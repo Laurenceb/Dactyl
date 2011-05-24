@@ -1,3 +1,5 @@
+//Dactyl project v1.0
+
 #include "dma.h"
 
 /**
@@ -39,12 +41,12 @@ int16_t Bytes_In_Buffer(Buffer_Type* buffer)
 /**
   * @brief  Returns a byte from the buffer.
   * @param  Buffer pointer
-  * @retval byte
+  * @retval int16 with bytes with value -1 if nothing in buffer 
   */
 int16_t Get_From_Buffer(Buffer_Type* buffer)
 {
 	uint8_t d=(buffer->data)[buffer->tail];//read data at tail
-	if(bytes_in_buffer(buffer))
+	if(Bytes_In_Buffer(buffer))
 	{
 		buffer->tail=(buffer->tail+1)%buffer->size;
 		return (int16_t)d;	//returns the byte
@@ -53,3 +55,14 @@ int16_t Get_From_Buffer(Buffer_Type* buffer)
 		return -1;		//no data
 }
 
+/**
+  * @brief  Returns a byte from the buffer.
+  * @param  Buffer pointer
+  * @retval byte
+  */
+uint8_t Pop_From_Buffer(Buffer_Type* buffer)
+{
+	uint8_t d=(buffer->data)[buffer->tail];//read data at tail
+	buffer->tail=(buffer->tail+1)%buffer->size;
+	return d;			//returns the byte
+}

@@ -1,3 +1,5 @@
+//Dactyl project v1.0
+
 #include "gpio.h"
 //note that periferal clocks are also configured here
 

@@ -1,3 +1,5 @@
+//Dactyl project v1.0
+
 #include "i2c.h"
 
 /**

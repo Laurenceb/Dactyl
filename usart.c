@@ -1,3 +1,4 @@
+//Dactyl project v1.0
 // Send and receive data over the USARTs
 
 #include "usart.h"
@@ -55,9 +56,9 @@ void Usarts_Init() {
   * @retval None
   */
 void Usart_Send_Str(char* str) {
-    unsigned short int i = 0;
-    while(str[i] != 0x00)
-        __usart_send_char(str[i++]);
+	unsigned short int i = 0;
+	while(str[i] != 0x00)
+		__usart_send_char(str[i++]);
 }
 
 /**
@@ -65,10 +66,21 @@ void Usart_Send_Str(char* str) {
   * @param  Buffer pointer - first byte is number of bytes
   * @retval None
   */
+void Gps_Send_Utf8(char* str) {
+	unsigned short int i=0;
+	while(i<str[0])
+		__gps_send_char(str[++i]);
+}
+
+/**
+  * @brief  Writes config to the GPS
+  * @param  String pointer - null terminated
+  * @retval None
+  */
 void Gps_Send_Str(char* str) {
-    unsigned short int i=0;
-    while(i<str[0])
-        __gps_send_char(str[i++]);
+	uint8_t i=0;
+	while(str[i])
+        	__gps_send_char(str[i++]);
 }
 
 /**

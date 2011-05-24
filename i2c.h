@@ -1,3 +1,5 @@
+//Dactyl project v1.0
+
 #include "stm32f10x.h"
 
 //Datatypes, including MEMS specific types

@@ -12,10 +12,11 @@
 #include "dma.h"
 #include "gpio.h"
 #include "Sensors/ubx.h"
+#include "Util/delay.h"
 
-//globals go here
+//globals go here - this is the only place in the project where globals are declared
 Buffer_Type Gps_Buffer;	//gps data buffer
-extern volatile Ubx_Gps_Type Gps;
+volatile Ubx_Gps_Type Gps;
 
 int main(void) {
 	Vector mag;
@@ -33,7 +34,7 @@ int main(void) {
 		if(Gps.packetflag==REQUIRED_DATA)
 		{
 			printf("%li,%li,%li,%li,%li,%li,%1X,%1X,\n",Gps.latitude,Gps.longitude,Gps.altitude,Gps.vnorth,Gps.veast,Gps.vdown,Gps.status,Gps.nosats);
-			Gps.packetflag=0;	//unlock the data
+			Gps.packetflag=0;	//We now have to reaquire the data
 		}
 		printf(",%d,%d,%d,",mag.x,mag.y,mag.z);
 		Delay(0x0FFFF);
@@ -46,11 +47,6 @@ int main(void) {
 		Mag_Read(&mag);
 		printf("%d,%d,%d\r\n",mag.x,mag.y,mag.z);
     }
-}
-
-
-void Delay(volatile unsigned long delay) {
-	for(; delay; --delay );
 }
 
 void Initialisation() {
