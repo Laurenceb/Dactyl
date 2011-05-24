@@ -75,4 +75,5 @@ void Initialisation() {
 	Gyr_Init();
 	// Say something
 	Usart_Send_Str((char*)"Setup gyro\r\n");
+	if(!Config_Gps()) Usart_Send_Str((char*)"Setup GPS ok\r\n");//if not the function printfs its error
 }

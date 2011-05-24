@@ -2,7 +2,9 @@
 
 #include "stm32f10x.h"
 #include "../Util/delay.h"
+#include <stdio.h>
 
+#pragma once
 typedef struct
 {
 	uint32_t time;					//milliseconds/week
@@ -71,6 +73,9 @@ typedef struct
 //^turns on the velocity north, east, down
 #define STAT_ENABLE 0xB5,0x62,0x06,0x01,0x08,0x00,0x01,0x06,0x00,0x01,0x00,0x00,0x00,0x00,0x17,0xDA}
 //^turns on status updates
+#define NEW_BAUD 115200
+#define GPS_DEFAULT_BAUD 38400
 
 //Function prototypes
-void Gps_Process_Byte(uint8_t c,Ubx_Gps_Type* Gps_);
+void Gps_Process_Byte(uint8_t c,Ubx_Gps_Type* gps);
+uint8_t Config_Gps(void);

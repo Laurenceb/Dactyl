@@ -2,6 +2,7 @@
 
 #include "ubx.h"
 #include "../dma.h"					//buffer declarations 
+#include "../usart.h"					//for sending data to gps
 
 extern volatile Ubx_Gps_Type Gps;			//These are global
 extern Buffer_Type Gps_Buffer;
@@ -45,11 +46,7 @@ void Gps_Process_Byte(uint8_t c,Ubx_Gps_Type* gps)//The raw USART data is fed in
 			State=3;
 			break;
 		case 3:				//Then the id
-			Id=c;/**
-  * @brief  Runs a state machine to parse raw usart data into a structure
-  * @param  Input character, pointer to the output gps datastructure
-  * @retval None
-  */
+			Id=c;
 			State=4;
 			break;
 		case 4:				//The least significant byte of the lenght 
@@ -148,7 +145,6 @@ uint8_t Get_UBX_Ack(uint8_t Class, uint8_t Id) {
 			b = Pop_From_Buffer(&Gps_Buffer);
  			if(b == ackPacket[ackByteID]) {//Check that bytes arrive in sequence as per expected ACK packet
 				ackByteID++;
-				//Serial.print(b, HEX);
 			} else {
 				ackByteID = 0;	//Reset and look again, invalid order
 			}
@@ -158,16 +154,35 @@ uint8_t Get_UBX_Ack(uint8_t Class, uint8_t Id) {
 }
 
 
-uint8_t Config_Gps() {
+uint8_t Config_Gps(void) {
 	char* nmea_off=GLL_OFF ZDA_OFF VTG_OFF GSV_OFF GSA_OFF RMC_OFF;
 	char filter_mode[]=AIR_4G_3D;
 	char update[]=HZ5_UPDATE;
 	char sbas[]=SBAS_OFF;
 	char packets[]=LLN_ENABLE VEL_ENABLE STAT_ENABLE;
+	char usart_conf[]=USART1_115200_UBX;
 	Gps_Send_Str(nmea_off);
-	if(!Gps_Send_Utf8(filter_mode)) {
-		printf("Ack ");
-		return 0;}
-//this needs finishing!
+	Gps_Send_Utf8(filter_mode);
+	if(!Get_UBX_Ack(filter_mode[3],filter_mode[4])) {
+		printf("Ack Error -Filter config\r\n");
+		return 1;}
+	Gps_Send_Utf8(update);
+	if(!Get_UBX_Ack(update[3],update[4])) {
+		printf("Ack Error -Update config\r\n");
+		return 1;}
+	Gps_Send_Utf8(sbas);
+	if(!Get_UBX_Ack(sbas[3],sbas[4])) {
+		printf("Ack Error -SBAS config\r\n");
+		return 1;}
+	Gps_Send_Utf8(packets);
+	if(!Get_UBX_Ack(packets[3],packets[4])) {
+		printf("Ack Error -Packets config\r\n");
+		return 1;}
+	Gps_Send_Utf8(usart_conf);
+	USART2_reconf(NEW_BAUD);
+	if(!Get_UBX_Ack(usart_conf[3],usart_conf[4])) {
+		printf("Ack Error -Usart config\r\n");
+		return 1;}	
+	return 0;				//Success
 }
 

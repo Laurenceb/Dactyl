@@ -51,6 +51,25 @@ void Usarts_Init() {
 }
 
 /**
+  * @brief  Rebaud the Usart2
+  * @param  uint16_t new baudrate
+  * @retval None
+  */
+void USART2_reconf(uint16_t new_baud) {
+    USART_InitTypeDef   USART_InitStructure;
+    USART_DeInit(USART2_USART);
+    USART_InitStructure.USART_BaudRate  = new_baud;
+    USART_InitStructure.USART_WordLength= USART_WordLength_8b;
+    USART_InitStructure.USART_StopBits  = USART_StopBits_1;
+    USART_InitStructure.USART_Parity    = USART_Parity_No;
+    USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
+    USART_InitStructure.USART_Mode      = USART_Mode_Tx | USART_Mode_Rx;
+    USART_Init(USART2_USART, &USART_InitStructure );
+    /* Re-enable the USART2 */
+    USART_Cmd(USART2_USART, ENABLE);
+}
+
+/**
   * @brief  Writes a string to USART1
   * @param  String pointer - null terminated
   * @retval None

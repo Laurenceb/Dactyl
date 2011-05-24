@@ -3,6 +3,7 @@
 
 #include "stm32f10x.h"
 #include <stdio.h>
+#include "Sensors/ubx.h"
 
 #pragma once
 
@@ -22,7 +23,7 @@
 #define USART2_RCC_USART  RCC_APB1Periph_USART2
 #define USART2_TX         GPIO_Pin_2
 #define USART2_RX         GPIO_Pin_3
-#define USART2_BAUD       38400		//note that this is for the FSA03 receiver
+#define USART2_BAUD       GPS_DEFAULT_BAUD		//note that this is for the FSA03 receiver
 
 //Public functions
 void Usarts_Init();
