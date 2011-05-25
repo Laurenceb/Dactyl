@@ -51,7 +51,7 @@ void Usarts_Init() {
   * @param  uint16_t new baudrate
   * @retval None
   */
-void USART2_reconf(uint16_t new_baud) {
+void USART2_reconf(uint32_t new_baud) {
     USART_InitTypeDef   USART_InitStructure;
     USART_DeInit(USART2_USART);
     USART_InitStructure.USART_BaudRate  = new_baud;
@@ -67,11 +67,11 @@ void USART2_reconf(uint16_t new_baud) {
   * @retval None
   */
 void Default_Usart_Config(USART_InitTypeDef* init) {
-    USART_InitStructure->USART_WordLength= USART_WordLength_8b;
-    USART_InitStructure->USART_StopBits  = USART_StopBits_1;
-    USART_InitStructure->USART_Parity    = USART_Parity_No;
-    USART_InitStructure->USART_HardwareFlowControl = USART_HardwareFlowControl_None;
-    USART_InitStructure->USART_Mode      = USART_Mode_Tx | USART_Mode_Rx;
+    init->USART_WordLength = USART_WordLength_8b;
+    init->USART_StopBits = USART_StopBits_1;
+    init->USART_Parity = USART_Parity_No;
+    init->USART_HardwareFlowControl = USART_HardwareFlowControl_None;
+    init->USART_Mode = USART_Mode_Tx | USART_Mode_Rx;
 }
 
 /**

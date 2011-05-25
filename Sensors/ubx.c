@@ -72,7 +72,7 @@ void Gps_Process_Byte(uint8_t c,Ubx_Gps_Type* gps)//The raw USART data is fed in
 						((uint8_t*)gps)[VEL_OFFSET-Lenght]=c;
 				}
 				if(Id==SOL_DATA && Lenght==SOL_POS)
-				Flush_Buffer(Buffer_Type* buffer)	gps->status=c;
+					gps->status=c;
 				if(Id==SOL_DATA && Lenght==SATS_POS)
 					gps->nosats=c;				
 			}
@@ -158,7 +158,7 @@ uint8_t Config_Gps(void) {
 	static const char packets[]=LLN_ENABLE VEL_ENABLE STAT_ENABLE;//note that this has only one header
 	static const char usart_conf[]=USART1_115200_UBX;
 	Gps_Send_Str(nmea_off);
-	Flush_Buffer(&Gps_Buffer;		//Wipe the DMA buffer - it will have been overwritten with nmea
+	Flush_Buffer(&Gps_Buffer);		//Wipe the DMA buffer - it will have been overwritten with nmea
 	Gps_Send_Utf8(filter_mode);
 	if(!Get_UBX_Ack(filter_mode[3],filter_mode[4])) {
 		printf("Ack Error -Filter config\r\n");

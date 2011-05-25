@@ -28,7 +28,7 @@
 //Public functions
 void Usarts_Init();
 void Default_Usart_Config(USART_InitTypeDef* init);
-void USART2_reconf(uint16_t new_baud);
+void USART2_reconf(uint32_t new_baud);
 void Usart_Send_Str(char* str);
 void Gps_Send_Str(char* str);
 void Gps_Send_Utf8(char* str);

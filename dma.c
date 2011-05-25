@@ -74,5 +74,5 @@ uint8_t Pop_From_Buffer(Buffer_Type* buffer)
   */
 void Flush_Buffer(Buffer_Type* buffer)
 {
-	while(Get_From_Buffer(Buffer_Type* buffer)>0);//loop until we reach end of buffer
+	while(Get_From_Buffer(buffer)>0);//loop until we reach end of buffer
 }

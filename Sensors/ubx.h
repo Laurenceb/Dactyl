@@ -73,8 +73,8 @@ typedef struct
 //^turns on the velocity north, east, down
 #define STAT_ENABLE 0xB5,0x62,0x06,0x01,0x08,0x00,0x01,0x06,0x00,0x01,0x00,0x00,0x00,0x00,0x17,0xDA}
 //^turns on status updates
-#define NEW_BAUD 115200
-#define GPS_DEFAULT_BAUD 38400
+#define NEW_BAUD 115200UL
+#define GPS_DEFAULT_BAUD 38400UL
 
 //Function prototypes
 void Gps_Process_Byte(uint8_t c,Ubx_Gps_Type* gps);

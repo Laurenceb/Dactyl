@@ -96,7 +96,7 @@ all: $(MAIN_BIN)
 # main
 
 $(MAIN_OUT): $(MAIN_OBJS) $(FWLIB) $(USBLIB)
-	$(LD) $(LDFLAGS) $(TARGET_ARCH) $^ -o $@
+	$(LD)  $(TARGET_ARCH) $^ -o $@ $(LDFLAGS)
 
 $(MAIN_OBJS): $(wildcard *.h) $(wildcard lib/STM32F10x_StdPeriph_Driver/*.h)\
  $(wildcard lib/STM32F10x_StdPeriph_Driver/inc/*.h)\
