@@ -72,7 +72,7 @@ void Gps_Process_Byte(uint8_t c,Ubx_Gps_Type* gps)//The raw USART data is fed in
 						((uint8_t*)gps)[VEL_OFFSET-Lenght]=c;
 				}
 				if(Id==SOL_DATA && Lenght==SOL_POS)
-					gps->status=c;
+				Flush_Buffer(Buffer_Type* buffer)	gps->status=c;
 				if(Id==SOL_DATA && Lenght==SATS_POS)
 					gps->nosats=c;				
 			}
@@ -121,9 +121,7 @@ void Gps_Process_Byte(uint8_t c,Ubx_Gps_Type* gps)//The raw USART data is fed in
   * @retval Success code
   */
 uint8_t Get_UBX_Ack(uint8_t Class, uint8_t Id) {
-	uint8_t b,counter=0;
-	uint8_t ackByteID = 0;
-	uint8_t ackPacket[10];			//Construct the expected ACK packet    
+	uint8_t counter=0,ackByteID=0,ackPacket[10];//Construct the expected ACK packet    
 	ackPacket[0] = 0xB5;	// header
 	ackPacket[1] = 0x62;	// header
 	ackPacket[2] = 0x05;	// class
@@ -142,26 +140,25 @@ uint8_t Get_UBX_Ack(uint8_t Class, uint8_t Id) {
 		if(ackByteID > 9)return UBX_OK;	//All packets in order!
 		if(counter++>GPS_RESPONSE_TIMEOUT)return UBX_FAIL; //Timeout if no valid response in 3 seconds
 		if(Bytes_In_Buffer(&Gps_Buffer)) {//Make sure data is available to read
-			b = Pop_From_Buffer(&Gps_Buffer);
- 			if(b == ackPacket[ackByteID]) {//Check that bytes arrive in sequence as per expected ACK packet
+ 			if(Pop_From_Buffer(&Gps_Buffer)==ackPacket[ackByteID])//Check that bytes arrive correct sequence
 				ackByteID++;
-			} else {
+			else
 				ackByteID = 0;	//Reset and look again, invalid order
-			}
- 
 		}
+		Delay(GPS_DELAY);		//Some time for the GPS to respond
 	}
 }
 
 
 uint8_t Config_Gps(void) {
-	char* nmea_off=GLL_OFF ZDA_OFF VTG_OFF GSV_OFF GSA_OFF RMC_OFF;
-	char filter_mode[]=AIR_4G_3D;
-	char update[]=HZ5_UPDATE;
-	char sbas[]=SBAS_OFF;
-	char packets[]=LLN_ENABLE VEL_ENABLE STAT_ENABLE;
-	char usart_conf[]=USART1_115200_UBX;
+	static const char* nmea_off=GLL_OFF ZDA_OFF VTG_OFF GSV_OFF GSA_OFF RMC_OFF;
+	static const char filter_mode[]=AIR_4G_3D;
+	static const char update[]=HZ5_UPDATE;	//these all live in flash
+	static const char sbas[]=SBAS_OFF;
+	static const char packets[]=LLN_ENABLE VEL_ENABLE STAT_ENABLE;//note that this has only one header
+	static const char usart_conf[]=USART1_115200_UBX;
 	Gps_Send_Str(nmea_off);
+	Flush_Buffer(&Gps_Buffer;		//Wipe the DMA buffer - it will have been overwritten with nmea
 	Gps_Send_Utf8(filter_mode);
 	if(!Get_UBX_Ack(filter_mode[3],filter_mode[4])) {
 		printf("Ack Error -Filter config\r\n");

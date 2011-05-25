@@ -31,11 +31,7 @@ void Usarts_Init() {
     
     // Configure USART1 peripheral
     USART_InitStructure.USART_BaudRate  = USART1_BAUD;
-    USART_InitStructure.USART_WordLength= USART_WordLength_8b;
-    USART_InitStructure.USART_StopBits  = USART_StopBits_1;
-    USART_InitStructure.USART_Parity    = USART_Parity_No;
-    USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
-    USART_InitStructure.USART_Mode      = USART_Mode_Tx | USART_Mode_Rx;
+    Default_Usart_Config(&USART_InitStructure);
     USART_Init(USART1_USART, &USART_InitStructure );
     // Configure USART2 peripheral - only buadrate is changed
     USART_InitStructure.USART_BaudRate = USART2_BAUD;
@@ -59,14 +55,23 @@ void USART2_reconf(uint16_t new_baud) {
     USART_InitTypeDef   USART_InitStructure;
     USART_DeInit(USART2_USART);
     USART_InitStructure.USART_BaudRate  = new_baud;
-    USART_InitStructure.USART_WordLength= USART_WordLength_8b;
-    USART_InitStructure.USART_StopBits  = USART_StopBits_1;
-    USART_InitStructure.USART_Parity    = USART_Parity_No;
-    USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
-    USART_InitStructure.USART_Mode      = USART_Mode_Tx | USART_Mode_Rx;
+    Default_Usart_Config(&USART_InitStructure);
     USART_Init(USART2_USART, &USART_InitStructure );
     /* Re-enable the USART2 */
     USART_Cmd(USART2_USART, ENABLE);
+}
+
+/**
+  * @brief  Setup the default USART config stuff
+  * @param  Init type pointer
+  * @retval None
+  */
+void Default_Usart_Config(USART_InitTypeDef* init) {
+    USART_InitStructure->USART_WordLength= USART_WordLength_8b;
+    USART_InitStructure->USART_StopBits  = USART_StopBits_1;
+    USART_InitStructure->USART_Parity    = USART_Parity_No;
+    USART_InitStructure->USART_HardwareFlowControl = USART_HardwareFlowControl_None;
+    USART_InitStructure->USART_Mode      = USART_Mode_Tx | USART_Mode_Rx;
 }
 
 /**
@@ -148,3 +153,4 @@ void __gps_send_char(char data) {
     USART_SendData(USART2_USART, data);
     while(USART_GetFlagStatus(USART2_USART, USART_FLAG_TXE) == RESET) {}
 }
+

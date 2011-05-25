@@ -66,3 +66,13 @@ uint8_t Pop_From_Buffer(Buffer_Type* buffer)
 	buffer->tail=(buffer->tail+1)%buffer->size;
 	return d;			//returns the byte
 }
+
+/**
+  * @brief Flushes the buffer, removing all data
+  * @param Buffer pointer
+  * @retval None
+  */
+void Flush_Buffer(Buffer_Type* buffer)
+{
+	while(Get_From_Buffer(Buffer_Type* buffer)>0);//loop until we reach end of buffer
+}
