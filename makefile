@@ -82,8 +82,8 @@ MAIN_OBJS = $(sort \
  $(patsubst %.cc,%.o,$(wildcard *.cc)) \
  $(patsubst %.c,%.o,$(wildcard *.c)) \
  $(patsubst %.s,%.o,$(wildcard *.s)) \
- $(patsubst %.c,%.o,$(wildcard Sensors/*.c)) \
  $(patsubst %.c,%.o,$(wildcard Util/*.c)) \
+ $(patsubst %.c,%.o,$(wildcard Sensors/*.c)) \
  $(patsubst %.c,%.o,$(wildcard lib/CMSIS_CM3/*.c)) \
  $(STARTUP_OBJ))
 

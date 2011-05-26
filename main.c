@@ -1,5 +1,4 @@
 /*Dactyl project -*/
-#include <stdio.h>
 #include <stdlib.h>
 
 // Load CMSIS and peripheral library and configuration
@@ -11,12 +10,16 @@
 #include "i2c.h"
 #include "dma.h"
 #include "gpio.h"
+//Include for printf if wanted
+#ifdef USE_LIBC_PRINTF
+	#include <stdio.h>
+#endif
 //Helper function headers
 #include "Sensors/ubx.h"
 #include "Sensors/WorldMagModel.h"
 //Utilities headers
 #include "Util/delay.h"
-
+#include "Util/rprintf.h"
 
 //globals go here - this is the only place in the project where globals are declared
 Buffer_Type Gps_Buffer;	//gps data buffer

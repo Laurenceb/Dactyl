@@ -107,6 +107,7 @@ void Gps_Send_Str(char* str) {
         	__gps_send_char(str[i++]);
 }
 
+#ifdef USE_LIBC_PRINTF
 /**
   * @brief  Retargets the C library printf function to the USART1.
   * @param  None
@@ -121,6 +122,7 @@ PUTCHAR_PROTOTYPE
   while (USART_GetFlagStatus(USART1_USART, USART_FLAG_TXE) == RESET) {;}
   return ch;
 }
+#endif
 
 #ifdef  USE_FULL_ASSERT
 

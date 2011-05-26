@@ -1,8 +1,10 @@
 //Dactyl project v1.0
+#pragma once
 
 #include "stm32f10x.h"
-#include "../Util/delay.h"
-#include <stdio.h>
+#ifdef USE_LIBC_PRINTF
+	#include <stdio.h>
+#endif
 
 #pragma once
 typedef struct
