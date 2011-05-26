@@ -25,6 +25,7 @@ typedef struct
 #define UBLOX 0x90
 #define UBLOX_WRITE UBLOX
 #define UBLOX_READ UBLOX|0x01
+#define UBLOX_3D 0x03					//3d fix
 #define REQUIRED_DATA 0x07				//get number of sats and status, 3D velocity, and 3D position 
 #define DATA_LENGHT 130
 #define LLH_DATA 0x02

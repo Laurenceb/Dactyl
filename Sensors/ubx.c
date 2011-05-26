@@ -2,6 +2,7 @@
 
 #include "../dma.h"					//buffer declarations 
 #include "../usart.h"					//for sending data to gps
+#include "../gpio.h"					//for configuring the gps power
 #include "../Util/delay.h"
 #include "../Util/rprintf.h"				//printf
 #include "ubx.h"
@@ -171,6 +172,8 @@ uint8_t Config_Gps(void) {
 	static const char sbas[]=SBAS_OFF;
 	static const char packets[]=LLN_ENABLE VEL_ENABLE STAT_ENABLE;//note that this has only one header
 	static const char usart_conf[]=USART1_115200_UBX;
+	Set_Gps_Pwr(Bit_SET);			//GPS on
+	for(uint8_t i=10;i;i--)Delay(GPS_DELAY);//Wait for the gps to boot itself up
 	Gps_Send_Str(nmea_off);
 	Flush_Buffer(&Gps_Buffer);		//Wipe the DMA buffer - it will have been overwritten with nmea
 	Gps_Send_Utf8(filter_mode);
