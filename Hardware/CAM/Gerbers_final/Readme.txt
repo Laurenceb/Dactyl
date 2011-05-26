@@ -1,0 +1,35 @@
+Manufacturing Information for "Dactyl" autopilot board
+------------------------------------------------------
+    12/09/10
+------------------------------------------------------
+******************************************************
+
+	IMPORTANT PLEASE READ THIS
+
+        ALSO SEE board.png FOR REFERENCE
+
+******************************************************
+
+****** Gerber RS274X layers **************************
+
+ auto.GTL        Top copper layer
+ auto.GBL        Bottom copper layer
+ auto.GTO        Top silkscreen layer     -    PLEASE USE BLACK SILKSCREEN
+ auto.GBO        Bottom silkscreen layer  -    PLEASE USE BLACK SILKSCREEN
+ auto.GTS        Top solderstop layer     -    PLEASE USE WHITE SOLDERSTOP
+ auto.GBS        Bottom solderstop layer  -    PLEASE USE WHITE SOLDERSTOP
+ auto.OLN        Outline layer for routering - this has been given circular aperture diameter 1mil in the Gerber
+
+****** Excellon Drill layers *************************
+
+auto_plated.TXT      Plated through holes
+auto_unplated.TXT    Unplated through holes - for mounting purposes.
+
+ It would be preferable for the mounting holes to be left unplated, however if the manufactiring process will not 
+allow for non plated through holes, all the holes have been combined in the file
+
+auto_all.TXT         All through holes.
+
+This should only be used if the production of unplated holes is not possible.
+
+
