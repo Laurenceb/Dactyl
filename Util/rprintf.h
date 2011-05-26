@@ -61,7 +61,7 @@
 //! Initializes the rprintf library for an output stream.
 /// You must call this initializer once before using any other rprintf function.
 /// The argument must be a character stream output function.
-void rprintfInit(void (*putchar_func)(unsigned char c));
+void rprintfInit(void (*putchar_func)(char c));
 
 //! prints a single character to the current output device
 void rprintfChar(unsigned char c);

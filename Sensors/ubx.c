@@ -73,10 +73,22 @@ void Gps_Process_Byte(uint8_t c,Ubx_Gps_Type* gps)//The raw USART data is fed in
 					if(Lenght<VEL_END && Lenght>VEL_START)
 						((uint8_t*)gps)[VEL_OFFSET-Lenght]=c;
 				}
-				if(Id==SOL_DATA && Lenght==SOL_POS)
-					gps->status=c;
-				if(Id==SOL_DATA && Lenght==SATS_POS)
-					gps->nosats=c;				
+				if(Id==SOL_DATA)
+				{
+					switch(Lenght){
+						case SOL_POS:
+							gps->status=c;
+							break;
+						case SATS_POS:
+							gps->nosats=c;
+							break;
+						case WEEK_POS:
+							gps->week|=c<<8;//the msb
+							break;
+						case WEEK_POS+1:
+							gps->week=c;
+					}
+				}				
 			}
 			Lenght--;
 			if(!Lenght)		//We have reached the end of the data

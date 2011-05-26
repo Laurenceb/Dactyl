@@ -20,13 +20,17 @@
 //Utilities headers
 #include "Util/delay.h"
 #include "Util/rprintf.h"
+//Control loop headers
+#include "Control/insgps.h"
 
 //globals go here - this is the only place in the project where globals are declared
 Buffer_Type Gps_Buffer;	//gps data buffer
 volatile Ubx_Gps_Type Gps;
+Nav_Type Nav;
 
 int main(void) {
 	Vector mag;
+	rprintfInit(__usart_send_char);//inititalise reduced printf functionality
 	Initialisation();//initialise all hardware
 	for(;;) {
 		// Turn on PA8, turn off PA11 - servo outout pins 1 and 2
@@ -57,6 +61,7 @@ int main(void) {
 }
 
 void Initialisation() {
+	//float null_[3];
 	// Setup STM32 system (clock, PLL and Flash configuration)
 	SystemInit();
 	// Setup the GPIOs
@@ -83,5 +88,10 @@ void Initialisation() {
 	// Say something
 	Usart_Send_Str((char*)"Setup gyro\r\n");
 	if(!Config_Gps()) Usart_Send_Str((char*)"Setup GPS ok\r\n");//if not the function printfs its error
+	//placeholder test functions
 	WMM_Initialize();			//Initialise the world magnetic model
+	INSGPSInit();
+	//INSCovariancePrediction(0.01);
+	//INSStatePrediction(null_,null_,0.01);
+	//INSCorrection(null_,null_,null_,0,0xFFFF);
 }

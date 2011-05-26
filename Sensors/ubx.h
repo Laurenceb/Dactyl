@@ -10,7 +10,8 @@
 typedef struct
 {
 	uint32_t time;					//milliseconds/week
-	int32_t  vnorth;				//cm/s
+	int16_t week;					//gps week number
+	int32_t vnorth;				//cm/s
 	int32_t veast;
 	int32_t vdown;
 	int32_t longitude;				//degrees/10^-7
@@ -32,11 +33,12 @@ typedef struct
 #define NAV_CLASS 0x01
 #define SATS_POS 5
 #define SOL_POS 42
+#define WEEK_POS 43
 #define SVINFO_DATA 0x30
-#define POS_OFFSET 40
+#define POS_OFFSET 42
 #define POS_START 12
 #define POS_END 25
-#define VEL_OFFSET 36 
+#define VEL_OFFSET 38 
 #define VEL_START 20
 #define VEL_END 37
 #define SYNC_1 0xB5

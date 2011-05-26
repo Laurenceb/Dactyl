@@ -120,7 +120,7 @@ typedef struct {
 	// Internal Function Prototypes
 void WMM_Set_Coeff_Array();
 int WMM_GeodeticToSpherical(WMMtype_CoordGeodetic * CoordGeodetic, WMMtype_CoordSpherical * CoordSpherical);
-int WMM_DateToYear(uint16_t month, uint16_t day, uint16_t year);
+int WMM_DateToYear(uint16_t Gps_Week);
 int WMM_Geomag(WMMtype_CoordSpherical * CoordSpherical,
 		    WMMtype_CoordGeodetic * CoordGeodetic, WMMtype_GeoMagneticElements * GeoMagneticElements);
 

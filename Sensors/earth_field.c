@@ -192,7 +192,7 @@ int WMM_Initialize()
 	return 0;                       // OK
 }
 
-int WMM_GetMagVector(float Lat, float Lon, float AltEllipsoid, uint16_t Month, uint16_t Day, uint16_t Year, float B[3])
+int WMM_GetMagVector(float Lat, float Lon, float AltEllipsoid, uint16_t Gps_Week, float B[3])
 {	
     // return '0' if all appears to be OK
     // return < 0 if error
@@ -250,7 +250,7 @@ int WMM_GetMagVector(float Lat, float Lon, float AltEllipsoid, uint16_t Month, u
 
     if (returned >= 0)
     {
-        if (WMM_DateToYear(Month, Day, Year) < 0)
+        if (WMM_DateToYear(Gps_Week) < 0)
             returned = -8;  // error
     }
 
@@ -1264,33 +1264,10 @@ float WMM_get_secular_var_coeff_h(uint16_t index)
 	return CoeffFile[index][5];
 }
 
-int WMM_DateToYear(uint16_t month, uint16_t day, uint16_t year)
-// Converts a given calendar date into a decimal year
+int WMM_DateToYear(uint16_t Gps_Week)
+// Converts a given gps week into a decimal year
 {
-	uint16_t temp = 0;	// Total number of days
-	uint16_t MonthDays[13] = { 0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
-	uint16_t ExtraDay = 0;
-	uint16_t i;
-
-	if ((year % 4 == 0 && year % 100 != 0) || (year % 400 == 0))
-		ExtraDay = 1;
-	MonthDays[2] += ExtraDay;
-
-	/******************Validation********************************/
-
-	if (month <= 0 || month > 12)
-		return -1;  // error
-
-	if (day <= 0 || day > MonthDays[month])
-		return -2;  // error
-
-	/****************Calculation of t***************************/
-	for (i = 1; i <= month; i++)
-		temp += MonthDays[i - 1];
-	temp += day;
-	
-	decimal_date = year + (temp - 1) / (365.0 + ExtraDay);
-
+	decimal_date=1980+(Gps_Week+1)*0.0191653649;//GPS weeks started with week 0 on 7th Jan 1980
 	return 0;   // OK
 }
 

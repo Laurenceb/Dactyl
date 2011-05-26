@@ -44,7 +44,7 @@ static void (*rputchar)(unsigned char c);
 // *** rprintf initialization ***
 // you must call this function once and supply the character output
 // routine before using other functions in this library
-void rprintfInit(void (*putchar_func)(unsigned char c)) {
+void rprintfInit(void (*putchar_func)(char c)) {
 	rputchar = putchar_func;
 }
 
