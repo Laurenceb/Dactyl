@@ -1,6 +1,7 @@
 /*-----------------------------------------------------------------------
 /  Low level disk interface modlue include file
 /-----------------------------------------------------------------------*/
+#define BOOL bool
 
 #ifndef _DISKIO
 
@@ -73,6 +74,20 @@ DRESULT disk_ioctl (BYTE, BYTE, void*);
 /* NAND specific ioctl command */
 #define NAND_FORMAT			30	/* Create physical format */
 
+/* Martin Thomas begin */
 
+/* Card type flags (CardType) */
+#define CT_MMC              0x01
+#define CT_SD1              0x02
+#define CT_SD2              0x04
+#define CT_SDC              (CT_SD1|CT_SD2)
+#define CT_BLOCK            0x08
+
+#ifndef RAMFUNC
+#define RAMFUNC
+#endif
+RAMFUNC void disk_timerproc (void);
+
+/* Martin Thomas end */
 #define _DISKIO
 #endif

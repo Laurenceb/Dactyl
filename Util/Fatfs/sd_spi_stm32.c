@@ -49,7 +49,7 @@
 #define STM32_SD_DISK_IOCTRL_FORCE      0
 
 // demo uses a command line option to define this (see Makefile):
-//#define USE_EK_STM32F
+#define USE_EK_STM32F //TODO - port to our hardware
 //#define USE_STM32_P103
 //#define USE_MINI_STM32
 
@@ -734,6 +734,7 @@ DSTATUS disk_initialize (
 	if (Stat & STA_NODISK) return Stat;	/* No card in the socket */
 
 	power_on();							/* Force socket power on and initialize interface */
+
 	interface_speed(INTERFACE_SLOW);
 	for (n = 10; n; n--) rcvr_spi();	/* 80 dummy clocks */
 

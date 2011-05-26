@@ -110,4 +110,6 @@ void Initialisation() {
 	else
 		printf("Mag model completed, B(nT NED frame)=%1f,%1f,%1f\r\n",Field[0],Field[1],Field[2]);
 	INSSetMagNorth(Field);			//Configure the Earths field in the EKF
+	//quick test - remove asap
+	f_mount(0,0);
 }
