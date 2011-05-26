@@ -72,7 +72,7 @@ void rprintfStr(char str[]) {	// send a string stored in RAM
 // begins printing at position indicated by <start>
 // prints number of characters indicated by <len>
 void rprintfStrLen(char str[], unsigned int start, unsigned int len) {
-	register int i=0;
+	unsigned int i=0;
 	// check to make sure we have a good pointer
 	if (!str) return;
 	// spin through characters up to requested start
@@ -335,7 +335,7 @@ int rprintf2RamRom(const char *sfmt, ...)
 					f++;
             }
             else if (Isdigit(sfmt[f])){
-					f_width = atoiRamRom((char *) f);
+					f_width = atoiRamRom((char *)&sfmt[f]);
 					while (Isdigit(sfmt[f]))
 						f++;        // skip the digits
             }
@@ -346,7 +346,7 @@ int rprintf2RamRom(const char *sfmt, ...)
 						f++;
 					}
 					else if (Isdigit(sfmt[f])){
-						prec = atoiRamRom((char *) f);
+						prec = atoiRamRom((char *)&sfmt[f]);
 						while (Isdigit(sfmt[f]))
 							f++;    // skip the digits
 					}
@@ -437,7 +437,7 @@ int rprintf2RamRom(const char *sfmt, ...)
 					bp = va_arg(ap, unsigned char *);
 					if (!bp)
 						bp = (unsigned char *) "(nil)";
-					f_width = f_width - strlen((char *) bp);
+					f_width = f_width - rStrLen((char *) bp);
 					if (!flush_left)
 						while (f_width-- > 0)
 							rprintfChar(pad);
@@ -470,12 +470,18 @@ unsigned char Isdigit(char c) {
 }
 
 int atoiRamRom(char *str) {
-	int num = 0;char r=0;
+	int num = 0;unsigned char r=0;
 	while(Isdigit(str[r])){
 		num *= 10;
 		num += str[r++] - 0x30;
 	}
 	return num;
+}
+
+int rStrLen(char *str) {
+	unsigned char i=0;
+	while(str[i++]);
+	return (int) i;
 }
 
 #endif

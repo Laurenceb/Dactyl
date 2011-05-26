@@ -100,6 +100,7 @@ void rprintfNum(char base, char numDigits, char isSigned, char padchar, long n);
 
 unsigned char Isdigit(char c);
 int atoiRamRom(char *str);
+int rStrLen(char *str);
 
 #ifdef RPRINTF_FLOAT
 	//! floating-point print routine
