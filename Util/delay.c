@@ -6,6 +6,6 @@
   * @retval None
   * Note this is not compensated for the sysclk speed
   */
-void Delay(unsigned long delay) {
-	for(; delay; --delay );
+void Delay(volatile unsigned long delay) {
+	for(; delay;){--delay;}
 }

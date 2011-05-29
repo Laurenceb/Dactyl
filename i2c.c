@@ -14,9 +14,9 @@ void I2C_Config() {								// Configure I2C1 for the sensor bus
 	I2C_InitStructure.I2C_OwnAddress1 = 0xAD;//0xAM --> ADAM
 	I2C_InitStructure.I2C_Ack = I2C_Ack_Enable;
 	I2C_InitStructure.I2C_AcknowledgedAddress= I2C_AcknowledgedAddress_7bit;
-	I2C_InitStructure.I2C_ClockSpeed = 100000;
-	I2C_Cmd( I2C1, ENABLE );
+	I2C_InitStructure.I2C_ClockSpeed = 400000;
 	I2C_Init( I2C1, &I2C_InitStructure );
+	I2C_Cmd( I2C1, ENABLE );
 }
 
 /**
@@ -87,7 +87,7 @@ I2C_Returntype I2C_Read(uint8_t* Data_Pointer,uint8_t Bytes, uint8_t Addr, uint8
 	}									//becomes a repeated start error
 	Time=0;
 	I2C_Send7bitAddress( I2C1, Addr|0x01, I2C_Direction_Receiver );		//Address to read
-	while(!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED)) {
+	while(!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED)) {
 		Time++;
 		if(Time>I2C_TIMEOUT) return I2C_SACK_TIMEOUT;			//Checks that the slave acknowledged
 	}									//We now auto switch to rx mode
@@ -110,9 +110,9 @@ I2C_Returntype I2C_Read(uint8_t* Data_Pointer,uint8_t Bytes, uint8_t Addr, uint8
 		if(Time>I2C_TIMEOUT) return I2C_RX_TIMEOUT;
 	}
 	I2C_AcknowledgeConfig(I2C1, DISABLE);					//Do not ack the last byte
-	Data_Pointer[n]=I2C_ReceiveData(I2C1);					//Third to last byte
+	Data_Pointer[n++]=I2C_ReceiveData(I2C1);				//Third to last byte
 	I2C_GenerateSTOP( I2C1, ENABLE );					//Enable the STOP here
-	Data_Pointer[n+1]=I2C_ReceiveData(I2C1);				//Read the Penultimate from buffer
+	Data_Pointer[n++]=I2C_ReceiveData(I2C1);				//Read the Penultimate from buffer
 	Time=0;
 	while(I2C_GetFlagStatus(I2C1,I2C_FLAG_RXNE)!=SET) {			//Last byte received here with a NACK and STOP
 		Time++;

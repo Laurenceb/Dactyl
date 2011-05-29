@@ -30,6 +30,7 @@ void Gps_Process_Byte(uint8_t c,Ubx_Gps_Type* gps)//The raw USART data is fed in
 {
 	static uint8_t State,Class,Id,Checksum_1,Checksum_2,Counter;
 	static uint16_t Lenght;
+	//putchar(c);
 	switch(State)
 	{
 		case 0:				//Start be waiting for the first sync byte
@@ -114,6 +115,7 @@ void Gps_Process_Byte(uint8_t c,Ubx_Gps_Type* gps)//The raw USART data is fed in
 						gps->packetflag|=0x02;
 					if(Id==VELNED_DATA)
 						gps->packetflag|=0x01;
+					//putchar(0x30+gps->packetflag);
 				}
 			}
 			State=0;
@@ -136,7 +138,8 @@ void Gps_Process_Byte(uint8_t c,Ubx_Gps_Type* gps)//The raw USART data is fed in
   * @retval Success code
   */
 uint8_t Get_UBX_Ack(uint8_t Class, uint8_t Id) {
-	uint8_t counter=0,ackByteID=0,ackPacket[10];//Construct the expected ACK packet    
+	uint8_t ackByteID=0,ackPacket[10],b;//Construct the expected ACK packet
+	uint32_t counter=0;  
 	ackPacket[0] = 0xB5;	// header
 	ackPacket[1] = 0x62;	// header
 	ackPacket[2] = 0x05;	// class
@@ -155,48 +158,66 @@ uint8_t Get_UBX_Ack(uint8_t Class, uint8_t Id) {
 		if(ackByteID > 9)return UBX_OK;	//All packets in order!
 		if(counter++>GPS_RESPONSE_TIMEOUT)return UBX_FAIL; //Timeout if no valid response in 3 seconds
 		if(Bytes_In_Buffer(&Gps_Buffer)) {//Make sure data is available to read
- 			if(Pop_From_Buffer(&Gps_Buffer)==ackPacket[ackByteID])//Check that bytes arrive correct sequence
+			b=Pop_From_Buffer(&Gps_Buffer);
+			//putchar(b);
+ 			if(b==ackPacket[ackByteID])//Check that bytes arrive correct sequence
 				ackByteID++;
 			else
 				ackByteID = 0;	//Reset and look again, invalid order
 		}
-		Delay(GPS_DELAY);		//Some time for the GPS to respond
 	}
 }
 
 
 uint8_t Config_Gps(void) {
-	static const char* nmea_off=GLL_OFF ZDA_OFF VTG_OFF GSV_OFF GSA_OFF RMC_OFF;
+	static const char* gll_off=GLL_OFF;
+	static const char* zda_off=ZDA_OFF;
+	static const char* vtg_off=VTG_OFF;
+	static const char* gsv_off=GSV_OFF;
+	static const char* gsa_off=GSA_OFF;
+	static const char* rmc_off=RMC_OFF;
+	static const char* gga_off=GGA_OFF;
+	static const char* nmea_rebaud=NMEA_REBAUD;
 	static const char filter_mode[]=AIR_4G_3D;
 	static const char update[]=HZ5_UPDATE;	//these all live in flash
 	static const char sbas[]=SBAS_OFF;
 	static const char packets[]=LLN_ENABLE VEL_ENABLE STAT_ENABLE;//note that this has only one header
-	static const char usart_conf[]=USART1_115200_UBX;
+	static const char usart_conf[]=USART1_57600_UBX;
 	Set_Gps_Pwr(Bit_SET);			//GPS on
-	for(uint8_t i=10;i;i--)Delay(GPS_DELAY);//Wait for the gps to boot itself up
-	Gps_Send_Str(nmea_off);
-	Flush_Buffer(&Gps_Buffer);		//Wipe the DMA buffer - it will have been overwritten with nmea
-	Gps_Send_Utf8(filter_mode);
-	if(!Get_UBX_Ack(filter_mode[3],filter_mode[4])) {
-		printf("Ack Error -Filter config\r\n");
-		return 1;}
-	Gps_Send_Utf8(update);
-	if(!Get_UBX_Ack(update[3],update[4])) {
-		printf("Ack Error -Update config\r\n");
-		return 1;}
-	Gps_Send_Utf8(sbas);
-	if(!Get_UBX_Ack(sbas[3],sbas[4])) {
-		printf("Ack Error -SBAS config\r\n");
-		return 1;}
-	Gps_Send_Utf8(packets);
-	if(!Get_UBX_Ack(packets[3],packets[4])) {
-		printf("Ack Error -Packets config\r\n");
-		return 1;}
+	Delay(GPS_DELAY);			//Wait for the gps to boot itself up
+	Gps_Send_Str(gll_off);			//Use NMEA commands to disable all sentences
+	Gps_Send_Str(zda_off);
+	Gps_Send_Str(vtg_off);
+	Gps_Send_Str(gsv_off);
+	Gps_Send_Str(gsa_off);
+	Gps_Send_Str(rmc_off);
+	Gps_Send_Str(gga_off);
+	Delay(GPS_DELAY);			//Wait for the gps to process this
+	//Gps_Send_Str(nmea_rebaud);		//NMEA command to switch ublox5 usart1 to UBX on 115200 baud 
+	//Delay(GPS_DELAY);
+	//USART2_reconf(NEW_BAUD);
+	Flush_Buffer(&Gps_Buffer);		//Wipe the DMA buffer - it will have been overwritten with NMEA
 	Gps_Send_Utf8(usart_conf);
 	USART2_reconf(NEW_BAUD);
-	if(!Get_UBX_Ack(usart_conf[3],usart_conf[4])) {
+	if(Get_UBX_Ack(usart_conf[3],usart_conf[4])) {
 		printf("Ack Error -Usart config\r\n");
-		return 1;}	
+		/*return 1;*/}
+	Gps_Send_Utf8(packets);
+	if(Get_UBX_Ack(packets[3],packets[4])) {
+		printf("Ack Error -Packets config\r\n");
+		/*return 1;*/}
+	Gps_Send_Utf8(filter_mode);
+	if(Get_UBX_Ack(filter_mode[3],filter_mode[4])) {
+		printf("Ack Error -Filter config\r\n");
+		/*return 1;*/}
+	Gps_Send_Utf8(update);
+	if(Get_UBX_Ack(update[3],update[4])) {
+		printf("Ack Error -Update config\r\n");
+		/*return 1;*/}
+	Gps_Send_Utf8(sbas);
+	if(Get_UBX_Ack(sbas[3],sbas[4])) {
+		printf("Ack Error -SBAS config\r\n");
+		/*return 1;*/}
 	return 0;				//Success
 }
 

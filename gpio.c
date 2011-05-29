@@ -27,6 +27,8 @@ void GPIO_Config_AF_Periferals() {
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_I2C1, ENABLE );//turn on the clock to the I2C hardware
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB|RCC_APB2Periph_GPIOA|RCC_APB2Periph_AFIO, ENABLE);//GPIO clks
 	RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1, ENABLE);// DMA1 clock enable
+	//Disable the JTAG so we can use pins as GPIO
+	GPIO_PinRemapConfig(GPIO_Remap_SWJ_Disable,ENABLE);
 	// Configure PB8/9 as open drain remapped alt-function output (I2C1 SCL/SDA)
 	GPIO_PinRemapConfig(GPIO_Remap_I2C1,ENABLE);
 	GPIO_InitStructure.GPIO_Pin = I2C1_REMAP_SCL|I2C1_REMAP_SDA;

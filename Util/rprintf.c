@@ -23,8 +23,8 @@
 #include "rprintf.h"
 
 #ifndef TRUE
-	#define TRUE	0
-	#define FALSE	-1
+	#define TRUE	1
+	#define FALSE	0
 #endif
 
 #define INF     32766	// maximum field size to print)
@@ -214,9 +214,6 @@ void rprintfFloat(char numDigits, float x) {
 	// print polarity character
 	if(negative)
 		rprintfChar('-');
-	else
-		rprintfChar('+');
-
 	// print digits
 	for(i=0; i<numDigits; i++) {
 		digit = (x/place);
@@ -305,6 +302,7 @@ int rprintf1RamRom(const char *format, ...) {
 int rprintf2RamRom(const char *sfmt, ...)
 {
 	unsigned char *bp;
+	float v;
 	long l;
 	unsigned long u;
 	int i;
@@ -429,6 +427,10 @@ int rprintf2RamRom(const char *sfmt, ...)
 						while (i-- > 0)
 							rprintfChar(' ');
 					break;
+	    case 'f':			// 'f' character
+					v = (float) (va_arg(ap, double));
+					if(!f_width)f_width=9;//default width
+					rprintfFloat(f_width,v);//f_width
             case 'c':			// 'c' character
 					i = va_arg(ap, int);
 					rprintfChar((int) (i));

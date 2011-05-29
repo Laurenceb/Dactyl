@@ -14,9 +14,10 @@ void Usarts_Init() {
     GPIO_InitTypeDef    GPIO_InitStructure;
     USART_InitTypeDef   USART_InitStructure;
     
-    // Enable clock to GPIO and USART1 and USART2 peripherals
-    RCC_APB2PeriphClockCmd(USART1_RCC_GPIO | USART1_RCC_USART | USART2_RCC_GPIO | USART2_RCC_USART, ENABLE);
-    
+    // Enable clock to GPIO and USART1 and USART2 peripherals - on different APBs
+    RCC_APB2PeriphClockCmd(USART1_RCC_GPIO | USART1_RCC_USART, ENABLE);
+    RCC_APB1PeriphClockCmd(USART2_RCC_USART,ENABLE );
+
     // Configure Tx pins
     GPIO_InitStructure.GPIO_Pin     = USART1_TX | USART2_TX;
     GPIO_InitStructure.GPIO_Speed   = GPIO_Speed_50MHz;
@@ -57,6 +58,8 @@ void USART2_reconf(uint32_t new_baud) {
     USART_InitStructure.USART_BaudRate  = new_baud;
     Default_Usart_Config(&USART_InitStructure);
     USART_Init(USART2_USART, &USART_InitStructure );
+    /* Enable USART2 DMA Rx request */
+    USART_DMACmd(USART2_USART, USART_DMAReq_Rx , ENABLE);
     /* Re-enable the USART2 */
     USART_Cmd(USART2_USART, ENABLE);
 }
