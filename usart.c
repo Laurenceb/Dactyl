@@ -54,6 +54,7 @@ void Usarts_Init() {
   */
 void USART2_reconf(uint32_t new_baud) {
     USART_InitTypeDef   USART_InitStructure;
+    USART_Cmd(USART2_USART, DISABLE);
     USART_DeInit(USART2_USART);
     USART_InitStructure.USART_BaudRate  = new_baud;
     Default_Usart_Config(&USART_InitStructure);

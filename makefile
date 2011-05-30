@@ -52,7 +52,7 @@ ifdef DEBUG
  TARGET_OPTS = -O0 -g3
  DEBUG_MACRO = -DDEBUG
 else	#Changed from O2
- TARGET_OPTS = -O0 -finline -finline-functions-called-once\
+ TARGET_OPTS = -Os -finline -finline-functions-called-once\
   -funroll-loops -fno-common -fpromote-loop-indices
 endif
 

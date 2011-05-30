@@ -45,7 +45,7 @@ int main(void) {
 				Gps_Process_Byte((uint8_t)(Pop_From_Buffer(&Gps_Buffer)),&Gps);}
 		printf("%ld,%ld,%ld,%ld,%ld,%ld,%1x,%1x,",Gps.latitude,Gps.longitude,Gps.altitude,Gps.vnorth,Gps.veast,Gps.vdown,Gps.status,Gps.nosats);
 		Gps.packetflag=0;	//We now have to reaquire the data
-		printf(",%d,%d,%d,",mag.x,mag.y,mag.z);
+		printf("%d,%d,%d,",mag.x,mag.y,mag.z);
 		//Delay(0x0FFFF);
 		Gyr_Read(&mag);
 		printf("%d,%d,%d,",mag.x,mag.y,mag.z);
@@ -73,6 +73,8 @@ void Initialisation() {
 	DMA_Cmd(USART2_DMA1, ENABLE);
 	// Set up the USARTs for outputting sensor information
     	Usarts_Init();
+	//Greeting
+	Usart_Send_Str((char*)"Dactyl project, for v1.0 hardware, compiled" __DATE__ " " __TIME__ "\r\n");
 	// Setup the I2C1
 	I2C_Config();
 	// Setup the magno
@@ -103,11 +105,11 @@ void Initialisation() {
 	else
 		printf("Accel error: %d\r\n",err);
 	if(!Config_Gps()) Usart_Send_Str((char*)"Setup GPS ok - awaiting fix\r\n");//If not the function printfs its error
-	while(Gps.status<UBLOX_3D) {		//Wait for a 3D fix
+	while(Gps.status!=UBLOX_3D) {		//Wait for a 3D fix
 		while(Bytes_In_Buffer(&Gps_Buffer))//Dump all the data
 			Gps_Process_Byte((uint8_t)(Pop_From_Buffer(&Gps_Buffer)),&Gps);
-		if(Gps.packetflag==0x07){		
-			putchar(0x30+Gps.nosats);
+		if(Gps.packetflag==REQUIRED_DATA){		
+			putchar(0x30+Gps.nosats);putchar(0x2C);//Number of sats seperated by commas
 			Gps.packetflag=0x00;
 		}
 	}
@@ -121,15 +123,17 @@ void Initialisation() {
 	Gps.latitude,Gps.longitude,Gps.altitude,\
 	Gps.vnorth,Gps.veast,Gps.vdown,Gps.status,Gps.nosats);
 	//Init the ekf, must do this before the mag model
-	/*INSGPSInit();
+	INSGPSInit();
 	//Now we initialise the magnetic model
 	if(WMM_Initialize())			//Initialise the world magnetic model
 		Usart_Send_Str((char*)"Mag model init error\r\n");
-	if(WMM_GetMagVector((float)Gps.latitude*1e7,(float)Gps.longitude*1e7,(float)Gps.altitude*1e-3,Gps.week,Field))
-		Usart_Send_Str((char*)"Mag model run error\r\n");
-	else
-		printf("Mag model completed, B(nT NED frame)=%1f,%1f,%1f\r\n",Field[0],Field[1],Field[2]);
+	else {
+		if(WMM_GetMagVector((float)Gps.latitude*1e-7,(float)Gps.longitude*1e-7,(float)Gps.altitude*1e-3,Gps.week,Field))
+			Usart_Send_Str((char*)"Mag model run error\r\n");
+		else
+			printf("Mag model completed, B(nT NED frame)=%1f,%1f,%1f\r\n",Field[0],Field[1],Field[2]);
+	}
 	INSSetMagNorth(Field);			//Configure the Earths field in the EKF
 	//quick test - remove asap
-	//f_mount(0,0);*/
+	f_mount(0,0);
 }

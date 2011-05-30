@@ -193,31 +193,29 @@ uint8_t Config_Gps(void) {
 	Gps_Send_Str(rmc_off);
 	Gps_Send_Str(gga_off);
 	Delay(GPS_DELAY);			//Wait for the gps to process this
-	//Gps_Send_Str(nmea_rebaud);		//NMEA command to switch ublox5 usart1 to UBX on 115200 baud 
-	//Delay(GPS_DELAY);
-	//USART2_reconf(NEW_BAUD);
 	Flush_Buffer(&Gps_Buffer);		//Wipe the DMA buffer - it will have been overwritten with NMEA
 	Gps_Send_Utf8(usart_conf);
-	USART2_reconf(NEW_BAUD);
 	if(Get_UBX_Ack(usart_conf[3],usart_conf[4])) {
 		printf("Ack Error -Usart config\r\n");
 		/*return 1;*/}
+	USART2_reconf(NEW_BAUD);
+	Delay(GPS_DELAY);
 	Gps_Send_Utf8(packets);
 	if(Get_UBX_Ack(packets[3],packets[4])) {
 		printf("Ack Error -Packets config\r\n");
-		/*return 1;*/}
+		return 1;}
 	Gps_Send_Utf8(filter_mode);
 	if(Get_UBX_Ack(filter_mode[3],filter_mode[4])) {
 		printf("Ack Error -Filter config\r\n");
-		/*return 1;*/}
+		return 1;}
 	Gps_Send_Utf8(update);
 	if(Get_UBX_Ack(update[3],update[4])) {
 		printf("Ack Error -Update config\r\n");
-		/*return 1;*/}
+		return 1;}
 	Gps_Send_Utf8(sbas);
 	if(Get_UBX_Ack(sbas[3],sbas[4])) {
 		printf("Ack Error -SBAS config\r\n");
-		/*return 1;*/}
+		return 1;}
 	return 0;				//Success
 }
 
