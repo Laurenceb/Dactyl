@@ -1,3 +1,5 @@
+//Dactyl project v1.0
+
 /*
  * Interrupt vector prototypes go here. Just add any you need.
  * A full list of possible vectors is in lib/CMSIS_CM3/startup/gcc/stm32f10x_*.s
@@ -11,6 +13,11 @@
 
 #include "stm32f10x.h"
 
+//Added functions
+void EXTI6_Config(void);
+void EXTI9_5_IRQHandler(void);
+
+//These have to exist
 void NMI_Handler(void);
 void HardFault_Handler(void);
 void MemManage_Handler(void);

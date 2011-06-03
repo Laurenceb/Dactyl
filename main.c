@@ -135,5 +135,6 @@ void Initialisation() {
 	}
 	INSSetMagNorth(Field);			//Configure the Earths field in the EKF
 	//quick test - remove asap
-	f_mount(0,0);
+	f_mount(0,0);				//Mount the microsd card as a FAT32 filesystem
+	EXTI6_Config();				//Configure the interrupt from gyro that runs the EKF
 }

@@ -33,7 +33,7 @@ typedef enum {					//returns I2C error/success codes
 #define GYR_STAT 0x1A
 #define MAGNO_SETUP {MAG_ADD,0x00,0x18,0x20,0x00}//configure the LSM303 magno for 75hz,high resolution, continuous conversion
 #define LEN_M 5
-#define ACCEL_SETUP {ACC_ADD,0xA0,0x2F,0x00,0x02,0x80}//configure LSM303 acc for 100hz, no highpass, int1=DTRD, +-2G with blocking
+#define ACCEL_SETUP {ACC_ADD,0xA0,0x2F,0x00,0x02,0x90}//configure LSM303 acc for 100hz, no highpass, int1=DTRD, +-4G with blocking
 #define LEN_A 6 
 #define ITG_SETUP {GYR_ADD,0x15,0x07,0x1B,0x31,0x01}//configure ITG gyro for 125hz,+-2000deg/s 42hz lowpass, int1=DTRD, DTRD enable
 #define LEN_ITG_S 6

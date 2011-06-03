@@ -7,7 +7,53 @@
 */
 
 #include "interrupts.h"
+#include "stm32f10x.h"
 
+
+/**
+  * @brief  Configure PA.06 in interrupt mode
+  * @param  None
+  * @retval None
+  * Note that this is hardcoded to the ITG-3200 pin on v1.0 dactyl board
+  * This initialiser function assumes the clocks and gpio have been configured
+  */
+void EXTI6_Config(void)
+{
+  EXTI_InitTypeDef   EXTI_InitStructure;
+  NVIC_InitTypeDef   NVIC_InitStructure;
+  /* Connect EXTI6 Line to PA.06 pin */
+  GPIO_EXTILineConfig(GPIO_PortSourceGPIOA, GPIO_PinSource6);
+
+  /* Configure EXTI6 line */
+  EXTI_InitStructure.EXTI_Line = EXTI_Line6;
+  EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
+  EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Rising;  
+  EXTI_InitStructure.EXTI_LineCmd = ENABLE;
+  EXTI_Init(&EXTI_InitStructure);
+
+  /* Enable and set EXTI6 Interrupt to the lowest priority */
+  NVIC_InitStructure.NVIC_IRQChannel = EXTI9_5_IRQn;	//Interrupt lines are grouped as they go into the NVIC controller
+  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x0F;
+  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x0F;
+  NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+  NVIC_Init(&NVIC_InitStructure);
+}
+
+/**
+  * @brief  This function handles External line 6 interrupt request.- gyro data ready ISR
+  * @param  None
+  * @retval None
+  */
+void EXTI9_5_IRQHandler(void)
+{
+  if(EXTI_GetITStatus(EXTI_Line6) != RESET)
+  {
+    /*Called Code goes here*/
+
+    /* Clear the  EXTI line 0 pending bit */
+    EXTI_ClearITPendingBit(EXTI_Line0);
+  }
+}
 
 
 /* The following interrupts should be present, though you can of course
