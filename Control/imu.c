@@ -1,5 +1,7 @@
+#include "insgps.h"
 #include "imu.h"
 #include "cal.h"
+#include "types.h"
 #include "../i2c.h"
 
 
@@ -8,8 +10,8 @@ void run_imu() {
 	static uint32_t state=0;		//State allows the I2C comms to be broken down between seperate calls
 	//Non Static
 	Vector m;
-	Float_Vector ac,ma,gy;
-	float Delta_Time=DELTA_TIME;
+	Float_Vector ac,ma,gy,gps_velocity,gps_position;
+	float Delta_Time=DELTA_TIME,Baro_Alt;
 	uint16_t SensorsUsed; 
 	//Setup the calibration arrays
 	float Acc_Cal_Dat[12]=ACC_CAL_6;
@@ -71,9 +73,12 @@ void run_imu() {
 			break;
 		case 15:
 			//Baro_Read_Pressure();
+			break;
 	}
 	if(++state==16)	state=0;
+	//Process the GPS data
 	//Run the EKF - we feed it vector pointers but it expects float arrays - alignment has to be correct
 	INSStatePrediction(&gy,&ac,Delta_Time);	//Run the EKF and incorporate the avaliable sensors
 	INSCovariancePrediction(Delta_Time);
-	INSCorrection(&ma,gps_position,gps_velocity,Baro_Alt,SensorsUsed);
+	INSCorrection(&ma,&gps_position,&gps_velocity,Baro_Alt,SensorsUsed);
+}

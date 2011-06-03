@@ -74,7 +74,7 @@ void Initialisation() {
 	// Set up the USARTs for outputting sensor information
     	Usarts_Init();
 	//Greeting
-	Usart_Send_Str((char*)"Dactyl project, for v1.0 hardware, compiled" __DATE__ " " __TIME__ "\r\n");
+	Usart_Send_Str((char*)"Dactyl project, for v1.0 hardware, compiled " __DATE__ " " __TIME__ "\r\n");
 	// Setup the I2C1
 	I2C_Config();
 	// Setup the magno

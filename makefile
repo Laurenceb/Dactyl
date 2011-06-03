@@ -11,7 +11,7 @@ STARTUP_FILE = stm32f10x_md
 #STARTUP_FILE = stm32f10x_cl
 
 # Set the external clock frequency
-HSE_VALUE = 8000000L
+HSE_VALUE = 12000000UL
 
 # Enable debug compilation
 #DEBUG = 1

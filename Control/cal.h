@@ -1,5 +1,6 @@
 //Dactyl project v1.0
-
+#include "types.h"
+#include "../i2c.h"
 //Board specific cal defines go here
 
 //Note that the magno was calibrated inside a steel frames building - field in nT seems slightly too low
@@ -11,4 +12,4 @@
 
 
 //Calibrate function
-void Calibrate_3(Float_Vector* data, Calibration* cal_)
+void Calibrate_3(Float_Vector* dataout, Vector* data, float* cal_);

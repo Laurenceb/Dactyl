@@ -2,6 +2,7 @@
 
 #include "stm32f10x.h"
 
+#pragma once
 //Datatypes, including MEMS specific types
 typedef struct {				//A 16 bit data vector & status type for mems sensors
 	int16_t x;

@@ -67,7 +67,7 @@
         - For Connectivity line devices an external 25MHz crystal is used to drive
           the System clock.
      If you are using different crystal you have to adapt those functions accordingly.
-	note this has been changed to go in the makefile, also 24mhz xtal for 72mhz
+	note this has been changed to go in the makefile, also 12mhz xtal for 72mhz
     */
     
 /*#define SYSCLK_FREQ_HSE    HSE_Value*/
@@ -75,7 +75,7 @@
 /* #define SYSCLK_FREQ_36MHz  36000000 */
 /* #define SYSCLK_FREQ_48MHz  48000000 */
 /* #define SYSCLK_FREQ_56MHz  56000000 */
-/*#define SYSCLK_FREQ_72MHz  72000000*/ 
+#define SYSCLK_FREQ_72MHz  72000000 
 
 /*!< Uncomment the following line if you need to use external SRAM mounted
      on STM3210E-EVAL board (STM32 High density devices) as data memory  */ 
@@ -881,11 +881,11 @@ static void SetSysClockTo72(void)
     RCC->CFGR &= (uint32_t)~(RCC_CFGR_PLLXTPRE | RCC_CFGR_PLLSRC | RCC_CFGR_PLLMULL);
     RCC->CFGR |= (uint32_t)(RCC_CFGR_PLLXTPRE_PREDIV1 | RCC_CFGR_PLLSRC_PREDIV1 | 
                             RCC_CFGR_PLLMULL9); 
-#else /* note changed for 24mhz external xtal */   
-    /*  PLL configuration: PLLCLK = HSE * 3 = 72 MHz */
+#else /* note changed for 12mhz external xtal */   
+    /*  PLL configuration: PLLCLK = HSE * 6 = 72 MHz */
     RCC->CFGR &= (uint32_t)((uint32_t)~(RCC_CFGR_PLLSRC | RCC_CFGR_PLLXTPRE |
                                         RCC_CFGR_PLLMULL));
-    RCC->CFGR |= (uint32_t)(RCC_CFGR_PLLSRC_HSE | RCC_CFGR_PLLMULL3);
+    RCC->CFGR |= (uint32_t)(RCC_CFGR_PLLSRC_HSE | RCC_CFGR_PLLMULL6);
 #endif /* STM32F10X_CL */
 
     /* Enable PLL */
