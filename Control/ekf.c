@@ -58,15 +58,15 @@ void LinearizeFG(float X[NUMX], float U[NUMU], float F[NUMX][NUMX],
 void MeasurementEq(float X[NUMX], float Be[3], float Y[NUMV]);
 void LinearizeH(float X[NUMX], float Be[3], float H[NUMV][NUMX]);
 
-// Private variables
+// Private variables - these should only be accessed from within ekf.c or code running within the isr/ekf thread
 float F[NUMX][NUMX], G[NUMX][NUMW], H[NUMV][NUMX];	// linearized system matrices
-													// global to init to zero and maintain zero elements
+							// global to init to zero and maintain zero elements
 float Be[3];			// local magnetic unit vector in NED frame
 float P[NUMX][NUMX], X[NUMX];	// covariance matrix and state vector
 float Q[NUMW], R[NUMV];		// input noise and measurement noise variances
 float K[NUMX][NUMV];		// feedback gain matrix
 
-extern Nav_Type Nav;
+Nav_Type Nav;
 
 //  *************  Exposed Functions ****************
 //  *************************************************

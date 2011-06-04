@@ -26,7 +26,9 @@
 //globals go here - this is the only place in the project where globals are declared
 Buffer_Type Gps_Buffer;	//gps data buffer
 volatile Ubx_Gps_Type Gps;
-Nav_Type Nav;		//ekf state
+volatile Nav_Type Nav_Global;	//ekf state
+volatile uint32_t Nav_Flag;//used to control and lock global nav state access
+
 
 int main(void) {
 	Vector mag;

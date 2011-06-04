@@ -58,12 +58,12 @@ I2C_Returntype I2C_Conf(uint8_t* Confstr,uint8_t Bytes) {			//Sets up an i2c dev
 I2C_Returntype I2C_Read(uint8_t* Data_Pointer,uint8_t Bytes, uint8_t Addr, uint8_t Sub_Addr) {//Reads from an i2c device
 	uint8_t n;								//0xFF as the Sub_Addr disables sub address
 	uint16_t Time=0;
-	I2C_GenerateSTART( I2C1, ENABLE );
-	while(!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_MODE_SELECT)) {
-		Time++;
-		if(Time>I2C_TIMEOUT) return I2C_START_TIMEOUT;
-	}
 	if(Sub_Addr!=0xFF) {							//0xFF disables this - so we wont setup addr pointer
+		I2C_GenerateSTART( I2C1, ENABLE );
+		while(!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_MODE_SELECT)) {
+			Time++;
+			if(Time>I2C_TIMEOUT) return I2C_START_TIMEOUT;
+		}
 		Time=0;
 		I2C_Send7bitAddress( I2C1, Addr, I2C_Direction_Transmitter );	//Address write
 		while(!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED)) {
@@ -80,7 +80,7 @@ I2C_Returntype I2C_Read(uint8_t* Data_Pointer,uint8_t Bytes, uint8_t Addr, uint8
 		//while(I2C_GetFlagStatus(I2C1,I2C_FLAG_BUSY)==SET);		//Wait for bus to go inactive
 	}
 	Time=0;
-	I2C_GenerateSTART( I2C1, ENABLE );					//Repeated start
+	I2C_GenerateSTART( I2C1, ENABLE );					//Repeated start or the first start
 	while(!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_MODE_SELECT)) {
 		Time++;
 		if(Time>I2C_TIMEOUT) return I2C_RSTART_TIMEOUT;			//note that if we disable sub addr, then a start error
