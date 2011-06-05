@@ -35,6 +35,7 @@
 #include "stm32f10x.h"
 #include "ffconf.h"
 #include "diskio.h"
+#include "../../gpio.h"
 
 // demo uses a command line option to define this (see Makefile):
 // #define STM32_SD_USE_DMA
@@ -49,33 +50,33 @@
 #define STM32_SD_DISK_IOCTRL_FORCE      0
 
 // demo uses a command line option to define this (see Makefile):
-#define USE_EK_STM32F //TODO - port to our hardware
+#define USE_EK_STM32F //this is ported to our hardware - Dactyl 1.0 pcb
 //#define USE_STM32_P103
 //#define USE_MINI_STM32
 
 #if defined(USE_EK_STM32F)
- #define CARD_SUPPLY_SWITCHABLE   1
+ #define CARD_SUPPLY_SWITCHABLE   0		/*we dont have switchable */
  #define GPIO_PWR                 GPIOD
  #define RCC_APB2Periph_GPIO_PWR  RCC_APB2Periph_GPIOD
  #define GPIO_Pin_PWR             GPIO_Pin_10
  #define GPIO_Mode_PWR            GPIO_Mode_Out_OD /* pull-up resistor at power FET */
- #define SOCKET_WP_CONNECTED      0
+ #define SOCKET_WP_CONNECTED      0		/*These are defined as 0 as they arent supported on Dactyl 1.0 pcb*/
  #define SOCKET_CP_CONNECTED      0
- #define SPI_SD                   SPI1
- #define GPIO_CS                  GPIOD
- #define RCC_APB2Periph_GPIO_CS   RCC_APB2Periph_GPIOD
- #define GPIO_Pin_CS              GPIO_Pin_9
- #define DMA_Channel_SPI_SD_RX    DMA1_Channel2
- #define DMA_Channel_SPI_SD_TX    DMA1_Channel3
- #define DMA_FLAG_SPI_SD_TC_RX    DMA1_FLAG_TC2
- #define DMA_FLAG_SPI_SD_TC_TX    DMA1_FLAG_TC3
- #define GPIO_SPI_SD              GPIOA
- #define GPIO_Pin_SPI_SD_SCK      GPIO_Pin_5
- #define GPIO_Pin_SPI_SD_MISO     GPIO_Pin_6
- #define GPIO_Pin_SPI_SD_MOSI     GPIO_Pin_7
- #define RCC_APBPeriphClockCmd_SPI_SD  RCC_APB2PeriphClockCmd
- #define RCC_APBPeriph_SPI_SD     RCC_APB2Periph_SPI1
- /* - for SPI1 and full-speed APB2: 72MHz/4 */
+ #define SPI_SD                   SPI2
+ #define GPIO_CS                  GPIOB
+ #define RCC_APB2Periph_GPIO_CS   RCC_APB2Periph_GPIOA
+ #define GPIO_Pin_CS              SD_SEL_PIN
+ #define DMA_Channel_SPI_SD_RX    DMA1_Channel4
+ #define DMA_Channel_SPI_SD_TX    DMA1_Channel5
+ #define DMA_FLAG_SPI_SD_TC_RX    DMA1_FLAG_TC4
+ #define DMA_FLAG_SPI_SD_TC_TX    DMA1_FLAG_TC5
+ #define GPIO_SPI_SD              GPIOB
+ #define GPIO_Pin_SPI_SD_SCK      GPIO_Pin_13
+ #define GPIO_Pin_SPI_SD_MISO     GPIO_Pin_14
+ #define GPIO_Pin_SPI_SD_MOSI     GPIO_Pin_15
+ #define RCC_APBPeriphClockCmd_SPI_SD  RCC_APB1PeriphClockCmd
+ #define RCC_APBPeriph_SPI_SD     RCC_APB1Periph_SPI2
+ /* - for SPI1 and full-speed APB1: 72MHz/(2*4)=9mhz */
  #define SPI_BaudRatePrescaler_SPI_SD  SPI_BaudRatePrescaler_4
 
 #elif defined(USE_STM32_P103)

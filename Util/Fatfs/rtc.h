@@ -16,7 +16,7 @@ typedef struct {
 } RTC_t;
 
 int rtc_init(void);
-bool rtc_gettime (RTC_t*);				/* Get time */
+bool rtc_gettime (RTC_t*);			/* Get time */
 bool rtc_settime (const RTC_t*);		/* Set time */
 
 #endif
