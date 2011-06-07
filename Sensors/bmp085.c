@@ -80,7 +80,7 @@ I2C_Returntype bmp085ReadShort(uint8_t address,uint16_t* data)
   * @retval I2C Success/error code
   */
 I2C_Returntype Baro_Read_ADC(int32_t* data) {
-	return bmp085ReadShort(0xF6,(uint16_t*)data);
+	return bmp085ReadShort(BMP085_ADC,(uint16_t*)data);
 }
 
 /**
@@ -91,7 +91,7 @@ I2C_Returntype Baro_Read_ADC(int32_t* data) {
 I2C_Returntype Baro_Read_Full_ADC(int32_t* data) {
 	I2C_Returntype t;
 	uint8_t b[3];
-	t=I2C_Read((uint8_t*)&b,3, BMP085_W, 0xF6);
+	t=I2C_Read((uint8_t*)&b,3, BMP085_W, BMP085_ADC);
 	*data=((((uint32_t)b[0] <<16) | ((uint32_t)b[1] <<8) | ((uint32_t)b[2])) >> (8-OSS));//The BMP085 sensor is big endian
 	return t;
 }
@@ -102,7 +102,7 @@ I2C_Returntype Baro_Read_Full_ADC(int32_t* data) {
   * @retval I2C Success/error code
   */
 I2C_Returntype Baro_Setup_Pressure(void) {
-	uint8_t bytes[]={BMP085_W,0xF4,0xF4};
+	uint8_t bytes[]={BMP085_W,BMP085_CTRL,BMP085_PRES};
 	return I2C_Conf(bytes,3);
 }
 
@@ -112,7 +112,7 @@ I2C_Returntype Baro_Setup_Pressure(void) {
   * @retval I2C Success/error code
   */
 I2C_Returntype Baro_Setup_Temperature(void) {
-	uint8_t bytes[]={BMP085_W,0xF4,0x2E};
+	uint8_t bytes[]={BMP085_W,BMP085_CTRL,BMP085_TEMP};
 	return I2C_Conf(bytes,3);
 }
 

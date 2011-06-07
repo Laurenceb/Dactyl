@@ -17,12 +17,26 @@ typedef struct{			//Structure for holding calibration data from onboard EEPROM
 }	Bmp_Cal_Type;
 
 extern Bmp_Cal_Type Our_Sensorcal;//Global cal for our sensor
-extern int32_t Bmp_temp;	//this is in intiger units of 0.1C
+extern int32_t Bmp_temp;	//This is in integer units of 0.1C
 extern float Sea_Level_Pressure;
 
-				//maximum oversampling
+				//Maximum oversampling
 #define OSS 3
 #define BMP085_W 0xEE
+#define BMP085_ADC 0xF6
+#define BMP085_CTRL 0xF4
+#define BMP085_TEMP 0x2E
+#if OSS==3
+	#define BMP085_PRES 0xF4
+#elif OSS==2
+	#define BMP085_PRES 0xB4
+#elif OSS==1
+	#define BMP085_PRES 0x74
+#elif OSS==0
+	#define BMP085_PRES 0x34
+#else
+	#error Invalid BMP085 oversampling!
+#endif
 
 #define Bmp_Setconfig() Bmp085_ReadConfig(&Our_Sensorcal)
 #define Bmp_Gettemp() Baro_Read_ADC(&Bmp_temp)
