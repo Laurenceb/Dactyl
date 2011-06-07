@@ -1,6 +1,6 @@
 /*Dactyl project -*/
 #include <stdlib.h>
-
+#include <math.h>
 // Load CMSIS and peripheral library and configuration
 #include "stm32f10x.h"
 //main header - contains config stuff
@@ -10,6 +10,7 @@
 #include "i2c.h"
 #include "dma.h"
 #include "gpio.h"
+#include "interrupts.h"
 //Include for printf if wanted
 #ifdef USE_LIBC_PRINTF
 	#include <stdio.h>
@@ -72,7 +73,8 @@ void Initialisation() {
 	float Field[3],mean_pressure=0;
 	Vector mag;
 	uint8_t err=0;
-	uint32_t raw_pressure,device_temperature;
+	uint32_t raw_pressure;
+	int32_t device_temperature;
 	// Setup STM32 system (clock, PLL and Flash configuration)
 	SystemInit();
 	// Setup the GPIOs
@@ -127,7 +129,7 @@ void Initialisation() {
 		Delay(0x4FFFF);
 		Baro_Read_Full_ADC(&raw_pressure);		//grab from baro adc
 		Bmp_Simp_Conv(&device_temperature,&raw_pressure);//convert to pressure - calibrated temperature output
-		printf("Baro pressure is %f Pascals, temperature is %f C\r\n",mean_pressure,(float)device_temperature/10.0);//For debug
+		printf("Baro pressure is %ld Pascals, temperature is %ld C\r\n",raw_pressure,device_temperature/10);//Debug
 	}
 	else
 		printf("Baro error: %d\r\n",err);

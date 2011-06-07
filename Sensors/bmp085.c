@@ -27,7 +27,7 @@ void Bmp085_Convert(int32_t* temperature_out, int32_t* temperature, int32_t* pre
 	x1 = (cal->b2 * (b6 * b6 >> 12)) >> 11;			//The termperature raw reading
 	x2 = cal->ac2 * b6 >> 11;
 	x3 = x1 + x2;
-	b3 = ((((int32_t)cal->ac1 << 2) + x3) << OSS + 2)>>2;
+	b3 = (((((int32_t)cal->ac1 << 2) + x3) << OSS) + 2)>>2;
 	x1 = cal->ac3 * b6 >> 13;
 	x2 = (cal->b1 * (b6 * b6 >> 12)) >> 16;
 	x3 = ((x1 + x2) + 2) >> 2;
@@ -47,7 +47,7 @@ void Bmp085_Convert(int32_t* temperature_out, int32_t* temperature, int32_t* pre
   */
 I2C_Returntype Bmp085_ReadConfig(Bmp_Cal_Type* cal)
 {
-	I2C_Returntype t= bmp085ReadShort(0xAA,&(cal->ac1));
+	I2C_Returntype t= bmp085ReadShort(0xAA,(uint16_t*)&(cal->ac1));
 	t |= bmp085ReadShort(0xAC,&(cal->ac2));
 	t |= bmp085ReadShort(0xAE,&(cal->ac3));
 	t |= bmp085ReadShort(0xB0,&(cal->ac4));
@@ -80,7 +80,7 @@ I2C_Returntype bmp085ReadShort(uint8_t address,uint16_t* data)
   * @retval I2C Success/error code
   */
 I2C_Returntype Baro_Read_ADC(int32_t* data) {
-	return bmp085ReadShort(0xF6,data);
+	return bmp085ReadShort(0xF6,(uint16_t*)data);
 }
 
 /**
@@ -103,7 +103,7 @@ I2C_Returntype Baro_Read_Full_ADC(int32_t* data) {
   */
 I2C_Returntype Baro_Setup_Pressure(void) {
 	uint8_t bytes[]={BMP085_W,0xF4,0xF4};
-	return I2C_Conf(&bytes,3);
+	return I2C_Conf(bytes,3);
 }
 
 /**
@@ -112,8 +112,8 @@ I2C_Returntype Baro_Setup_Pressure(void) {
   * @retval I2C Success/error code
   */
 I2C_Returntype Baro_Setup_Temperature(void) {
-	uint8_t bytes[]={BMP085_W,0xF4,0x24};
-	return I2C_Conf(&bytes,3);
+	uint8_t bytes[]={BMP085_W,0xF4,0x2E};
+	return I2C_Conf(bytes,3);
 }
 
 /**

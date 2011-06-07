@@ -56,7 +56,7 @@ I2C_Returntype I2C_Conf(uint8_t* Confstr,uint8_t Bytes) {			//Sets up an i2c dev
   * @retval I2C success/error code
   */
 I2C_Returntype I2C_Read(uint8_t* Data_Pointer,uint8_t Bytes, uint8_t Addr, uint8_t Sub_Addr) {//Reads from an i2c device
-	int8_t n;								//0xFF as the Sub_Addr disables sub address
+	int8_t n=0;								//0xFF as the Sub_Addr disables sub address
 	uint16_t Time=0;
 	if(Sub_Addr!=0xFF) {							//0xFF disables this - so we wont setup addr pointer
 		I2C_GenerateSTART( I2C1, ENABLE );
@@ -97,7 +97,7 @@ I2C_Returntype I2C_Read(uint8_t* Data_Pointer,uint8_t Bytes, uint8_t Addr, uint8
 			Time++;
 			if(Time>I2C_TIMEOUT) return I2C_RX_TIMEOUT;
 		}
-		for(n=0;n<((int8_t)Bytes-3);n++) {
+		for(;n<((int8_t)Bytes-3);n++) {
 			Time=0;
 			Data_Pointer[n]=I2C_ReceiveData(I2C1);
 			while(!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_RECEIVED)) {
@@ -127,6 +127,7 @@ I2C_Returntype I2C_Read(uint8_t* Data_Pointer,uint8_t Bytes, uint8_t Addr, uint8
 			Time++;
 			if(Time>I2C_TIMEOUT) return I2C_RX_TIMEOUT;
 		}
+		I2C_GenerateSTOP( I2C1, ENABLE );				//Enable the STOP here
 		Data_Pointer[n++]=I2C_ReceiveData(I2C1);			//First byte to lowest location
 	}
 	Data_Pointer[n]=I2C_ReceiveData(I2C1);					//Clear the buffer (last byte is in it)

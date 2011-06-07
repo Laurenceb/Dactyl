@@ -4,6 +4,7 @@
 #include "types.h"
 #include "../i2c.h"
 #include "../dma.h"
+#include "../gpio.h"
 #include "../Sensors/ubx.h"
 
 //Globals from main
