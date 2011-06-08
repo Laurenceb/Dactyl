@@ -18,6 +18,7 @@
 //Helper function headers
 #include "Sensors/ubx.h"
 #include "Sensors/bmp085.h"
+#include "Sensors/pitot.h"
 #include "Sensors/WorldMagModel.h"
 //Control headers
 #include "Control/imu.h"
@@ -133,6 +134,17 @@ void Initialisation() {
 	}
 	else
 		printf("Baro error: %d\r\n",err);
+	//Setup and test the pitot tube sensor
+	Delay(0x30FFFF);				//At least 100ms delay for the pitot to enter sleep mode
+	if(!(err=Pitot_Set_Press_Conv())){
+		//Say something
+		Usart_Send_Str((char*)"Setup Pitot\r\n");//Now do a quick test of the pitot		
+		Delay(0x30FFFF);			//At least 100ms delay
+		Pito_Read_Conv((uint32_t*)&raw_pressure);
+		printf("Pitot ADC reads %ld\r\n",Pitot_Conv((uint32_t)raw_pressure));//Debug
+	}
+	else
+		printf("Pitot error: %d\r\n",err);
 	if(!Config_Gps()) Usart_Send_Str((char*)"Setup GPS ok - awaiting fix\r\n");//If not the function printfs its error
 	while(Gps.status!=UBLOX_3D) {		//Wait for a 3D fix
 		while(Bytes_In_Buffer(&Gps_Buffer))//Dump all the data
