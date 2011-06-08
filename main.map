@@ -139,9 +139,9 @@ Discarded input sections
  .bss           0x00000000        0x0 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/thumb2/crti.o
  .data          0x00000000        0x4 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/thumb2/crtbegin.o
  .data          0x00000000        0x0 Control/ekf.o
- .text          0x00000000      0x220 Control/imu.o
+ .text          0x00000000      0x258 Control/imu.o
  .data          0x00000000        0x0 Control/imu.o
- .bss           0x00000000       0x70 Control/imu.o
+ .bss           0x00000000       0x74 Control/imu.o
  .rodata        0x00000000       0x30 Control/imu.o
  .text          0x00000000       0xd0 Control/sensorcal.o
  .data          0x00000000        0x0 Control/sensorcal.o
@@ -446,7 +446,7 @@ END GROUP
                 0x0800a350                WMM_GetMagVector
  .text          0x0800a4e8       0x70 Sensors/pitot.o
                 0x0800a4e8                Pitot_Conv
-                0x0800a4fe                Pito_Read_Conv
+                0x0800a4fe                Pitot_Read_Conv
                 0x0800a526                Pitot_Set_Temp_Conv
                 0x0800a540                Pitot_Set_Press_Conv
  .text          0x0800a558      0x31c Sensors/ubx.o
@@ -1540,14 +1540,19 @@ BKP_TamperPinLevelConfig                          lib/STM32F10x_StdPeriph_Driver
 BKP_WriteBackupRegister                           lib/STM32F10x_StdPeriph_Driver/libstm32fw.a(stm32f10x_bkp.o)
                                                   Util/Fatfs/rtc.o
 Baro_Convert_Pressure                             Sensors/bmp085.o
+Baro_Gettemp                                      Control/imu.o
 Baro_Read_ADC                                     Sensors/bmp085.o
                                                   main.o
 Baro_Read_Full_ADC                                Sensors/bmp085.o
                                                   main.o
+                                                  Control/imu.o
 Baro_Setup_Pressure                               Sensors/bmp085.o
                                                   main.o
+                                                  Control/imu.o
 Baro_Setup_Temperature                            Sensors/bmp085.o
                                                   main.o
+                                                  Control/imu.o
+Baro_Simple_Conv                                  Control/imu.o
 Be                                                Control/ekf.o
 Bmp085_Convert                                    Sensors/bmp085.o
                                                   main.o
@@ -1710,6 +1715,7 @@ Gyr_Read                                          i2c.o
                                                   main.o
                                                   Control/imu.o
 Gyr_Stat                                          i2c.o
+                                                  Control/imu.o
 H                                                 Control/ekf.o
 HardFaultException                                lib/libcs3-lanchon-stm32.a(lanchon_stm32_isr_interrupt.o)
                                                   lib/libcs3-lanchon-stm32.a(lanchon-stm32-vector.o)
@@ -1849,10 +1855,12 @@ PWR_WakeUpPinCmd                                  lib/STM32F10x_StdPeriph_Driver
 PendSVC                                           lib/libcs3-lanchon-stm32.a(lanchon_stm32_isr_interrupt.o)
                                                   lib/libcs3-lanchon-stm32.a(lanchon-stm32-vector.o)
 PendSV_Handler                                    interrupts.o
-Pito_Read_Conv                                    Sensors/pitot.o
-                                                  main.o
 Pitot_Conv                                        Sensors/pitot.o
                                                   main.o
+                                                  Control/imu.o
+Pitot_Read_Conv                                   Sensors/pitot.o
+                                                  main.o
+                                                  Control/imu.o
 Pitot_Set_Press_Conv                              Sensors/pitot.o
                                                   main.o
 Pitot_Set_Temp_Conv                               Sensors/pitot.o

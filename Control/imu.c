@@ -6,6 +6,8 @@
 #include "../dma.h"
 #include "../gpio.h"
 #include "../Sensors/ubx.h"
+#include "../Sensors/bmp085.h"
+#include "../Sensors/pitot.h"
 
 //Globals from main
 extern Buffer_Type Gps_Buffer;
@@ -20,6 +22,7 @@ void run_imu() {
 	static uint32_t state=0,p_count=0,b_count=0;//State allows the I2C comms to be broken down between seperate calls
 	static Ubx_Gps_Type gps;		//This is our local copy - theres is also a global, be careful with copying
 	static Nav_Type Nav;
+	static Gyr_Status Gyro_Data;
 	//Non Static
 	Vector m;
 	Float_Vector ac,ma,gy,gps_velocity,gps_position,target_vector,waypoint;
@@ -27,6 +30,7 @@ void run_imu() {
 	uint16_t SensorsUsed=0;			//We by default have no sensors
 	uint32_t Baro_Pressure;
 	int32_t Baro_Temperature; 
+	int32_t Pitot_Pressure;
 	//Setup the calibration arrays
 	float Acc_Cal_Dat[12]=ACC_CAL_6;
 	float Mag_Cal_Dat[12]=MAG_CAL_6;
@@ -46,23 +50,23 @@ void run_imu() {
 		switch(state){//this runs at 55 Hz
 			case 0:			//Read and Setup a pressure conversion - at 22.5Hz
 				if(b_count++) {	//If the counter is not 0
-					//Baro_Read_Pressure();	//TODO write all bmp085 driver code
-					//Baro_Convert_Pressure();//Convert to an altitude
+					Baro_Read_Full_ADC(&Baro_Pressure);//bmp085 driver - read full ADC
+					Baro_Simple_Conv(&Baro_Temperature,&Baro_Temperature);//Convert to a pressure in Pa
 					SensorsUsed|=BARO_SENSOR;//we have used the baro sensor
 				}
-				else //Baro_Read_Temperature();	//Tempterature data will be ready
-				//Next we setup the new conversion
-				if(b_count==10) {
+				else Baro_Gettemp();//Temperature data will be ready
+				if(b_count==10) {//Next we setup the new conversion
 					b_count=0;
-					//Baro_Setup_Temperature();//Set this up so we read temp every ten iterations
+					Baro_Setup_Temperature();//Set this up so we read temp every ten iterations
 				}
-				else //Baro_Setup_Pressure();
+				else Baro_Setup_Pressure();
 				break;
 			case 1:			//Read the gyro temperature (presently used for pitot cal)
-				//Gyr_Stat();	//Also read the pitot output every 4 iterations (13.75Hz)
+				Gyr_Stat(&Gyro_Data);//Also read the pitot output every 4 iterations (13.75Hz)
 				if(p_count++==1) {
-					//Pitot_Read_Pressure();//Read the pitot
-					//Pitot_convert_Airspeed();//Convert to the airspeed - we then use this to estimate windspeed
+					Pitot_Read_Conv((uint32_t*)&Pitot_Pressure);;//Read the pitot - we dont need to setup a conversion
+					Pitot_Pressure=Pitot_Conv((uint32_t)Pitot_Pressure);//Align and sign the adc value - 1lsb=~0.24Pa
+					//Pitot_convert_Airspeed();//TODO Convert to the airspeed - we then use this to estimate windspeed
 					p_count=0;
 				}
 				break;

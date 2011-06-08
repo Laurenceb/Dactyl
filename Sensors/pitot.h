@@ -10,5 +10,5 @@
 //function prototypes
 I2C_Returntype Pitot_Set_Press_Conv(void);
 I2C_Returntype Pitot_Set_Temp_Conv(void);
-I2C_Returntype Pito_Read_Conv(uint32_t* adc);
+I2C_Returntype Pitot_Read_Conv(uint32_t* adc);
 int32_t Pitot_Conv(uint32_t d);

@@ -140,7 +140,7 @@ void Initialisation() {
 		//Say something
 		Usart_Send_Str((char*)"Setup Pitot\r\n");//Now do a quick test of the pitot		
 		Delay(0x30FFFF);			//At least 100ms delay
-		Pito_Read_Conv((uint32_t*)&raw_pressure);
+		Pitot_Read_Conv((uint32_t*)&raw_pressure);
 		printf("Pitot ADC reads %ld\r\n",Pitot_Conv((uint32_t)raw_pressure));//Debug
 	}
 	else
