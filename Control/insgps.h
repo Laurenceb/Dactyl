@@ -82,7 +82,7 @@ typedef struct NavStruct {
 	float Vel[3];		// Velocity in meters and in NED
 	float q[4];		// unit quaternion rotation relative to NED
 	float gyro_bias[3];
-	float accel_bias[3];
+	//float accel_bias[3];
 } Nav_Type;
 /**
  * @}

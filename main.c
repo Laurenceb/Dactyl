@@ -44,30 +44,13 @@ int main(void) {
 	Vector mag;
 	rprintfInit(__usart_send_char);//inititalise reduced printf functionality
 	Initialisation();//initialise all hardware
-	for(;;) {/* THIS IS JUST SOME PLACEHOLDER TEST STUFF
-		// Turn on PA8, turn off PA11 - servo outout pins 1 and 2
-		GPIO_SetBits(GPIOA, GPIO_Pin_8);
-		GPIO_ResetBits(GPIOA, GPIO_Pin_11);*/
-		//Delay(0x0FFFF);
-		Acc_Read(&mag);
-		//while(bytes_in_buffer(&gps_buffer))
-		//	putc((uint8_t)(Pop_From_Buffer(&gps_buffer)),stdout);
-		while(Gps.packetflag!=REQUIRED_DATA){		//wait for all fix data
-			while(Bytes_In_Buffer(&Gps_Buffer))	//dump all the data
-				Gps_Process_Byte((uint8_t)(Pop_From_Buffer(&Gps_Buffer)),&Gps);}
-		printf("%ld,%ld,%ld,%ld,%ld,%ld,%1x,%1x,",Gps.latitude,Gps.longitude,Gps.altitude,Gps.vnorth,Gps.veast,Gps.vdown,Gps.status,Gps.nosats);
-		Gps.packetflag=0;	//We now have to reaquire the data
-		printf("%d,%d,%d,",mag.x,mag.y,mag.z);
-		//Delay(0x0FFFF);
-		Gyr_Read(&mag);
-		printf("%d,%d,%d,",mag.x,mag.y,mag.z);
-		// Turn off PA8, turn on PA11
-		GPIO_SetBits(GPIOA, GPIO_Pin_11);
-		GPIO_ResetBits(GPIOA, GPIO_Pin_8);
-		//Delay(0x0FFFF);
-		Mag_Read(&mag);
-		printf("%d,%d,%d\r\n",mag.x,mag.y,mag.z);
-    }
+	for(;;) {/* THIS IS JUST SOME PLACEHOLDER TEST STUFF */
+		if(Nav_Flag){	//wait for some EKF data to be ready
+		printf("%4f,%4f,%4f,%4f,%4f,%4f,%4f,%4f,%4f,%4f\r\n",Nav_Global.Pos[0],Nav_Global.Pos[1],Nav_Global.Pos[2],\
+		Nav_Global.Vel[0],Nav_Global.Vel[1],Nav_Global.Vel[2],Nav_Global.q[0],Nav_Global.q[1],Nav_Global.q[2],Nav_Global.q[3]);
+		Nav_Flag=0;	//We now have to reaquire the nav data
+		}
+	}
 }
 
 void Initialisation() {

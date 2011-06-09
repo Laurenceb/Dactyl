@@ -51,7 +51,9 @@ void run_imu() {
 			case 0:			//Read and Setup a pressure conversion - at 22.5Hz
 				if(b_count++) {	//If the counter is not 0
 					Baro_Read_Full_ADC(&Baro_Pressure);//bmp085 driver - read full ADC
-					Baro_Simple_Conv(&Baro_Temperature,&Baro_Temperature);//Convert to a pressure in Pa
+					Baro_Simple_Conv(&Baro_Temperature,&Baro_Pressure);//Convert to a pressure in Pa
+					//TODO add a kalman filter to estimate sea level pressure
+					Baro_Alt=Baro_Convert_Pressure(Baro_Pressure);//Convert to an altitude
 					SensorsUsed|=BARO_SENSOR;//we have used the baro sensor
 				}
 				else Baro_Gettemp();//Temperature data will be ready
