@@ -156,7 +156,7 @@ void rprintfu32(unsigned long data) {
 void rprintfNum(char base, char numDigits, char isSigned, char padchar, long n) {
 	// define a global HexChars or use line below
 	//static char HexChars[16] = "0123456789ABCDEF";
-	char *p, buf[32];
+	char *p, buf_[32];
 	unsigned long x;
 	unsigned char count;
 
@@ -167,7 +167,7 @@ void rprintfNum(char base, char numDigits, char isSigned, char padchar, long n) 
 	 	x = n;
 	// setup little string buffer
 	count = (numDigits-1)-(isSigned?1:0);
-  	p = buf + sizeof (buf);
+  	p = buf_ + sizeof (buf_);
   	*--p = '\0';
 	// force calculation of first digit
 	// (to prevent zero from not printing at all!!!)
@@ -196,42 +196,32 @@ void rprintfNum(char base, char numDigits, char isSigned, char padchar, long n) 
 // *** rprintfFloat ***
 // floating-point print
 void rprintfFloat(char numDigits, float x) {
-	unsigned char firstplace = FALSE;
-	unsigned char negative;
-	unsigned char i, digit;
-	float place = 1.0;
-	// save sign
-	negative = (x<0);
-	// convert to absolute value
-	x = (x>0)?(x):(-x);
-	// find starting digit place
-	for(i=0; i<15; i++) {
-		if((x/place) < 10.0)
-			break;
-		else
-			place *= 10.0;
-	}
-	// print polarity character
-	if(negative)
-		rprintfChar('-');
-	// print digits
-	for(i=0; i<numDigits; i++) {
-		digit = (x/place);
-		if(digit | firstplace | (place == 1.0))
-		{
-			firstplace = TRUE;
-			rprintfChar(digit+0x30);
-		}
-		else
-			rprintfChar(' ');
-		
-		if(place == 1.0)
-		{
-			rprintfChar('.');
-		}
-		x -= (digit*place);
-		place /= 10.0;
-	}
+        unsigned char sig = TRUE;
+        unsigned char i, digit;
+        float place = 1.0;
+        // print polarity character
+        if(x<0)
+                rprintfChar('-');
+        // convert to absolute value
+        x = (x>0)?(x):(-x);
+        // find starting digit place
+        for(i=0; i<15; i++) {
+                if((x/place) < 10.0)
+                        break;
+                else
+                        place *= 10.0;
+        }
+        // print digits
+        for(i=0; i<numDigits || sig; i++) {
+                digit = (unsigned char)(x/place);
+                rprintfChar(digit+0x30);
+                if(place == 1.0){
+                        if(i<numDigits)rprintfChar('.');
+                        sig=FALSE;
+                }
+                x -= (digit*place);
+                place /= 10.0;
+        }
 }
 #endif
 

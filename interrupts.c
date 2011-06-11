@@ -8,7 +8,7 @@
 
 #include "interrupts.h"
 #include "stm32f10x.h"
-
+#include "Control/imu.h"
 
 /**
   * @brief  Configure PA.06 in interrupt mode
@@ -49,9 +49,9 @@ void EXTI9_5_IRQHandler(void)
   if(EXTI_GetITStatus(EXTI_Line6) != RESET)
   {
     /*Called Code goes here*/
-
-    /* Clear the  EXTI line 0 pending bit */
-    EXTI_ClearITPendingBit(EXTI_Line0);
+    run_imu();
+    /* Clear the  EXTI line 9 pending bit */
+    EXTI_ClearITPendingBit(EXTI_Line9);
   }
 }
 

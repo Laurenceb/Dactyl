@@ -85,7 +85,7 @@ void Gps_Process_Byte(uint8_t c,Ubx_Gps_Type* gps)//The raw USART data is fed in
 							gps->nosats=c;
 							break;
 						case WEEK_POS:
-							gps->week|=c<<8;//the msb
+							gps->week|=((uint32_t)c)<<8;//the msb
 							break;
 						case WEEK_POS+1:
 							gps->week=c;

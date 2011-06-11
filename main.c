@@ -148,15 +148,11 @@ void Initialisation() {
 	Gps.vnorth,Gps.veast,Gps.vdown,Gps.status,Gps.nosats);
 	//Init the ekf, must do this before the mag model
 	INSGPSInit();
-	//Now we initialise the magnetic model
-	if(WMM_Initialize())			//Initialise the world magnetic model
-		Usart_Send_Str((char*)"Mag model init error\r\n");
-	else {
-		if(WMM_GetMagVector((float)Gps.latitude*1e-7,(float)Gps.longitude*1e-7,(float)Gps.altitude*1e-3,Gps.week,Field))
-			Usart_Send_Str((char*)"Mag model run error\r\n");
-		else
-			printf("Mag model completed, B(nT NED frame)=%1f,%1f,%1f\r\n",Field[0],Field[1],Field[2]);
-	}
+	//Now we initialise the magnetic model - init function is called from the get vector function
+	if(err|=WMM_GetMagVector((float)Gps.latitude*1e-7,(float)Gps.longitude*1e-7,(float)Gps.altitude*1e-3,Gps.week,Field))
+		printf("Mag model run error %d\r\n",err);
+	else
+		printf("Mag model completed, B(nT NED frame)=%1f,%1f,%1f\r\n",Field[0],Field[1],Field[2]);
 	INSSetMagNorth(Field);			//Configure the Earths field in the EKF
 	//Record the bmp085 temperature
 	Baro_Setup_Temperature();
@@ -191,6 +187,7 @@ void Initialisation() {
 	Sea_Level_Pressure=mean_pressure*pow((1-2.255808e-5*Home_Position.z),-5.255);//convert to sea level pressure -bmp085 datasheet
 	printf("Sea level pressure is %f\r\n",Sea_Level_Pressure);
 	//quick test - remove asap
-	f_mount(0,0);				//Mount the microsd card as a FAT32 filesystem
+	//f_mount(0,0);				//Mount the microsd card as a FAT32 filesystem
 	EXTI6_Config();				//Configure the interrupt from gyro that runs the EKF
+	Gyr_Read(&mag);				//Kick start the ISR by reading the gyro to set data ready to low 
 }

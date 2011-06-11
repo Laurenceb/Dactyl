@@ -51,12 +51,12 @@ void run_imu() {
 			case 0:			//Read and Setup a pressure conversion - at 22.5Hz
 				if(b_count++) {	//If the counter is not 0
 					Baro_Read_Full_ADC(&Baro_Pressure);//bmp085 driver - read full ADC
-					Baro_Simple_Conv(&Baro_Temperature,&Baro_Pressure);//Convert to a pressure in Pa
+					Bmp_Simp_Conv(&Baro_Temperature,&Baro_Pressure);//Convert to a pressure in Pa
 					//TODO add a kalman filter to estimate sea level pressure
 					Baro_Alt=Baro_Convert_Pressure(Baro_Pressure);//Convert to an altitude
 					SensorsUsed|=BARO_SENSOR;//we have used the baro sensor
 				}
-				else Baro_Gettemp();//Temperature data will be ready
+				else Bmp_Gettemp();//Temperature data will be ready
 				if(b_count==10) {//Next we setup the new conversion
 					b_count=0;
 					Baro_Setup_Temperature();//Set this up so we read temp every ten iterations
@@ -98,5 +98,22 @@ void run_imu() {
 	target_vector.x=waypoint.x-Nav.Pos[0];			//A float vector to the waypoint in NED space
 	target_vector.y=waypoint.y-Nav.Pos[1];
 	target_vector.z=waypoint.z-Nav.Pos[2];
-	
+	//Move the body x,y axes into earth NED frame using Reb, looking at z=down components of body x and y
+	x_down=2 * (Nav.q[1] * Nav.q[3] - Nav.q[0] * Nav.q[2]);
+	y_down=2 * (Nav.q[2] * Nav.q[3] + Nav.q[0] * Nav.q[1]);
+	//Work out the heading offset - z component of target vector cross body x axis
+	h_offset=(Nav.q[0] * Nav.q[0] + Nav.q[1] * Nav.q[1] - Nav.q[2] * Nav.q[2] - Nav.q[3] * Nav.q[3]) * target_vector.y\
+	 - 2 * (Nav.q[1] * Nav.q[2] + Nav.q[0] * Nav.q[3]) * target_vector.x;
+	//Run the control loops if we arent controlled from the ground
+	if(!Ground_Flag) {
+		Run_PID(&(control.pitch_setpoint),control.airframe.airspeed-Airspeed,0);//Pitch setpoint control pid (actually a PI)
+		Run_PID(&(control.roll_setpoint),h_offset,0);		//Roll setpoint set by heading error
+		Run_PID(&(control.throttle),target_vector.z,Nav.v[2]);	//Throttle set according to altitude error
+		Run_PID(&(control.evevator),control.pitch_setpoint.out+x_down,gy.y-Nav.gyro_bias[1]);//Elevator, remember x_down is reversed sign
+		Run_PID(&(control.ailerons),control.roll_setpoint.out-y_down,gy.x-Nav.gyro_bias[0]);//Ailerons, TODO - work out if signs sane
+		Run_PID(&(control.rudder),ac.y,gy.z-Nav.gyro_bias[2]);	//Rudder, D term takes out turbulence, and I term for roll-bank (no P?)
+		Apply_Servos(&control);
+	}
+	//else{}//any control code to run whilst in ground mode goes here
+		
 }
