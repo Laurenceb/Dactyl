@@ -45,3 +45,12 @@ int32_t Pitot_Conv(uint32_t d) {
 	if(d&0x00400000)return (d>>6)|0xFFFF0000;//-ive result
 	else return (d>>6)&0x0000FFFF;	//+ive result
 }
+
+/**
+  * @brief  Reads the corrected adc data and returns float with pressure difference in pascals (not actual airspeed)
+  * @param  Uncorrected value (int32_t)
+  * @retval Corrected value (float)
+  */
+float Pitot_convert_Airspeed(int32_t P) {
+	return (float)(P-PITOT_OFFSET)*PITOT_GAIN;
+}

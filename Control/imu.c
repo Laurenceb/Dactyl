@@ -1,3 +1,4 @@
+//Dactyl project v1.0
 #include "insgps.h"
 #include "imu.h"
 #include "cal.h"
@@ -26,7 +27,7 @@ void run_imu() {
 	//Non Static
 	Vector m;
 	Float_Vector ac,ma,gy,gps_velocity,gps_position,target_vector,waypoint;
-	float Delta_Time=DELTA_TIME,Baro_Alt;
+	float Delta_Time=DELTA_TIME,Baro_Alt,Airspeed;
 	uint16_t SensorsUsed=0;			//We by default have no sensors
 	uint32_t Baro_Pressure;
 	int32_t Baro_Temperature; 
@@ -68,7 +69,7 @@ void run_imu() {
 				if(p_count++==1) {
 					Pitot_Read_Conv((uint32_t*)&Pitot_Pressure);;//Read the pitot - we dont need to setup a conversion
 					Pitot_Pressure=Pitot_Conv((uint32_t)Pitot_Pressure);//Align and sign the adc value - 1lsb=~0.24Pa
-					//Pitot_convert_Airspeed();//TODO Convert to the airspeed - we then use this to estimate windspeed
+					Airspeed=Pitot_convert_Airspeed(Pitot_Pressure);//TODO- use this to estimate windspeed (atm its using Pa)
 					p_count=0;
 				}
 				break;
@@ -105,15 +106,20 @@ void run_imu() {
 	h_offset=(Nav.q[0] * Nav.q[0] + Nav.q[1] * Nav.q[1] - Nav.q[2] * Nav.q[2] - Nav.q[3] * Nav.q[3]) * target_vector.y\
 	 - 2 * (Nav.q[1] * Nav.q[2] + Nav.q[0] * Nav.q[3]) * target_vector.x;
 	//Run the control loops if we arent controlled from the ground
-	if(!Ground_Flag) {
-		Run_PID(&(control.pitch_setpoint),control.airframe.airspeed-Airspeed,0);//Pitch setpoint control pid (actually a PI)
-		Run_PID(&(control.roll_setpoint),h_offset,0);		//Roll setpoint set by heading error
-		Run_PID(&(control.throttle),target_vector.z,Nav.v[2]);	//Throttle set according to altitude error
-		Run_PID(&(control.evevator),control.pitch_setpoint.out+x_down,gy.y-Nav.gyro_bias[1]);//Elevator, remember x_down is reversed sign
-		Run_PID(&(control.ailerons),control.roll_setpoint.out-y_down,gy.x-Nav.gyro_bias[0]);//Ailerons, TODO - work out if signs sane
-		Run_PID(&(control.rudder),ac.y,gy.z-Nav.gyro_bias[2]);	//Rudder, D term takes out turbulence, and I term for roll-bank (no P?)
-		Apply_Servos(&control);
+	if(!Ground_Flag) {//TODO implement ground control using input capture and sanity check
+		//Pitch setpoint control pid (actually a PI) -- Note- uses dynamic pressure 
+		Run_PID(&(control.pitch_setpoint),&(control.airframe.pitch_setpoint),control.airframe.airspeed-Airspeed,0);
+		//Roll setpoint set by heading error
+		Run_PID(&(control.roll_setpoint),&(control.airframe.roll_setpoint),h_offset,0);
+		//Throttle set according to altitude error
+		Run_PID(&(control.throttle),&(control.airframe.throttle),target_vector.z,Nav.v[2]);
+		//Elevator, remember x_down is reversed sign
+		Run_PID(&(control.evevator),&(control.airframe.elevator),control.pitch_setpoint.out+x_down,gy.y-Nav.gyro_bias[1]);
+		//Ailerons, TODO - work out if signs sane
+		Run_PID(&(control.ailerons),&(control.airframe.ailerons),control.roll_setpoint.out-y_down,gy.x-Nav.gyro_bias[0]);
+		//Rudder, D term takes out turbulence, and I term for roll-bank (no P?)
+		Run_PID(&(control.rudder),&(control.airframe.rudder),ac.y,gy.z-Nav.gyro_bias[2]);
+		//Apply_Servos(&control); - TODO impliment servo driver function here using pwm
 	}
-	//else{}//any control code to run whilst in ground mode goes here
-		
+	//else{}//any control code to run whilst in ground mode goes here		
 }
