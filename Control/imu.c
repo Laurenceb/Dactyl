@@ -119,6 +119,8 @@ void run_imu() {
 		Run_PID(&(control.ailerons),&(control.airframe.ailerons),control.roll_setpoint.out-y_down,gy.x-Nav.gyro_bias[0]);
 		//Rudder, D term takes out turbulence, and I term for roll-bank (no P?)
 		Run_PID(&(control.rudder),&(control.airframe.rudder),ac.y,gy.z-Nav.gyro_bias[2]);
+		//Apply the feedforward, linking rudder to roll offset
+		control.rudder.out+=control.airframe.feedforward*control.roll_setpoint.out;
 		//Apply_Servos(&control); - TODO impliment servo driver function here using pwm
 	}
 	//else{}//any control code to run whilst in ground mode goes here		

@@ -9,7 +9,8 @@
 
 //datatypes
 typedef struct{
-	float airspeed;
+	float airspeed;				//Target airspeed
+	float rubber_feedforward;		//Feedforward from roll offset
 	PID_ctrl_type pitch_setpoint;
 	PID_ctrl_type roll_setpoint;
 	PID_ctrl_type ailerons;
