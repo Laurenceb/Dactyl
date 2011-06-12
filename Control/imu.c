@@ -3,6 +3,7 @@
 #include "imu.h"
 #include "cal.h"
 #include "types.h"
+#include "loops.h"
 #include "../i2c.h"
 #include "../dma.h"
 #include "../gpio.h"
@@ -24,10 +25,11 @@ void run_imu() {
 	static Ubx_Gps_Type gps;		//This is our local copy - theres is also a global, be careful with copying
 	static Nav_Type Nav;
 	static Gyr_Status Gyro_Data;
+	static Control_type control;		//The control structure
 	//Non Static
 	Vector m;
 	Float_Vector ac,ma,gy,gps_velocity,gps_position,target_vector,waypoint;
-	float Delta_Time=DELTA_TIME,Baro_Alt,Airspeed;
+	float Delta_Time=DELTA_TIME,Baro_Alt,Airspeed,x_down,y_down,h_offset;
 	uint16_t SensorsUsed=0;			//We by default have no sensors
 	uint32_t Baro_Pressure;
 	int32_t Baro_Temperature; 
@@ -112,15 +114,15 @@ void run_imu() {
 		//Roll setpoint set by heading error
 		Run_PID(&(control.roll_setpoint),&(control.airframe.roll_setpoint),h_offset,0);
 		//Throttle set according to altitude error
-		Run_PID(&(control.throttle),&(control.airframe.throttle),target_vector.z,Nav.v[2]);
+		Run_PID(&(control.throttle),&(control.airframe.throttle),target_vector.z,Nav.Vel[2]);
 		//Elevator, remember x_down is reversed sign
-		Run_PID(&(control.evevator),&(control.airframe.elevator),control.pitch_setpoint.out+x_down,gy.y-Nav.gyro_bias[1]);
+		Run_PID(&(control.elevator),&(control.airframe.elevator),control.pitch_setpoint.out+x_down,gy.y-Nav.gyro_bias[1]);
 		//Ailerons, TODO - work out if signs sane
 		Run_PID(&(control.ailerons),&(control.airframe.ailerons),control.roll_setpoint.out-y_down,gy.x-Nav.gyro_bias[0]);
 		//Rudder, D term takes out turbulence, and I term for roll-bank (no P?)
 		Run_PID(&(control.rudder),&(control.airframe.rudder),ac.y,gy.z-Nav.gyro_bias[2]);
 		//Apply the feedforward, linking rudder to roll offset
-		control.rudder.out+=control.airframe.feedforward*control.roll_setpoint.out;
+		control.rudder.out+=control.airframe.rudder_feedforward*control.roll_setpoint.out;
 		//Apply_Servos(&control); - TODO impliment servo driver function here using pwm
 	}
 	//else{}//any control code to run whilst in ground mode goes here		

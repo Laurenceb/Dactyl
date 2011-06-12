@@ -230,14 +230,17 @@ bool rtc_gettime (RTC_t *rtc)
 * Output         : None
 * Return         : None
 *******************************************************************************/
-static void my_RTC_SetCounter(uint32_t cnt)
+void my_RTC_SetCounter(uint32_t cnt)
 {
+	/* Allow access to BKP Domain */
+	PWR_BackupAccessCmd(ENABLE);
 	/* Wait until last write operation on RTC registers has finished */
 	RTC_WaitForLastTask();
 	/* Change the current time */
 	RTC_SetCounter(cnt);
 	/* Wait until last write operation on RTC registers has finished */
 	RTC_WaitForLastTask();
+	PWR_BackupAccessCmd(DISABLE);
 }
 
 /*******************************************************************************
@@ -258,9 +261,7 @@ bool rtc_settime (const RTC_t *rtc)
 	if ( isDST( &ts ) ) {
 		cnt -= 60*60; // Subtract one hour
 	}
-	PWR_BackupAccessCmd(ENABLE);
 	my_RTC_SetCounter( cnt );
-	PWR_BackupAccessCmd(DISABLE);
 
 	return true;
 }

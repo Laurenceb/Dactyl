@@ -27,6 +27,7 @@
 #include "Util/delay.h"
 #include "Util/rprintf.h"
 #include "Util/Fatfs/ff.h"
+#include "Util/time.h"
 //Control loop headers
 #include "Control/insgps.h"
 
@@ -36,8 +37,13 @@ Float_Vector Home_Position,Waypoint_Global;//Home position for setting NED space
 float Long_To_Meters_Home;	//Conversion factor for longditude to meters
 volatile Ubx_Gps_Type Gps;	//Global Gps, there is also a static gps in the ekf/imu filter code
 volatile Nav_Type Nav_Global;	//EKF state
+//Flags/Mutex go here
 volatile uint32_t Nav_Flag;	//Used to control and lock global nav state access
 uint32_t New_Waypoint_Flagged;
+uint32_t Ground_Flag;
+//FatFs filesystem globals go here
+FRESULT f_err_code;
+static FATFS FATFS_Obj;
 
 
 int main(void) {
@@ -186,8 +192,10 @@ void Initialisation() {
 	printf("Baro pressure is %f Pascals, temperature is %f C\r\n",mean_pressure,(float)device_temperature/10.0);
 	Sea_Level_Pressure=mean_pressure*pow((1-2.255808e-5*Home_Position.z),-5.255);//convert to sea level pressure -bmp085 datasheet
 	printf("Sea level pressure is %f\r\n",Sea_Level_Pressure);
-	//quick test - remove asap
-	//f_mount(0,0);				//Mount the microsd card as a FAT32 filesystem
+	//Try initialising the uSD card and mounting the filesystem - if there is no card inserted it will error when we try to use files/dir
+	RTC_init;				//initialise the RTC, turning on the BKP domain
+	Set_RTC_From_GPS(Gps.week,Gps.time);	//First set the RTC correctly, so it can be used by filesystem
+	if(f_err_code = f_mount(0, &FATFS_Obj))Usart_Send_Str((char*)"FatFs mount error\r\n");//this should only error if internal error 
 	EXTI6_Config();				//Configure the interrupt from gyro that runs the EKF
 	Gyr_Read(&mag);				//Kick start the ISR by reading the gyro to set data ready to low 
 }

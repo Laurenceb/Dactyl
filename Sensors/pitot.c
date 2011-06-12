@@ -2,6 +2,7 @@
 #include "stm32f10x.h"
 #include "pitot.h"
 #include "../i2c.h"
+#include "../Control/cal.h"
 
 /**
   * @brief  Sets up a pressure conversion

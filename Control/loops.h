@@ -1,5 +1,5 @@
 //Dactyl project v1.0
-
+#pragma once
 //loop types
 typedef struct {
 	float integr;
@@ -15,5 +15,5 @@ typedef struct {
 } PID_ctrl_type;
 
 //function prototypes
-void Run_PID(PID_type* PID,float P, float D);
+void Run_PID(PID_type* PID, PID_ctrl_type* ctrl, float P, float D);
 void Reset_PID(PID_type* PID);
