@@ -42,10 +42,10 @@ void run_imu() {
 	Acc_Read(&m);
 	Calibrate_3(&ac,&m,Acc_Cal_Dat);
 	Gyr_Read(&m);
-	Calibrate_3(&gy,&m,Acc_Cal_Dat);
+	Calibrate_3(&gy,&m,Gyr_Cal_Dat);
 	if(Get_MEMS_DRDY()&0x02) {		//If the magno data ready pin is high
 		Mag_Read(&m);
-		Calibrate_3(&ma,&m,Acc_Cal_Dat);
+		Calibrate_3(&ma,&m,Mag_Cal_Dat);
 		SensorsUsed|=MAG_SENSORS;	//Let the EKF know what we used
 	}
 	else {					//If no magno data, we have time to do other stuff - this is ~50% of times

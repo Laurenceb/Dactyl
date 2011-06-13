@@ -23,11 +23,13 @@
 //Control headers
 #include "Control/imu.h"
 #include "Control/types.h"
+#include "Control/cal.h"
 //Utilities headers
 #include "Util/delay.h"
 #include "Util/rprintf.h"
 #include "Util/Fatfs/ff.h"
 #include "Util/time.h"
+#include "Util/coords.h"
 //Control loop headers
 #include "Control/insgps.h"
 
@@ -60,8 +62,13 @@ int main(void) {
 }
 
 void Initialisation() {
-	float Field[3],mean_pressure=0;
+	float Field[3],mean_pressure=0,Zeros[]={0,0,0}, Rbe[3][3], q[4];
+        float ge[3]={0,0,-9.81};
+	//Setup the calibration arrays - Note: might be worth moving this somewhere else as its used in the imu code as well
+	float Acc_Cal_Dat[12]=ACC_CAL_6;
+	float Mag_Cal_Dat[12]=MAG_CAL_6;
 	Vector mag;
+	Float_Vector mag_corr,acc_corr;
 	uint8_t err=0;
 	uint32_t raw_pressure;
 	int32_t device_temperature;
@@ -188,9 +195,15 @@ void Initialisation() {
 	mean_pressure/=(float)err;		//Average pressure in pascals
 	Long_To_Meters_Home=LAT_TO_METERS*cos(Home_Position.x*UBX_DEG_TO_RADS);
 	printf("Home position set\r\n");
-	//Use home position to initialise the ekf
-	//quaternion init code here - TODO
-	INSSetState(&Home_Position, float vel[3], float q[4], float gyro_bias[3]);
+	//Use home position to initialise the ekf - assume that we intialise stationary with no gyro bias, and grab accel and magno data
+	Mag_Read(&mag);
+	Calibrate_3(&mag_corr,&mag,Mag_Cal_Dat);
+	Acc_Read(&mag);
+	Calibrate_3(&acc_corr,&mag,Acc_Cal_Dat);
+	//quaternion init code - from Openpilot
+	RotFrom2Vectors(&acc_corr, ge, &mag_corr, Field, Rbe);
+	R2Quaternion(Rbe, q);
+	INSSetState(&Home_Position,Zeros,q,Zeros);
 	//Use the Baro output to find sea level pressure
 	printf("Baro pressure is %f Pascals, temperature is %f C\r\n",mean_pressure,(float)device_temperature/10.0);
 	Sea_Level_Pressure=mean_pressure*pow((1-2.255808e-5*Home_Position.z),-5.255);//convert to sea level pressure -bmp085 datasheet
