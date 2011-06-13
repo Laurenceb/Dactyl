@@ -188,6 +188,9 @@ void Initialisation() {
 	mean_pressure/=(float)err;		//Average pressure in pascals
 	Long_To_Meters_Home=LAT_TO_METERS*cos(Home_Position.x*UBX_DEG_TO_RADS);
 	printf("Home position set\r\n");
+	//Use home position to initialise the ekf
+	//quaternion init code here - TODO
+	INSSetState(&Home_Position, float vel[3], float q[4], float gyro_bias[3]);
 	//Use the Baro output to find sea level pressure
 	printf("Baro pressure is %f Pascals, temperature is %f C\r\n",mean_pressure,(float)device_temperature/10.0);
 	Sea_Level_Pressure=mean_pressure*pow((1-2.255808e-5*Home_Position.z),-5.255);//convert to sea level pressure -bmp085 datasheet
