@@ -216,7 +216,7 @@ void rprintfFloat(char numDigits, float x) {
                 digit = (unsigned char)(x/place);
                 rprintfChar(digit+0x30);
                 if(place == 1.0){
-                        if(i<numDigits)rprintfChar('.');
+                        if((i+1)<numDigits)rprintfChar('.');
                         sig=FALSE;
                 }
                 x -= (digit*place);
@@ -421,6 +421,7 @@ int rprintf2RamRom(const char *sfmt, ...)
 					v = (float) (va_arg(ap, double));
 					if(!f_width)f_width=9;//default width
 					rprintfFloat(f_width,v);//f_width
+					break;
             case 'c':			// 'c' character
 					i = va_arg(ap, int);
 					rprintfChar((int) (i));

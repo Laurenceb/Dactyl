@@ -191,7 +191,7 @@ void Initialisation() {
 	}
 	Home_Position.x/=(float)err;
 	Home_Position.y/=(float)err;
-	Home_Position.z/=(float)err;		//Find average position
+	Home_Position.z/=((float)err*1000.0);	//Find average position - note altitude converted to meters
 	mean_pressure/=(float)err;		//Average pressure in pascals
 	Long_To_Meters_Home=LAT_TO_METERS*cos(Home_Position.x*UBX_DEG_TO_RADS);
 	printf("Home position set\r\n");
@@ -211,7 +211,7 @@ void Initialisation() {
 	//Try initialising the uSD card and mounting the filesystem - if there is no card inserted it will error when we try to use files/dir
 	RTC_init;				//initialise the RTC, turning on the BKP domain
 	Set_RTC_From_GPS(Gps.week,Gps.time);	//First set the RTC correctly, so it can be used by filesystem
-	if(f_err_code = f_mount(0, &FATFS_Obj))Usart_Send_Str((char*)"FatFs mount error\r\n");//this should only error if internal error 
+	if((f_err_code = f_mount(0, &FATFS_Obj)))Usart_Send_Str((char*)"FatFs mount error\r\n");//this should only error if internal error 
 	EXTI6_Config();				//Configure the interrupt from gyro that runs the EKF
 	Gyr_Read(&mag);				//Kick start the ISR by reading the gyro to set data ready to low 
 }

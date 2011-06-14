@@ -31,6 +31,11 @@ void EXTI6_Config(void)
   EXTI_InitStructure.EXTI_LineCmd = ENABLE;
   EXTI_Init(&EXTI_InitStructure);
 
+  /* Set the Vector Table base location at 0x08000000 */    
+  NVIC_SetVectorTable(NVIC_VectTab_FLASH, 0x0);      
+   
+  /* Configure one bit for preemption priority */   
+  NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
   /* Enable and set EXTI6 Interrupt to the lowest priority */
   NVIC_InitStructure.NVIC_IRQChannel = EXTI9_5_IRQn;	//Interrupt lines are grouped as they go into the NVIC controller
   NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x0F;
@@ -50,8 +55,8 @@ void EXTI9_5_IRQHandler(void)
   {
     /*Called Code goes here*/
     run_imu();
-    /* Clear the  EXTI line 9 pending bit */
-    EXTI_ClearITPendingBit(EXTI_Line9);
+    /* Clear the  EXTI line 6 pending bit */
+    EXTI_ClearITPendingBit(EXTI_Line6);
   }
 }
 

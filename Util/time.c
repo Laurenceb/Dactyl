@@ -1,5 +1,4 @@
 //Dactyl project v1.0
-#include "Fatfs/rtc.h"
 #include "time.h"
 /**
   * @brief  Reads GPS time as week number and milliseconds of week, and populates HW RTC
