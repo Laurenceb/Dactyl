@@ -165,7 +165,7 @@ void Initialisation() {
 	if(err|=WMM_GetMagVector((float)Gps.latitude*1e-7,(float)Gps.longitude*1e-7,(float)Gps.altitude*1e-3,Gps.week,Field))
 		printf("Mag model run error %d\r\n",err);
 	else
-		printf("Mag model completed, B(nT NED frame)=%1f,%1f,%1f\r\n",Field[0],Field[1],Field[2]);
+		printf("Mag model completed, B(mG NED frame)=%1f,%1f,%1f\r\n",Field[0],Field[1],Field[2]);
 	INSSetMagNorth(Field);			//Configure the Earths field in the EKF
 	//Record the bmp085 temperature
 	Baro_Setup_Temperature();
