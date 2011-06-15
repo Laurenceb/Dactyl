@@ -7,8 +7,6 @@
 #define LAT_TO_METERS (float)0.011131884
 #define UBX_DEG_TO_RADS (float)1.745329252e-9
 
-//Globals
-extern uint32_t Ground_Flag;
 
 //datatypes
 typedef struct{

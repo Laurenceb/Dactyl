@@ -13,7 +13,7 @@ float Sea_Level_Pressure;
   * @param  Pointers to output temperature, input temperature, pressure (overwritten), and cal structure for the sensor
   * @retval None
   */
-void Bmp085_Convert(int32_t* temperature_out, int32_t* temperature, int32_t* pressure, Bmp_Cal_Type* cal)
+void Bmp085_Convert(int32_t* temperature_out, int32_t* temperature, uint32_t* pressure, Bmp_Cal_Type* cal)
 {
 	int32_t x1, x2, b5, b6, x3, b3, p;			//This is based on code from sparkfun.com
 	uint32_t b4, b7;
@@ -48,16 +48,16 @@ void Bmp085_Convert(int32_t* temperature_out, int32_t* temperature, int32_t* pre
 I2C_Returntype Bmp085_ReadConfig(Bmp_Cal_Type* cal)
 {
 	I2C_Returntype t= bmp085ReadShort(0xAA,(uint16_t*)&(cal->ac1));
-	t |= bmp085ReadShort(0xAC,&(cal->ac2));
-	t |= bmp085ReadShort(0xAE,&(cal->ac3));
-	t |= bmp085ReadShort(0xB0,&(cal->ac4));
-	t |= bmp085ReadShort(0xB2,&(cal->ac5));
-	t |= bmp085ReadShort(0xB4,&(cal->ac6));
-	t |= bmp085ReadShort(0xB6,&(cal->b1));
-	t |= bmp085ReadShort(0xB8,&(cal->b2));
-	t |= bmp085ReadShort(0xBA,&(cal->mb));
-	t |= bmp085ReadShort(0xBC,&(cal->mc));
-	t |= bmp085ReadShort(0xBE,&(cal->md));
+	t |= bmp085ReadShort(0xAC,(uint16_t*)&(cal->ac2));
+	t |= bmp085ReadShort(0xAE,(uint16_t*)&(cal->ac3));
+	t |= bmp085ReadShort(0xB0,(uint16_t*)&(cal->ac4));
+	t |= bmp085ReadShort(0xB2,(uint16_t*)&(cal->ac5));
+	t |= bmp085ReadShort(0xB4,(uint16_t*)&(cal->ac6));
+	t |= bmp085ReadShort(0xB6,(uint16_t*)&(cal->b1));
+	t |= bmp085ReadShort(0xB8,(uint16_t*)&(cal->b2));
+	t |= bmp085ReadShort(0xBA,(uint16_t*)&(cal->mb));
+	t |= bmp085ReadShort(0xBC,(uint16_t*)&(cal->mc));
+	t |= bmp085ReadShort(0xBE,(uint16_t*)&(cal->md));
 	return t;
 }
 
@@ -70,7 +70,7 @@ I2C_Returntype bmp085ReadShort(uint8_t address,uint16_t* data)
 {
 	I2C_Returntype t;
 	t=I2C_Read((uint8_t*) data,2, BMP085_W, address);
-	Flipbytes(data);	//The BMP085 sensor is big endian, we are little on stm32
+	Flipbytes((int16_t*)data);	//The BMP085 sensor is big endian, we are little on stm32
 	return t;
 }
 
@@ -88,7 +88,7 @@ I2C_Returntype Baro_Read_ADC(int32_t* data) {
   * @param  Pointer to returned data
   * @retval I2C Success/error code
   */
-I2C_Returntype Baro_Read_Full_ADC(int32_t* data) {
+I2C_Returntype Baro_Read_Full_ADC(uint32_t* data) {
 	I2C_Returntype t;
 	uint8_t b[3];
 	t=I2C_Read((uint8_t*)&b,3, BMP085_W, BMP085_ADC);

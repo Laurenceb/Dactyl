@@ -43,11 +43,11 @@ extern float Sea_Level_Pressure;
 #define Bmp_Simp_Conv(tmp_out,press) Bmp085_Convert(tmp_out,&Bmp_temp,press,&Our_Sensorcal);
 
 //function prototypes
-void Bmp085_Convert(int32_t* temperature_out, int32_t* temperature, int32_t* pressure, Bmp_Cal_Type* cal);
+void Bmp085_Convert(int32_t* temperature_out, int32_t* temperature, uint32_t* pressure, Bmp_Cal_Type* cal);
 I2C_Returntype Bmp085_ReadConfig(Bmp_Cal_Type* cal);
 I2C_Returntype bmp085ReadShort(uint8_t address,uint16_t* data);
 I2C_Returntype Baro_Read_ADC(int32_t* data);
-I2C_Returntype Baro_Read_Full_ADC(int32_t* data);
+I2C_Returntype Baro_Read_Full_ADC(uint32_t* data);
 I2C_Returntype Baro_Setup_Pressure(void);
 I2C_Returntype Baro_Setup_Temperature(void);
 float Baro_Convert_Pressure(uint32_t p);

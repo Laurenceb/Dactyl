@@ -33,7 +33,8 @@
 
 #define RAD2DEG (180.0/M_PI)
 #define DEG2RAD (M_PI/180.0)
-
+//allow compilation of most of this to be turned off
+#if FULL_CONV==1
 // ****** convert Lat,Lon,Alt to ECEF  ************
 void LLA2ECEF(double LLA[3], double ECEF[3])
 {
@@ -217,7 +218,7 @@ void ECEF2Base(double ECEF[3], double BaseECEF[3], float Rne[3][3], float NED[3]
 	NED[1] = Rne[1][0] * diff[0] + Rne[1][1] * diff[1] + Rne[1][2] * diff[2];
 	NED[2] = Rne[2][0] * diff[0] + Rne[2][1] * diff[1] + Rne[2][2] * diff[2];
 }
-
+#endif
 // ****** convert Rotation Matrix to Quaternion ********
 // ****** if R converts from e to b, q is rotation from e to b ****
 void R2Quaternion(float R[3][3], float q[4])
@@ -333,7 +334,7 @@ uint8_t RotFrom2Vectors(const float v1b[3], const float v1e[3], const float v2b[
 
 	return 1;
 }
-
+#if FULL_CONV==1
 void Rv2Rot(float Rv[3], float R[3][3])
 {
 	// Compute rotation matrix from a rotation vector
@@ -361,7 +362,7 @@ void Rv2Rot(float Rv[3], float R[3][3])
 
 	Quaternion2R(q, R);
 }
-
+#endif
 // ****** Vector Cross Product ********
 void CrossProduct(const float v1[3], const float v2[3], float result[3])
 {

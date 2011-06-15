@@ -10,12 +10,12 @@ typedef struct {				//A 16 bit data vector & status type for mems sensors
 	int16_t z;
 	uint8_t status;
 }	Vector;
-
+#pragma pack(1)
 typedef struct {
 	uint8_t status;
 	int16_t temp;
-}	Gyr_Status;				//special gyro status type
-
+}	Gyr_Status;				//special gyro status type - note packed to ensure alignment
+#pragma pack()
 typedef enum {					//returns I2C error/success codes
 	I2C_SUCCESS=0,				//theres only one sort of success 
 	I2C_START_TIMEOUT,
@@ -36,8 +36,8 @@ typedef enum {					//returns I2C error/success codes
 #define LEN_M 5
 #define ACCEL_SETUP {ACC_ADD,0xA0,0x2F,0x00,0x02,0x90}//configure LSM303 acc for 100hz, no highpass, int1=DTRD, +-4G with blocking
 #define LEN_A 6 
-#define ITG_SETUP {GYR_ADD,0x15,0x07,0x1B,0x31,0x01}//configure ITG gyro for 125hz,+-2000deg/s 42hz lowpass, int1=DTRD, DTRD enable
-#define LEN_ITG_S 6
+#define ITG_SETUP {GYR_ADD,0x15,0x07,0x1B,0x31}//configure ITG gyro for 125hz,+-2000deg/s 42hz lowpass, int1=DTRD
+#define LEN_ITG_S 5
 #define ITG_CLOCK {GYR_ADD,0x3E,0x01}		//configure clock to be pll off gyro x axis
 #define LEN_ITG_C 3
 //needs bmp085 and ltc2481 to be added TODO

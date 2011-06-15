@@ -20,6 +20,7 @@
 #include "Sensors/bmp085.h"
 #include "Sensors/pitot.h"
 #include "Sensors/WorldMagModel.h"
+#include "Sensors/WMMInternal.h"	//Used to get constants
 //Control headers
 #include "Control/imu.h"
 #include "Control/types.h"
@@ -41,8 +42,8 @@ volatile Ubx_Gps_Type Gps;	//Global Gps, there is also a static gps in the ekf/i
 volatile Nav_Type Nav_Global;	//EKF state
 //Flags/Mutex go here
 volatile uint32_t Nav_Flag;	//Used to control and lock global nav state access
-uint32_t New_Waypoint_Flagged;
-uint32_t Ground_Flag;
+volatile uint32_t New_Waypoint_Flagged;
+volatile uint32_t Ground_Flag;
 //FatFs filesystem globals go here
 FRESULT f_err_code;
 static FATFS FATFS_Obj;
@@ -159,14 +160,6 @@ void Initialisation() {
 	printf("%ld,%ld,%ld,%ld,%ld,%ld,%1x,%1x\r\n",\
 	Gps.latitude,Gps.longitude,Gps.altitude,\
 	Gps.vnorth,Gps.veast,Gps.vdown,Gps.status,Gps.nosats);
-	//Init the ekf, must do this before the mag model
-	INSGPSInit();
-	//Now we initialise the magnetic model - init function is called from the get vector function
-	if(err|=WMM_GetMagVector((float)Gps.latitude*1e-7,(float)Gps.longitude*1e-7,(float)Gps.altitude*1e-3,Gps.week,Field))
-		printf("Mag model run error %d\r\n",err);
-	else
-		printf("Mag model completed, B(mG NED frame)=%1f,%1f,%1f\r\n",Field[0],Field[1],Field[2]);
-	INSSetMagNorth(Field);			//Configure the Earths field in the EKF
 	//Record the bmp085 temperature
 	Baro_Setup_Temperature();
 	Delay(0x4FFFF);
@@ -184,26 +177,34 @@ void Initialisation() {
 		Home_Position.x+=(float)Gps.latitude;
 		Home_Position.y+=(float)Gps.longitude;
 		Home_Position.z+=(float)Gps.altitude;
-		Baro_Read_Full_ADC(&raw_pressure);		//grab from baro adc
+		Baro_Read_Full_ADC(&raw_pressure);//grab from baro adc
 		Baro_Setup_Pressure();
 		Bmp_Simp_Conv(&device_temperature,&raw_pressure);//convert to pressure
 		mean_pressure+=raw_pressure;
 	}
-	Home_Position.x/=(float)err;
+	Home_Position.x/=(float)err;		//Home is in raw units of degrees x 10^7
 	Home_Position.y/=(float)err;
 	Home_Position.z/=((float)err*1000.0);	//Find average position - note altitude converted to meters
 	mean_pressure/=(float)err;		//Average pressure in pascals
-	Long_To_Meters_Home=LAT_TO_METERS*cos(Home_Position.x*UBX_DEG_TO_RADS);
+	Long_To_Meters_Home=LAT_TO_METERS*cos(UBX_DEG_TO_RADS*Home_Position.x);
 	printf("Home position set\r\n");
+	//Init the ekf, must do this before the mag model
+	INSGPSInit();
+	//Now we initialise the magnetic model - init function is called from the get vector function
+	if((err=WMM_GetMagVector(Home_Position.x*1e-7,Home_Position.y*1e-7,Home_Position.z,Gps.week,Field)))
+		printf("Mag model run error %d\r\n",err);
+	else
+		printf("Mag model completed, B(mG NED frame)=%1f,%1f,%1f\r\n",Field[0],Field[1],Field[2]);
+	INSSetMagNorth(Field);			//Configure the Earths field in the EKF
 	//Use home position to initialise the ekf - assume that we intialise stationary with no gyro bias, and grab accel and magno data
 	Mag_Read(&mag);
 	Calibrate_3(&mag_corr,&mag,Mag_Cal_Dat);
 	Acc_Read(&mag);
 	Calibrate_3(&acc_corr,&mag,Acc_Cal_Dat);
 	//quaternion init code - from Openpilot
-	RotFrom2Vectors(&acc_corr, ge, &mag_corr, Field, Rbe);
+	RotFrom2Vectors((float*)&acc_corr, ge, (float*)&mag_corr, Field, Rbe);
 	R2Quaternion(Rbe, q);
-	INSSetState(&Home_Position,Zeros,q,Zeros);
+	INSSetState(Zeros,Zeros,q,Zeros);	//Home position is defined as the origin
 	//Use the Baro output to find sea level pressure
 	printf("Baro pressure is %f Pascals, temperature is %f C\r\n",mean_pressure,(float)device_temperature/10.0);
 	Sea_Level_Pressure=mean_pressure*pow((1-2.255808e-5*Home_Position.z),-5.255);//convert to sea level pressure -bmp085 datasheet

@@ -30,6 +30,7 @@
 #ifndef COORDINATECONVERSIONS_H_
 #define COORDINATECONVERSIONS_H_
 
+#if FULL_CONV==1
     // ****** convert Lat,Lon,Alt to ECEF  ************
 void LLA2ECEF(double LLA[3], double ECEF[3]);
 
@@ -55,7 +56,7 @@ void LLA2Base(double LLA[3], double BaseECEF[3], float Rne[3][3], float NED[3]);
 
 	// ****** Express ECEF in a local NED Base Frame ********
 void ECEF2Base(double ECEF[3], double BaseECEF[3], float Rne[3][3], float NED[3]);
-
+#endif
 	// ****** convert Rotation Matrix to Quaternion ********
 	// ****** if R converts from e to b, q is rotation from e to b ****
 void R2Quaternion(float R[3][3], float q[4]);
