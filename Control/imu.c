@@ -90,8 +90,9 @@ void run_imu() {
 		gps_velocity.y=(float)gps.veast*0.01;
 		gps_velocity.z=(float)gps.vdown*0.01;
 		SensorsUsed|=POS_SENSORS|HORIZ_SENSORS|VERT_SENSORS;//Set the flagbits for the gps update
+		if(!Gps.packetflag)Gps=gps;			//Copy the data over to the main 'thread' if the global unlocked
+		gps.packetflag=0x00;				//Reset the flag
 	}
-	if(!Gps.packetflag)Gps=gps;				//Copy the data over to the main 'thread' if the global unlocked
 	//Run the EKF - we feed it vector pointers but it expects float arrays - alignment has to be correct
 	INSStatePrediction((float*)&gy,(float*)&ac,Delta_Time);	//Run the EKF and incorporate the avaliable sensors
 	INSCovariancePrediction(Delta_Time);
