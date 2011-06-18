@@ -10,12 +10,12 @@ typedef struct {				//A 16 bit data vector & status type for mems sensors
 	int16_t z;
 	uint8_t status;
 }	Vector;
-#pragma pack(1)
+
 typedef struct {
 	uint8_t status;
 	int16_t temp;
 }	Gyr_Status;				//special gyro status type - note packed to ensure alignment
-#pragma pack()
+
 typedef enum {					//returns I2C error/success codes
 	I2C_SUCCESS=0,				//theres only one sort of success 
 	I2C_START_TIMEOUT,

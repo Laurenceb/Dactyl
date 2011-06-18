@@ -49,21 +49,22 @@ FRESULT f_err_code;
 static FATFS FATFS_Obj;
 
 
-int main(void) {
-	Vector mag;
+int main(void) {;
 	rprintfInit(__usart_send_char);//inititalise reduced printf functionality
 	Initialisation();//initialise all hardware
 	for(;;) {/* THIS IS JUST SOME PLACEHOLDER TEST STUFF */
 		if(Nav_Flag){	//wait for some EKF data to be ready
 		printf("%4f,%4f,%4f,%4f,%4f,%4f,%4f,%4f,%4f,%4f\r\n",Nav_Global.Pos[0],Nav_Global.Pos[1],Nav_Global.Pos[2],\
-		Nav_Global.Vel[0],Nav_Global.Vel[1],Nav_Global.Vel[2],Nav_Global.q[0],Nav_Global.q[1],Nav_Global.q[2],Nav_Global.q[3]);
+		Nav_Global.Vel[0],Nav_Global.Vel[1],Nav_Global.Vel[2],Nav_Global.q[0],Nav_Global.q[1],Nav_Global.q[2],\
+		Nav_Global.q[3]);
+		printf("%4f,%4f,%4f\r\n",Nav_Global.gyro_bias[0],Nav_Global.gyro_bias[1],Nav_Global.gyro_bias[2]);
 		Nav_Flag=0;	//We now have to reaquire the nav data
 		}
 	}
 }
 
 void Initialisation() {
-	float Field[3],mean_pressure=0,Zeros[]={0,0,0}, Rbe[3][3], q[4];
+	float Field[3],mean_pressure=0,Zeros[]={0,0,0}, Rbe[3][3], q[4], mag_len;
         float ge[3]={0,0,-9.81};
 	//Setup the calibration arrays - Note: might be worth moving this somewhere else as its used in the imu code as well
 	float Acc_Cal_Dat[12]=ACC_CAL_6;
@@ -195,6 +196,9 @@ void Initialisation() {
 		printf("Mag model run error %d\r\n",err);
 	else
 		printf("Mag model completed, B(mG NED frame)=%1f,%1f,%1f\r\n",Field[0],Field[1],Field[2]);
+	//Now we normalise the field - the ekf works with normalised lenght Be vector
+	mag_len = sqrt(pow(Field[0],2) + pow(Field[1],2) + pow(Field[2],2));
+	Field[0]/=mag_len;Field[1]/=mag_len;Field[2]/=mag_len;
 	INSSetMagNorth(Field);			//Configure the Earths field in the EKF
 	//Use home position to initialise the ekf - assume that we intialise stationary with no gyro bias, and grab accel and magno data
 	Mag_Read(&mag);

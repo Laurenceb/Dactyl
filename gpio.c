@@ -117,5 +117,5 @@ void Aux_Devices_Configuration() {		//sets up the pwm and rs485 device related p
   * @retval Unsigned interger flag
   */
 uint8_t Get_MEMS_DRDY() {			//returns MEMS signals the LSB are 0b00000<LSM303ACC><LSM303MAG><ITG-3200>
-	return (uint8_t)(((GPIO_ReadInputData(GPIOA)>>6)|(GPIO_ReadInputData(GPIOB)>>10))&0x0007);//note this is hardcoded
+	return (uint8_t)(((GPIO_ReadInputData(GPIOA)>>6)|((GPIO_ReadInputData(GPIOB)>>10)&0x0004))&0x0007);//note this is hardcoded
 }

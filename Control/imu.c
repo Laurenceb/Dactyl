@@ -18,17 +18,18 @@ extern float Long_To_Meters_Home;
 extern volatile Ubx_Gps_Type Gps;
 extern volatile Nav_Type Nav_Global,Nav;	
 extern volatile uint32_t Nav_Flag,New_Waypoint_Flagged,Ground_Flag;	
-
 	
 
 void run_imu() {
 	//Static variables
 	static uint32_t state=0,p_count=0,b_count=0;//State allows the I2C comms to be broken down between seperate calls
-	static Ubx_Gps_Type gps;		//This is our local copy - theres is also a global, be careful with copying
-	static Gyr_Status Gyro_Data;
 	static Control_type control;		//The control structure
 	//Non Static
-	Vector m;
+	#pragma pack(1)
+	Vector m;				//make sure these are packed
+	static Ubx_Gps_Type gps;		//This is our local copy - theres is also a global, be careful with copying
+	static Gyr_Status Gyro_Data;
+	#pragma pack()
 	Float_Vector ac,ma,gy,gps_velocity,gps_position,target_vector,waypoint;
 	float Delta_Time=DELTA_TIME,Baro_Alt=0,Airspeed,x_down,y_down,h_offset;
 	uint16_t SensorsUsed=0;			//We by default have no sensors
@@ -51,7 +52,7 @@ void run_imu() {
 	}
 	else {					//If no magno data, we have time to do other stuff - this is ~50% of times
 		//Now the state dependant I2C stuff
-		switch(state){//this runs at 55 Hz
+		switch(state){			//this runs at 55 Hz - TODO adjust for 100hz ekf interation not 125Hz
 			case 0:			//Read and Setup a pressure conversion - at 22.5Hz
 				if(b_count++) {	//If the counter is not 0
 					Baro_Read_Full_ADC(&Baro_Pressure);//bmp085 driver - read full ADC
