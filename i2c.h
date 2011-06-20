@@ -36,7 +36,7 @@ typedef enum {					//returns I2C error/success codes
 #define LEN_M 5
 #define ACCEL_SETUP {ACC_ADD,0xA0,0x2F,0x00,0x02,0x90}//configure LSM303 acc for 100hz, no highpass, int1=DTRD, +-4G with blocking
 #define LEN_A 6 
-#define ITG_SETUP {GYR_ADD,0x15,0x09,0x1B,0x31}//configure ITG gyro for 125hz,+-2000deg/s 42hz lowpass, int1=DTRD
+#define ITG_SETUP {GYR_ADD,0x15,0x07,0x1B,0x11}//configure ITG gyro for 125hz,+-2000deg/s 42hz lowpass, int1=DTRD - 50us pulse
 #define LEN_ITG_S 5
 #define ITG_CLOCK {GYR_ADD,0x3E,0x01}		//configure clock to be pll off gyro x axis
 #define LEN_ITG_C 3

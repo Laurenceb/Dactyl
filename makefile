@@ -51,8 +51,8 @@ WARNINGS = -Wall -W -Wshadow -Wcast-qual -Wwrite-strings -Winline
 ifdef DEBUG
  TARGET_OPTS = -O0 -g3
  DEBUG_MACRO = -DDEBUG
-else	#Changed from O2
- TARGET_OPTS = -Os -finline -finline-functions-called-once\
+else	#Changed from O2 - optimisation split between control loop and rest of project, using a seperate makefile
+ TARGET_OPTS = $(OPTIMISE) -finline -finline-functions-called-once\
   -funroll-loops -fno-common -fpromote-loop-indices
 endif
 
@@ -86,9 +86,15 @@ MAIN_OBJS = $(sort \
  $(patsubst %.c,%.o,$(wildcard Util/*.c)) \
  $(patsubst %.c,%.o,$(wildcard Util/Fatfs/*.c)) \
  $(patsubst %.c,%.o,$(wildcard Sensors/*.c)) \
- $(patsubst %.c,%.o,$(wildcard Control/*.c)) \
  $(patsubst %.c,%.o,$(wildcard lib/CMSIS_CM3/*.c)) \
  $(STARTUP_OBJ))
+
+CONTROL_OBJS = $(sort $(patsubst %.c,%.o,$(wildcard Control/*.c)))
+
+#optimisation
+$(MAIN_OBJS): OPTIMISE= -Os
+
+$(CONTROL_OBJS): OPTIMISE= -Os
 
 # all
 
@@ -98,8 +104,8 @@ all: $(MAIN_BIN)
 
 # main
 
-$(MAIN_OUT): $(MAIN_OBJS) $(FWLIB) $(USBLIB)
-	$(LD)  $(TARGET_ARCH) $^ -o $@ $(LDFLAGS)
+$(MAIN_OUT): $(MAIN_OBJS) $(CONTROL_OBJS) $(FWLIB) $(USBLIB)
+	$(LD) $(TARGET_ARCH) $^ -o $@ $(LDFLAGS)
 
 $(MAIN_OBJS): $(wildcard *.h) $(wildcard lib/STM32F10x_StdPeriph_Driver/*.h)\
  $(wildcard lib/STM32F10x_StdPeriph_Driver/inc/*.h)\
@@ -108,7 +114,6 @@ $(MAIN_OBJS): $(wildcard *.h) $(wildcard lib/STM32F10x_StdPeriph_Driver/*.h)\
 
 $(MAIN_BIN): $(MAIN_OUT)
 	$(OBJCOPY) $(OBJCOPYFLAGS) $< $@
-
 
 # fwlib
 
@@ -156,6 +161,7 @@ upload: all
 .PHONY: clean
 clean:
 	-rm -f $(MAIN_OBJS) $(MAIN_OUT) $(MAIN_MAP) $(MAIN_BIN)
+	-rm -f $(CONTROL_OBJS)
 	-rm -f jtag/flash.elf jtag/flash.bin
 	@cd lib/STM32F10x_StdPeriph_Driver && $(MAKE) clean
 	@cd lib/STM32_USB-FS-Device_Driver && $(MAKE) clean

@@ -53,10 +53,10 @@ void EXTI9_5_IRQHandler(void)
 {
   if(EXTI_GetITStatus(EXTI_Line6) != RESET)
   {
-    /*Called Code goes here*/
-    run_imu();
     /* Clear the  EXTI line 6 pending bit */
     EXTI_ClearITPendingBit(EXTI_Line6);
+    /*Called Code goes here*/
+    run_imu();
   }
 }
 

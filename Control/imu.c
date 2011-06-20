@@ -18,7 +18,8 @@ extern float Long_To_Meters_Home;
 extern volatile Ubx_Gps_Type Gps;
 extern volatile Nav_Type Nav_Global,Nav;	
 extern volatile uint32_t Nav_Flag,New_Waypoint_Flagged,Ground_Flag;	
-	
+
+extern volatile float Balt;	
 
 void run_imu() {
 	//Static variables
@@ -59,7 +60,8 @@ void run_imu() {
 					Bmp_Simp_Conv(&Baro_Temperature,&Baro_Pressure);//Convert to a pressure in Pa
 					//TODO add a kalman filter to estimate sea level pressure
 					Baro_Alt=Baro_Convert_Pressure(Baro_Pressure);//Convert to an altitude
-					SensorsUsed|=BARO_SENSOR;//we have used the baro sensor
+					//SensorsUsed|=BARO_SENSOR;//we have used the baro sensor
+					Balt=Baro_Alt;//Note debug
 				}
 				else Bmp_Gettemp();//Temperature data will be ready
 				if(b_count==10) {//Next we setup the new conversion
