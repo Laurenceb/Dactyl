@@ -18,7 +18,7 @@ void Bmp085_Convert(int32_t* temperature_out, int32_t* temperature, uint32_t* pr
 	int32_t x1, x2, b5, b6, x3, b3, p;			//This is based on code from sparkfun.com
 	uint32_t b4, b7;
 	
-	x1 = ((int32_t)*temperature - cal->ac6) * cal->ac5 >> 15;
+	x1 = (((int32_t)*temperature - cal->ac6) * cal->ac5) >> 15;
 	x2 = ((int32_t) cal->mc << 11) / (x1 + cal->md);
 	b5 = x1 + x2;
 	*temperature_out = (b5 + 8) >> 4;			//The pressure pointer is corrected to true pressure by this function
@@ -90,7 +90,9 @@ I2C_Returntype Baro_Read_ADC(int32_t* data) {
   */
 I2C_Returntype Baro_Read_Full_ADC(uint32_t* data) {
 	I2C_Returntype t;
+	#pragma pack(1)
 	uint8_t b[3];
+	#pragma pack()
 	t=I2C_Read((uint8_t*)&b,3, BMP085_W, BMP085_ADC);
 	*data=((((uint32_t)b[0] <<16) | ((uint32_t)b[1] <<8) | ((uint32_t)b[2])) >> (8-OSS));//The BMP085 sensor is big endian
 	return t;
