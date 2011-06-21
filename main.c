@@ -60,7 +60,7 @@ int main(void) {;
 		printf("%4f,%4f,%4f\r\n",Nav_Global.gyro_bias[0],Nav_Global.gyro_bias[1],Nav_Global.gyro_bias[2]);
 		Nav_Flag=0;	//We now have to reaquire the nav data
 		}
-		printf("%3f\r\n",Balt);
+		printf("%5f\r\n",Balt);
 	}
 }
 

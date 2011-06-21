@@ -51,16 +51,16 @@ void run_imu() {
 		Calibrate_3(&ma,&m,Mag_Cal_Dat);
 		SensorsUsed|=MAG_SENSORS;	//Let the EKF know what we used
 	}
-	else {					//If no magno data, we have time to do other stuff - this is ~50% of times
+	//else {					//If no magno data, we have time to do other stuff - this is ~50% of times
 		//Now the state dependant I2C stuff
-		switch(state){			//this runs at 55 Hz - TODO adjust for 100hz ekf interation not 125Hz
-			case 0:			//Read and Setup a pressure conversion - at 22.5Hz
+		switch(state){			//this runs at 125 Hz
+			case 0:			//Read and Setup a pressure conversion - at 41.66Hz
 				if(b_count++) {	//If the counter is not 0
 					Baro_Read_Full_ADC(&Baro_Pressure);//bmp085 driver - read full ADC
 					Bmp_Simp_Conv(&Baro_Temperature,&Baro_Pressure);//Convert to a pressure in Pa
 					//TODO add a kalman filter to estimate sea level pressure
 					Baro_Alt=Baro_Convert_Pressure(Baro_Pressure);//Convert to an altitude
-					//SensorsUsed|=BARO_SENSOR;//we have used the baro sensor
+					SensorsUsed|=BARO_SENSOR;//we have used the baro sensor
 					Balt=Baro_Alt;//Note debug
 				}
 				else Bmp_Gettemp();//Temperature data will be ready
@@ -70,18 +70,18 @@ void run_imu() {
 				}
 				else Baro_Setup_Pressure();
 				break;
-			case 1:			//Read the gyro temperature (presently used for pitot cal)
-				Gyr_Stat(&Gyro_Data);//Also read the pitot output every 4 iterations (13.75Hz)
-				if(p_count++==1) {
+			case 1:			
+				if(p_count++==2) {//Also read the pitot output every 9 iterations (13.9Hz)
 					Pitot_Read_Conv((uint32_t*)&Pitot_Pressure);;//Read the pitot - we dont need to setup a conversion
 					Pitot_Pressure=Pitot_Conv((uint32_t)Pitot_Pressure);//Align and sign the adc value - 1lsb=~0.24Pa
 					Airspeed=Pitot_convert_Airspeed(Pitot_Pressure);//TODO- use this to estimate windspeed (atm its using Pa)
 					p_count=0;
 				}
-				break;
+			case 2:			//Read the gyro temperature (presently used for pitot cal) (13.9Hz)
+				if(p_count==1)Gyr_Stat(&Gyro_Data);
 		}
-	}
-	if(++state==2)	state=0;
+	//}
+	if(++state==3)	state=0;
 	//Process the GPS data
 	while(Bytes_In_Buffer(&Gps_Buffer))			//Dump all the data from DMA
 		Gps_Process_Byte((uint8_t)(Pop_From_Buffer(&Gps_Buffer)),&gps);

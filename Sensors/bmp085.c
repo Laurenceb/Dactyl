@@ -93,7 +93,7 @@ I2C_Returntype Baro_Read_Full_ADC(uint32_t* data) {
 	#pragma pack(1)
 	uint8_t b[3];
 	#pragma pack()
-	t=I2C_Read((uint8_t*)&b,3, BMP085_W, BMP085_ADC);
+	t=I2C_Read(b,3, BMP085_W, BMP085_ADC);
 	*data=((((uint32_t)b[0] <<16) | ((uint32_t)b[1] <<8) | ((uint32_t)b[2])) >> (8-OSS));//The BMP085 sensor is big endian
 	return t;
 }
