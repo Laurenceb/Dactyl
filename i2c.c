@@ -37,6 +37,10 @@ I2C_Returntype I2C_Conf(uint8_t* Confstr,uint8_t Bytes) {			//Sets up an i2c dev
 	while(!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED)) {
 		Time++;
 		if(Time>I2C_TIMEOUT) return I2C_SACK_TIMEOUT;
+		if(SET==I2C_GetFlagStatus(I2C1, I2C_FLAG_AF)) {
+			I2C_ClearFlag(I2C1, I2C_FLAG_AF);
+			return I2C_SACK_FAILURE;				//Slave did not ack
+		}
 	}
 	for(n=1;n<Bytes;n++) {
 		Time=0;
@@ -69,6 +73,10 @@ I2C_Returntype I2C_Read(uint8_t* Data_Pointer,uint8_t Bytes, uint8_t Addr, uint8
 		while(!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED)) {
 			Time++;
 			if(Time>I2C_TIMEOUT) return I2C_SACK_TIMEOUT;		//Checks that the slave acknowledged
+			if(SET==I2C_GetFlagStatus(I2C1, I2C_FLAG_AF)) {
+				I2C_ClearFlag(I2C1, I2C_FLAG_AF);
+				return I2C_SACK_FAILURE;				//Slave did not ack
+			}
 		}
 		Time=0;
 		I2C_SendData( I2C1, Sub_Addr );					//Write sub address register
@@ -90,6 +98,10 @@ I2C_Returntype I2C_Read(uint8_t* Data_Pointer,uint8_t Bytes, uint8_t Addr, uint8
 	while(!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED)) {
 		Time++;
 		if(Time>I2C_TIMEOUT) return I2C_SACK_TIMEOUT;			//Checks that the slave acknowledged
+		if(SET==I2C_GetFlagStatus(I2C1, I2C_FLAG_AF)) {
+			I2C_ClearFlag(I2C1, I2C_FLAG_AF);
+			return I2C_SACK_FAILURE;				//Slave did not ack
+		}
 	}									//We now auto switch to rx mode
 	if(Bytes>2) {								//More than two bytes to receive
 		Time=0;

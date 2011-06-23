@@ -20,6 +20,7 @@ typedef enum {					//returns I2C error/success codes
 	I2C_SUCCESS=0,				//theres only one sort of success 
 	I2C_START_TIMEOUT,
 	I2C_RSTART_TIMEOUT,
+	I2C_SACK_FAILURE,
 	I2C_SACK_TIMEOUT,
 	I2C_TX_TIMEOUT,
 	I2C_RX_TIMEOUT

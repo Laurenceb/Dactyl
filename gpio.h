@@ -51,6 +51,8 @@
 //convenience macros
 #define RS485_RECEIVER    Bit_RESET
 #define RS485_TRANSMITTER Bit_SET
+#define ACC_DATA_READY 0x04
+#define MAG_DATA_READY 0x02
 
 //function prototypes
 //config functions

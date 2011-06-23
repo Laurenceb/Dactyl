@@ -25,14 +25,16 @@ void run_imu() {
 	//Static variables
 	static uint32_t state=0,p_count=0,b_count=0;//State allows the I2C comms to be broken down between seperate calls
 	static Control_type control;		//The control structure
-	//Non Static
-	#pragma pack(1)
-	Vector m;				//make sure these are packed
+	#pragma pack(1)				/*make sure these are packed*/
 	static Ubx_Gps_Type gps;		//This is our local copy - theres is also a global, be careful with copying
 	static Gyr_Status Gyro_Data;
+	static Float_Vector ac;			//The accel is not always avalibale - 100hz update
+	static float AirSpeed=0;
+	//Non Static
+	Vector m;
 	#pragma pack()
-	Float_Vector ac,ma,gy,gps_velocity,gps_position,target_vector,waypoint;
-	float Delta_Time=DELTA_TIME,Baro_Alt=0,Airspeed,x_down,y_down,h_offset;
+	Float_Vector ma,gy,gps_velocity,gps_position,target_vector,waypoint;
+	float Delta_Time=DELTA_TIME,Baro_Alt=0,x_down,y_down,h_offset;
 	uint16_t SensorsUsed=0;			//We by default have no sensors
 	uint32_t Baro_Pressure;
 	int32_t Baro_Temperature; 
@@ -41,46 +43,50 @@ void run_imu() {
 	float Acc_Cal_Dat[12]=ACC_CAL_6;
 	float Mag_Cal_Dat[12]=MAG_CAL_6;
 	float Gyr_Cal_Dat[12]=GYR_CAL_6;
+	//Check for the avaliable sensors
+	uint8_t Sensors=Get_MEMS_DRDY();
 	//Now read the sensors, convert to float from uint16_t and apply the calibration
-	Acc_Read(&m);
-	Calibrate_3(&ac,&m,Acc_Cal_Dat);
+	if(Sensors&ACC_DATA_READY) {
+		Acc_Read(&m);
+		Calibrate_3(&ac,&m,Acc_Cal_Dat);//If the acc has no new data we inherit the previous data
+	}
 	Gyr_Read(&m);
 	Calibrate_3(&gy,&m,Gyr_Cal_Dat);
-	if(Get_MEMS_DRDY()&0x02) {		//If the magno data ready pin is high
+	if(Sensors&MAG_DATA_READY) {		//If the magno data ready pin is high
 		Mag_Read(&m);
 		Calibrate_3(&ma,&m,Mag_Cal_Dat);
 		SensorsUsed|=MAG_SENSORS;	//Let the EKF know what we used
 	}
-	//else {					//If no magno data, we have time to do other stuff - this is ~50% of times
-		//Now the state dependant I2C stuff
-		switch(state){			//this runs at 125 Hz
-			case 0:			//Read and Setup a pressure conversion - at 41.66Hz
-				if(b_count++) {	//If the counter is not 0
-					Baro_Read_Full_ADC(&Baro_Pressure);//bmp085 driver - read full ADC
-					Bmp_Simp_Conv(&Baro_Temperature,&Baro_Pressure);//Convert to a pressure in Pa
-					//TODO add a kalman filter to estimate sea level pressure
-					Baro_Alt=Baro_Convert_Pressure(Baro_Pressure);//Convert to an altitude
-					SensorsUsed|=BARO_SENSOR;//we have used the baro sensor
-					Balt=Baro_Alt;//Note debug
-				}
-				else Bmp_Gettemp();//Temperature data will be ready
-				if(b_count==10) {//Next we setup the new conversion
-					b_count=0;
-					Baro_Setup_Temperature();//Set this up so we read temp every ten iterations
-				}
-				else Baro_Setup_Pressure();
-				break;
-			case 1:			
-				if(p_count++==2) {//Also read the pitot output every 9 iterations (13.9Hz)
-					Pitot_Read_Conv((uint32_t*)&Pitot_Pressure);;//Read the pitot - we dont need to setup a conversion
+	//Now the state dependant I2C stuff
+	switch(state){			//this runs at 125 Hz
+		case 0:			//Read and Setup a pressure conversion - at 41.66Hz
+			if(b_count++) {	//If the counter is not 0
+				Baro_Read_Full_ADC(&Baro_Pressure);//bmp085 driver - read full ADC
+				Bmp_Simp_Conv(&Baro_Temperature,&Baro_Pressure);//Convert to a pressure in Pa
+				//TODO add a kalman filter to estimate sea level pressure
+				Baro_Alt=Baro_Convert_Pressure(Baro_Pressure);//Convert to an altitude
+				SensorsUsed|=BARO_SENSOR;//we have used the baro sensor
+				Balt=Baro_Pressure;//Baro_Alt;//Note debug
+			}
+			else Bmp_Gettemp();//Temperature data will be ready
+			if(b_count==10) {//Next we setup the new conversion
+				b_count=0;
+				Baro_Setup_Temperature();//Set this up so we read temp every ten iterations
+			}
+			else Baro_Setup_Pressure();
+			break;
+		case 1:			//Read the gyro temperature (presently used for pitot cal) (13.9Hz)
+			if(p_count==1)Gyr_Stat(&Gyro_Data);
+			break;
+		case 2:			
+			if(p_count++==2) {//Also read the pitot output every 9 iterations (13.9Hz) - this also checks for ACK - indicating data
+				if(!Pitot_Read_Conv((uint32_t*)&Pitot_Pressure)) {//Read the pitot - we dont need to setup a conversion
 					Pitot_Pressure=Pitot_Conv((uint32_t)Pitot_Pressure);//Align and sign the adc value - 1lsb=~0.24Pa
-					Airspeed=Pitot_convert_Airspeed(Pitot_Pressure);//TODO- use this to estimate windspeed (atm its using Pa)
-					p_count=0;
+					AirSpeed=Pitot_convert_Airspeed(Pitot_Pressure);//TODO- use this to estimate windspeed (atm its using Pa)
 				}
-			case 2:			//Read the gyro temperature (presently used for pitot cal) (13.9Hz)
-				if(p_count==1)Gyr_Stat(&Gyro_Data);
-		}
-	//}
+				p_count=0;
+			}
+	}
 	if(++state==3)	state=0;
 	//Process the GPS data
 	while(Bytes_In_Buffer(&Gps_Buffer))			//Dump all the data from DMA
@@ -93,6 +99,7 @@ void run_imu() {
 		gps_velocity.y=(float)gps.veast*0.01;
 		gps_velocity.z=(float)gps.vdown*0.01;
 		SensorsUsed|=POS_SENSORS|HORIZ_SENSORS|VERT_SENSORS;//Set the flagbits for the gps update
+		SensorsUsed&=~BARO_SENSOR;			//Never use baro and gps to speed up filter
 		if(!Gps.packetflag)Gps=gps;			//Copy the data over to the main 'thread' if the global unlocked
 		gps.packetflag=0x00;				//Reset the flag
 	}
@@ -115,7 +122,7 @@ void run_imu() {
 	//Run the control loops if we arent controlled from the ground
 	if(!Ground_Flag) {//TODO implement ground control using input capture and sanity check
 		//Pitch setpoint control pid (actually a PI) -- Note- uses dynamic pressure 
-		Run_PID(&(control.pitch_setpoint),&(control.airframe.pitch_setpoint),control.airframe.airspeed-Airspeed,0);
+		Run_PID(&(control.pitch_setpoint),&(control.airframe.pitch_setpoint),control.airframe.airspeed-AirSpeed,0);
 		//Roll setpoint set by heading error
 		Run_PID(&(control.roll_setpoint),&(control.airframe.roll_setpoint),h_offset,0);
 		//Throttle set according to altitude error
