@@ -29,12 +29,12 @@ void run_imu() {
 	static Ubx_Gps_Type gps;		//This is our local copy - theres is also a global, be careful with copying
 	static Gyr_Status Gyro_Data;
 	static Float_Vector ac;			//The accel is not always avalibale - 100hz update
-	static float AirSpeed=0;
+	static float AirSpeed=0,Baro_Alt;
 	//Non Static
 	Vector m;
 	#pragma pack()
 	Float_Vector ma,gy,gps_velocity,gps_position,target_vector,waypoint;
-	float Delta_Time=DELTA_TIME,Baro_Alt=0,x_down,y_down,h_offset;
+	float Delta_Time=DELTA_TIME,x_down,y_down,h_offset;
 	uint16_t SensorsUsed=0;			//We by default have no sensors
 	uint32_t Baro_Pressure;
 	int32_t Baro_Temperature; 
@@ -63,10 +63,9 @@ void run_imu() {
 			if(b_count++) {	//If the counter is not 0
 				Baro_Read_Full_ADC(&Baro_Pressure);//bmp085 driver - read full ADC
 				Bmp_Simp_Conv(&Baro_Temperature,&Baro_Pressure);//Convert to a pressure in Pa
-				//TODO add a kalman filter to estimate sea level pressure
 				Baro_Alt=Baro_Convert_Pressure(Baro_Pressure);//Convert to an altitude
 				SensorsUsed|=BARO_SENSOR;//we have used the baro sensor
-				Balt=Baro_Pressure;//Baro_Alt;//Note debug
+				Balt=Baro_Alt;//Baro_Alt;//Note debug
 			}
 			else Bmp_Gettemp();//Temperature data will be ready
 			if(b_count==10) {//Next we setup the new conversion
@@ -92,14 +91,15 @@ void run_imu() {
 	while(Bytes_In_Buffer(&Gps_Buffer))			//Dump all the data from DMA
 		Gps_Process_Byte((uint8_t)(Pop_From_Buffer(&Gps_Buffer)),&gps);
 	if(gps.packetflag==REQUIRED_DATA){	
-		gps_position.x=((float)gps.latitude-Home_Position.x)*LAT_TO_METERS;//Remember, NED frame
+		gps_position.x=((float)gps.latitude-Home_Position.x)*LAT_TO_METERS;//Remember, NED frame, and gps altitude needs *=-1
 		gps_position.y=((float)gps.longitude-Home_Position.y)*Long_To_Meters_Home;//This is a global set with home position
-		gps_position.z=((float)gps.altitude*0.001)-Home_Position.z;//Home is in raw gps coordinates - apart from altitude in m
+		gps_position.z=-((float)gps.altitude*0.001)-Home_Position.z;//Home is in raw gps coordinates - apart from altitude in m
 		gps_velocity.x=(float)gps.vnorth*0.01;		//Ublox velocity is in cm/s
 		gps_velocity.y=(float)gps.veast*0.01;
 		gps_velocity.z=(float)gps.vdown*0.01;
 		SensorsUsed|=POS_SENSORS|HORIZ_SENSORS|VERT_SENSORS;//Set the flagbits for the gps update
-		SensorsUsed&=~BARO_SENSOR;			//Never use baro and gps to speed up filter
+		//Correct Sea level pressure TODO make more kalman filtery to estimate sea level pressure
+		Sea_Level_Pressure+=12.25*(gps.altitude*0.001-Baro_Alt)*0.02;//At moment uses a fixed gain of 0.02/200ms iteration period
 		if(!Gps.packetflag)Gps=gps;			//Copy the data over to the main 'thread' if the global unlocked
 		gps.packetflag=0x00;				//Reset the flag
 	}
