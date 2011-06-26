@@ -23,7 +23,7 @@ extern volatile float Balt;
 
 void run_imu() {
 	//Static variables
-	static uint32_t state=0,p_count=0,b_count=0;//State allows the I2C comms to be broken down between seperate calls
+	static uint32_t state=0,p_count=0,b_count=1;//State allows the I2C comms to be broken down between seperate calls
 	static Control_type control;		//The control structure
 	#pragma pack(1)				/*make sure these are packed*/
 	static Ubx_Gps_Type gps;		//This is our local copy - theres is also a global, be careful with copying
@@ -60,12 +60,12 @@ void run_imu() {
 	//Now the state dependant I2C stuff
 	switch(state){			//this runs at 125 Hz
 		case 0:			//Read and Setup a pressure conversion - at 41.66Hz
-			if(b_count++) {	//If the counter is not 0
+			if(b_count++) {	//If the counter is !0 - it is intialised as 1, and the bmp085 has to have been setup for press
 				Baro_Read_Full_ADC(&Baro_Pressure);//bmp085 driver - read full ADC
 				Bmp_Simp_Conv(&Baro_Temperature,&Baro_Pressure);//Convert to a pressure in Pa
-				Baro_Alt=Baro_Convert_Pressure(Baro_Pressure);//Convert to an altitude
+				Baro_Alt=Baro_Convert_Pressure(Baro_Pressure);//Convert to an altitude - relative to GPS geoid
 				SensorsUsed|=BARO_SENSOR;//we have used the baro sensor
-				Balt=Baro_Alt;//Baro_Alt;//Note debug
+				Balt=Baro_Alt;//Note debug
 			}
 			else Bmp_Gettemp();//Temperature data will be ready
 			if(b_count==10) {//Next we setup the new conversion
@@ -99,14 +99,14 @@ void run_imu() {
 		gps_velocity.z=(float)gps.vdown*0.01;
 		SensorsUsed|=POS_SENSORS|HORIZ_SENSORS|VERT_SENSORS;//Set the flagbits for the gps update
 		//Correct Sea level pressure TODO make more kalman filtery to estimate sea level pressure
-		Sea_Level_Pressure+=12.25*(gps.altitude*0.001-Baro_Alt)*0.02;//At moment uses a fixed gain of 0.02/200ms iteration period
+		Sea_Level_Pressure+=12.25*(gps.altitude*0.001-Baro_Alt)*0.01;//At moment uses a fixed gain of 0.01/200ms iteration period
 		if(!Gps.packetflag)Gps=gps;			//Copy the data over to the main 'thread' if the global unlocked
 		gps.packetflag=0x00;				//Reset the flag
 	}
 	//Run the EKF - we feed it vector pointers but it expects float arrays - alignment has to be correct
 	INSStatePrediction((float*)&gy,(float*)&ac,Delta_Time);	//Run the EKF and incorporate the avaliable sensors
 	INSCovariancePrediction(Delta_Time);
-	INSCorrection((float*)&ma,(float*)&gps_position,(float*)&gps_velocity,Baro_Alt,SensorsUsed);
+	INSCorrection((float*)&ma,(float*)&gps_position,(float*)&gps_velocity,Baro_Alt+Home_Position.z,SensorsUsed);
 	if(!Nav_Flag) {Nav_Global=Nav; Nav_Flag=(uint32_t)0x01;}//Copy over Nav state if its been unlocked
 	//EKF is finished, time to run the guidance
 	if(New_Waypoint_Flagged) {waypoint=Waypoint_Global; New_Waypoint_Flagged=0;}//Check for any new waypoints that may have been set

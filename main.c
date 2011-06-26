@@ -179,15 +179,21 @@ void Initialisation() {
 		Home_Position.x+=(float)Gps.latitude;
 		Home_Position.y+=(float)Gps.longitude;
 		Home_Position.z-=(float)Gps.altitude;//NED frame - alititude is negative
-		Baro_Read_Full_ADC(&raw_pressure);//grab from baro adc
-		Baro_Setup_Pressure();
-		Bmp_Simp_Conv(&device_temperature,&raw_pressure);//convert to pressure
-		mean_pressure+=raw_pressure;
+		if(err&0x01) {			//On odd iterations we convert the temperature
+			Bmp_Gettemp();
+			Baro_Setup_Pressure();
+		}
+		else {
+			Baro_Read_Full_ADC(&raw_pressure);//grab from baro adc
+			Baro_Setup_Temperature();
+			Bmp_Simp_Conv(&device_temperature,&raw_pressure);//convert to pressure
+			mean_pressure+=raw_pressure;
+		}
 	}
 	Home_Position.x/=(float)err;		//Home is in raw units of degrees x 10^7
 	Home_Position.y/=(float)err;
 	Home_Position.z/=((float)err*1000.0);	//Find average position - note altitude converted to meters
-	mean_pressure/=(float)err;		//Average pressure in pascals
+	mean_pressure/=(float)(err>>1);		//Average pressure in pascals
 	Long_To_Meters_Home=LAT_TO_METERS*cos(UBX_DEG_TO_RADS*Home_Position.x);
 	printf("Home position set\r\n");
 	//Init the ekf, must do this before the mag model
@@ -212,8 +218,8 @@ void Initialisation() {
 	INSSetState(Zeros,Zeros,q,Zeros);	//Home position is defined as the origin
 	//Use the Baro output to find sea level pressure, remeber home altitude is negative
 	printf("Baro pressure is %f Pascals, temperature is %f C\r\n",mean_pressure,(float)device_temperature/10.0);
-	//Sea_Level_Pressure=mean_pressure*pow((1+2.255808e-5*Home_Position.z),-5.255);//convert to sea level pressure -bmp085 datasheet
-	Sea_Level_Pressure=mean_pressure;	//Set home position (Down=0) to the reference zero altitude
+	Sea_Level_Pressure=mean_pressure*pow((1+2.255808e-5*Home_Position.z),-5.255);//convert to sea level pressure -bmp085 datasheet
+	//Sea_Level_Pressure=mean_pressure;	//Set home position (Down=0) to the reference zero altitude
 	printf("Sea level pressure is %f\r\n",Sea_Level_Pressure);
 	//Try initialising the uSD card and mounting the filesystem - if there is no card inserted it will error when we try to use files/dir
 	RTC_init;				//initialise the RTC, turning on the BKP domain

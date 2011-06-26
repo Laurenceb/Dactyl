@@ -103,11 +103,11 @@ void INSGPSInit()		//pretty much just a place holder for now
 	Q[6] = Q[7] = Q[8] = 2e-9;	// gyro bias random walk variance (rad/s^2)^2
 
 	R[0] = R[1] = 0.004;	// High freq GPS horizontal position noise variance (m^2)
-	R[2] = 25;		// High freq GPS vertical position noise variance (m^2)
+	R[2] = 20;		// High freq GPS vertical position noise variance (m^2)
 	R[3] = R[4] = 0.004;	// High freq GPS horizontal velocity noise variance (m/s)^2
-	R[5] = 0.036;		// High freq GPS vertical velocity noise variance (m/s)^2
+	R[5] = 0.04;		// High freq GPS vertical velocity noise variance (m/s)^2
 	R[6] = R[7] = R[8] = 0.005;	// magnetometer unit vector noise variance
-	R[9] = .05;		// High freq altimeter noise variance (m^2)
+	R[9] = .07;		// High freq altimeter noise variance (m^2)
 }
 
 void INSResetP(float PDiag[NUMX])
