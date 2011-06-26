@@ -65,7 +65,6 @@ void run_imu() {
 				Bmp_Simp_Conv(&Baro_Temperature,&Baro_Pressure);//Convert to a pressure in Pa
 				Baro_Alt=Baro_Convert_Pressure(Baro_Pressure);//Convert to an altitude - relative to GPS geoid
 				SensorsUsed|=BARO_SENSOR;//we have used the baro sensor
-				Balt=Baro_Alt;//Note debug
 			}
 			else Bmp_Gettemp();//Temperature data will be ready
 			if(b_count==10) {//Next we setup the new conversion
@@ -82,6 +81,7 @@ void run_imu() {
 				if(!Pitot_Read_Conv((uint32_t*)&Pitot_Pressure)) {//Read the pitot - we dont need to setup a conversion
 					Pitot_Pressure=Pitot_Conv((uint32_t)Pitot_Pressure);//Align and sign the adc value - 1lsb=~0.24Pa
 					AirSpeed=Pitot_convert_Airspeed(Pitot_Pressure);//TODO- use this to estimate windspeed (atm its using Pa)
+					Balt=AirSpeed;//Note debug
 				}
 				p_count=0;
 			}
