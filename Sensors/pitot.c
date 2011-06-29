@@ -53,5 +53,5 @@ int32_t Pitot_Conv(uint32_t d) {
   * @retval Corrected value (float)
   */
 float Pitot_convert_Airspeed(int32_t P) {
-	return (float)(P-PITOT_OFFSET)*PITOT_GAIN;
+	return ((float)(P-PITOT_OFFSET))*PITOT_GAIN;
 }

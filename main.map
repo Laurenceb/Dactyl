@@ -372,7 +372,7 @@ END GROUP
                 0x200016e8                PROVIDE (__cs3_heap_start, _end)
                 0x20005000                PROVIDE (__cs3_heap_end, (__cs3_region_start_ram + __cs3_region_size_ram))
 
-.text           0x08000000    0x16720
+.text           0x08000000    0x16610
  CREATE_OBJECT_SYMBOLS
                 0x08000000                __cs3_region_start_rom = .
  *(.cs3.region-head.rom)
@@ -384,8 +384,8 @@ END GROUP
                 0x08000001                ASSERT ((. != __cs3_interrupt_vector_lanchon_stm32), No interrupt vector)
  *(.rom)
  *(.rom.b)
-                0x08015594                PROVIDE (__cs3_reset_lanchon_stm32, _start)
-                0x08015594                __cs3_reset = __cs3_reset_lanchon_stm32
+                0x080154ac                PROVIDE (__cs3_reset_lanchon_stm32, _start)
+                0x080154ac                __cs3_reset = __cs3_reset_lanchon_stm32
  *(.cs3.reset)
  *(.text .text.* .gnu.linkonce.t.*)
  .text          0x080000ec       0x30 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/thumb2/crtbegin.o
@@ -420,615 +420,614 @@ END GROUP
                 0x08001968                WMM_Geomag
                 0x08001a60                WMM_Initialize
                 0x08001ad8                WMM_GetMagVector
- .text          0x08001c70       0x98 Sensors/pitot.o
+ .text          0x08001c70       0x84 Sensors/pitot.o
                 0x08001c70                Pitot_Conv
                 0x08001c86                Pitot_convert_Airspeed
-                0x08001cb0                Pitot_Read_Conv
-                0x08001cd8                Pitot_Set_Temp_Conv
-                0x08001cf0                Pitot_Set_Press_Conv
- .text          0x08001d08      0x31c Sensors/ubx.o
-                0x08001d08                Gps_Process_Byte
-                0x08001e74                Get_UBX_Ack
-                0x08001f20                Config_Gps
- .text          0x08002024       0x42 Util/Fatfs/fattime.o
-                0x08002024                get_fattime
- *fill*         0x08002066        0x2 00
- .text          0x08002068     0x1a54 Util/Fatfs/ff.o
-                0x0800208e                clust2sect
-                0x0800213e                f_mount
-                0x0800257c                put_fat
-                0x0800267a                get_fat
-                0x080028ca                f_truncate
-                0x08002b30                f_readdir
-                0x08002b7e                f_getfree
-                0x08002c5e                f_lseek
-                0x08002db0                f_write
-                0x08002f62                f_read
-                0x0800318c                f_sync
-                0x08003242                f_close
-                0x08003450                f_stat
-                0x08003492                f_opendir
-                0x08003500                f_rename
-                0x08003626                f_utime
-                0x08003688                f_chmod
-                0x080036e4                f_unlink
-                0x080037ac                f_mkdir
-                0x0800395e                f_open
- .text          0x08003abc      0x2e4 Util/Fatfs/rtc.o
-                0x08003b98                my_RTC_SetCounter
-                0x08003bba                rtc_settime
-                0x08003c8c                rtc_init
-                0x08003d26                rtc_gettime
- .text          0x08003da0      0x7cc Util/Fatfs/sd_spi_stm32.o
-                0x08003dc8                disk_status
-                0x08003dd8                disk_timerproc
-                0x08004058                disk_initialize
-                0x080041dc                disk_ioctl
-                0x080043e0                disk_read
-                0x080044c0                disk_write
- *fill*         0x0800456c        0x4 00
- .text          0x08004570      0x630 Util/coords.o
-                0x08004570                CrossProduct
-                0x080045ce                quat_inverse
-                0x080045ea                quat_copy
-                0x08004600                quat_mult
-                0x0800470a                rot_mult
-                0x080047aa                VectorMagnitude
-                0x080047ec                RotFrom2Vectors
-                0x080049b8                R2Quaternion
- .text          0x08004ba0       0x16 Util/delay.o
-                0x08004ba0                Delay
- *fill*         0x08004bb6        0x2 00
- .text          0x08004bb8      0x57c Util/rprintf.o
-                0x08004bb8                rprintfInit
-                0x08004bc4                rprintfChar
-                0x08004be4                rprintfStr
-                0x08004bfc                rprintfStrLen
-                0x08004c32                rprintfCRLF
-                0x08004c36                rprintfu04
-                0x08004c40                rprintfu08
-                0x08004c52                rprintfu16
-                0x08004c64                rprintfu32
-                0x08004c76                rprintfNum
-                0x08004d2c                rprintfFloat
-                0x08004de4                Isdigit
-                0x08004df2                atoiRamRom
-                0x08004e18                rStrLen
-                0x08004e28                rprintf2RamRom
- .text          0x08005134       0x20 Util/time.o
-                0x08005134                Set_RTC_From_GPS
- .text          0x08005154       0xd8 dma.o
-                0x08005154                Pop_From_Buffer
-                0x08005170                Bytes_In_Buffer
-                0x0800519c                Get_From_Buffer
-                0x080051d0                Flush_Buffer
-                0x080051e2                DMA_Configuration
- .text          0x0800522c      0x1e0 gpio.o
-                0x0800522c                Get_MEMS_DRDY
-                0x08005254                MEMS_Status_Configuration
-                0x08005290                Aux_Devices_Configuration
-                0x080052ec                SPI_Control_Configuration
-                0x08005354                GPS_IO_Configuration
-                0x080053a0                GPIO_Config_AF_Periferals
-                0x080053f4                All_IO_Configuration
- .text          0x0800540c      0x440 i2c.o
-                0x0800540c                Flipbytes
-                0x08005416                I2C_Read
-                0x08005664                Gyr_Stat
-                0x0800567e                Gyr_Read
-                0x080056a4                Mag_Read
-                0x080056ca                I2C_Conf
-                0x0800578c                Gyr_Init
-                0x080057c4                Acc_Init
-                0x080057e0                Mag_Init
-                0x080057fc                I2C_Config
- .text          0x0800584c       0x84 interrupts.o
-                0x0800584c                NMI_Handler
-                0x0800584e                HardFault_Handler
-                0x08005850                MemManage_Handler
-                0x08005852                BusFault_Handler
-                0x08005854                UsageFault_Handler
-                0x08005856                SVC_Handler
-                0x08005858                DebugMon_Handler
-                0x0800585a                PendSV_Handler
-                0x0800585c                SysTick_Handler
-                0x0800585e                EXTI9_5_IRQHandler
-                0x08005878                EXTI6_Config
+                0x08001c9c                Pitot_Read_Conv
+                0x08001cc4                Pitot_Set_Temp_Conv
+                0x08001cdc                Pitot_Set_Press_Conv
+ .text          0x08001cf4      0x31c Sensors/ubx.o
+                0x08001cf4                Gps_Process_Byte
+                0x08001e60                Get_UBX_Ack
+                0x08001f0c                Config_Gps
+ .text          0x08002010       0x42 Util/Fatfs/fattime.o
+                0x08002010                get_fattime
+ *fill*         0x08002052        0x2 00
+ .text          0x08002054     0x1a54 Util/Fatfs/ff.o
+                0x0800207a                clust2sect
+                0x0800212a                f_mount
+                0x08002568                put_fat
+                0x08002666                get_fat
+                0x080028b6                f_truncate
+                0x08002b1c                f_readdir
+                0x08002b6a                f_getfree
+                0x08002c4a                f_lseek
+                0x08002d9c                f_write
+                0x08002f4e                f_read
+                0x08003178                f_sync
+                0x0800322e                f_close
+                0x0800343c                f_stat
+                0x0800347e                f_opendir
+                0x080034ec                f_rename
+                0x08003612                f_utime
+                0x08003674                f_chmod
+                0x080036d0                f_unlink
+                0x08003798                f_mkdir
+                0x0800394a                f_open
+ .text          0x08003aa8      0x2e4 Util/Fatfs/rtc.o
+                0x08003b84                my_RTC_SetCounter
+                0x08003ba6                rtc_settime
+                0x08003c78                rtc_init
+                0x08003d12                rtc_gettime
+ .text          0x08003d8c      0x7cc Util/Fatfs/sd_spi_stm32.o
+                0x08003db4                disk_status
+                0x08003dc4                disk_timerproc
+                0x08004044                disk_initialize
+                0x080041c8                disk_ioctl
+                0x080043cc                disk_read
+                0x080044ac                disk_write
+ .text          0x08004558      0x630 Util/coords.o
+                0x08004558                CrossProduct
+                0x080045b6                quat_inverse
+                0x080045d2                quat_copy
+                0x080045e8                quat_mult
+                0x080046f2                rot_mult
+                0x08004792                VectorMagnitude
+                0x080047d4                RotFrom2Vectors
+                0x080049a0                R2Quaternion
+ .text          0x08004b88       0x16 Util/delay.o
+                0x08004b88                Delay
+ *fill*         0x08004b9e        0x2 00
+ .text          0x08004ba0      0x57c Util/rprintf.o
+                0x08004ba0                rprintfInit
+                0x08004bac                rprintfChar
+                0x08004bcc                rprintfStr
+                0x08004be4                rprintfStrLen
+                0x08004c1a                rprintfCRLF
+                0x08004c1e                rprintfu04
+                0x08004c28                rprintfu08
+                0x08004c3a                rprintfu16
+                0x08004c4c                rprintfu32
+                0x08004c5e                rprintfNum
+                0x08004d14                rprintfFloat
+                0x08004dcc                Isdigit
+                0x08004dda                atoiRamRom
+                0x08004e00                rStrLen
+                0x08004e10                rprintf2RamRom
+ .text          0x0800511c       0x20 Util/time.o
+                0x0800511c                Set_RTC_From_GPS
+ .text          0x0800513c       0xd8 dma.o
+                0x0800513c                Pop_From_Buffer
+                0x08005158                Bytes_In_Buffer
+                0x08005184                Get_From_Buffer
+                0x080051b8                Flush_Buffer
+                0x080051ca                DMA_Configuration
+ .text          0x08005214      0x1e0 gpio.o
+                0x08005214                Get_MEMS_DRDY
+                0x0800523c                MEMS_Status_Configuration
+                0x08005278                Aux_Devices_Configuration
+                0x080052d4                SPI_Control_Configuration
+                0x0800533c                GPS_IO_Configuration
+                0x08005388                GPIO_Config_AF_Periferals
+                0x080053dc                All_IO_Configuration
+ .text          0x080053f4      0x440 i2c.o
+                0x080053f4                Flipbytes
+                0x080053fe                I2C_Read
+                0x0800564c                Gyr_Stat
+                0x08005666                Gyr_Read
+                0x0800568c                Mag_Read
+                0x080056b2                I2C_Conf
+                0x08005774                Gyr_Init
+                0x080057ac                Acc_Init
+                0x080057c8                Mag_Init
+                0x080057e4                I2C_Config
+ .text          0x08005834       0x84 interrupts.o
+                0x08005834                NMI_Handler
+                0x08005836                HardFault_Handler
+                0x08005838                MemManage_Handler
+                0x0800583a                BusFault_Handler
+                0x0800583c                UsageFault_Handler
+                0x0800583e                SVC_Handler
+                0x08005840                DebugMon_Handler
+                0x08005842                PendSV_Handler
+                0x08005844                SysTick_Handler
+                0x08005846                EXTI9_5_IRQHandler
+                0x08005860                EXTI6_Config
  .text.Default_Handler
-                0x080058d0        0x2 lib/CMSIS_CM3/startup/gcc/startup_stm32f10x_md.o
-                0x080058d0                EXTI2_IRQHandler
-                0x080058d0                TIM1_CC_IRQHandler
-                0x080058d0                PVD_IRQHandler
-                0x080058d0                EXTI3_IRQHandler
-                0x080058d0                EXTI0_IRQHandler
-                0x080058d0                I2C2_EV_IRQHandler
-                0x080058d0                ADC1_2_IRQHandler
-                0x080058d0                SPI1_IRQHandler
-                0x080058d0                TAMPER_IRQHandler
-                0x080058d0                DMA1_Channel4_IRQHandler
-                0x080058d0                USART3_IRQHandler
-                0x080058d0                RTC_IRQHandler
-                0x080058d0                DMA1_Channel7_IRQHandler
-                0x080058d0                CAN1_RX1_IRQHandler
-                0x080058d0                TIM4_IRQHandler
-                0x080058d0                I2C1_EV_IRQHandler
-                0x080058d0                DMA1_Channel6_IRQHandler
-                0x080058d0                TIM3_IRQHandler
-                0x080058d0                RCC_IRQHandler
-                0x080058d0                TIM1_TRG_COM_IRQHandler
-                0x080058d0                DMA1_Channel1_IRQHandler
-                0x080058d0                Default_Handler
-                0x080058d0                EXTI15_10_IRQHandler
-                0x080058d0                SPI2_IRQHandler
-                0x080058d0                DMA1_Channel5_IRQHandler
-                0x080058d0                EXTI4_IRQHandler
-                0x080058d0                USB_LP_CAN1_RX0_IRQHandler
-                0x080058d0                USB_HP_CAN1_TX_IRQHandler
-                0x080058d0                DMA1_Channel3_IRQHandler
-                0x080058d0                TIM1_UP_IRQHandler
-                0x080058d0                WWDG_IRQHandler
-                0x080058d0                TIM2_IRQHandler
-                0x080058d0                TIM1_BRK_IRQHandler
-                0x080058d0                EXTI1_IRQHandler
-                0x080058d0                RTCAlarm_IRQHandler
-                0x080058d0                USART2_IRQHandler
-                0x080058d0                I2C2_ER_IRQHandler
-                0x080058d0                DMA1_Channel2_IRQHandler
-                0x080058d0                CAN1_SCE_IRQHandler
-                0x080058d0                FLASH_IRQHandler
-                0x080058d0                USART1_IRQHandler
-                0x080058d0                I2C1_ER_IRQHandler
-                0x080058d0                USBWakeUp_IRQHandler
- *fill*         0x080058d2        0x2 00
- .text          0x080058d4       0xf8 lib/CMSIS_CM3/system_stm32f10x.o
-                0x080058d4                SystemInit
- *fill*         0x080059cc        0x4 00
- .text          0x080059d0      0x780 main.o
-                0x080059d0                Initialisation
-                0x08006034                main
- .text          0x08006150      0x17c usart.o
-                0x08006150                Default_Usart_Config
-                0x08006162                __gps_send_char
-                0x08006180                Gps_Send_Str
-                0x08006198                Gps_Send_Utf8
-                0x080061b2                __usart_send_char
-                0x080061d0                Usart_Send_Str
-                0x080061e8                USART2_reconf
-                0x0800622c                Usarts_Init
- *fill*         0x080062cc        0x4 00
- .text          0x080062d0     0x8878 Control/ekf.o
-                0x080062d0                ins_get_num_states
-                0x080062d4                INSGPSInit
-                0x08006404                INSResetP
-                0x08006444                INSSetState
-                0x080064a8                INSPosVelReset
-                0x08006530                INSSetPosVelVar
-                0x0800654c                INSSetGyroBias
-                0x08006568                INSSetAccelVar
-                0x08006584                INSSetGyroVar
-                0x080065a0                INSSetMagVar
-                0x080065bc                INSSetMagNorth
-                0x080065d4                CovariancePrediction
-                0x0800d91e                INSCovariancePrediction
-                0x0800d944                SerialUpdate
-                0x0800da9c                StateEq
-                0x0800dd90                RungeKutta
-                0x0800deb8                LinearizeFG
-                0x0800e32c                MeasurementEq
-                0x0800e4ea                LinearizeH
-                0x0800e7b4                INSCorrection
-                0x0800e964                VelBaroCorrection
-                0x0800e980                GpsMagCorrection
-                0x0800e998                FullCorrection
-                0x0800e9a6                GpsBaroCorrection
-                0x0800e9c4                MagVelBaroCorrection
-                0x0800e9e0                MagCorrection
-                0x0800ea00                INSStatePrediction
- .text          0x0800eb48      0x5d0 Control/imu.o
-                0x0800eb48                run_imu
- .text          0x0800f118       0x6a Control/loops.o
-                0x0800f118                Run_PID
-                0x0800f17a                Reset_PID
- .text          0x0800f182       0xc8 Control/sensorcal.o
-                0x0800f182                Calibrate_3
- *fill*         0x0800f24a        0x2 00
- .text          0x0800f24c       0xc0 lib/STM32F10x_StdPeriph_Driver/libstm32fw.a(misc.o)
-                0x0800f24c                NVIC_PriorityGroupConfig
-                0x0800f260                NVIC_Init
-                0x0800f2c4                NVIC_SetVectorTable
-                0x0800f2d8                NVIC_SystemLPConfig
-                0x0800f2f4                SysTick_CLKSourceConfig
- .text          0x0800f30c       0xe4 lib/STM32F10x_StdPeriph_Driver/libstm32fw.a(stm32f10x_bkp.o)
-                0x0800f30c                BKP_TamperPinLevelConfig
-                0x0800f318                BKP_TamperPinCmd
-                0x0800f324                BKP_ITConfig
-                0x0800f330                BKP_RTCOutputConfig
-                0x0800f348                BKP_SetRTCCalibrationValue
-                0x0800f360                BKP_WriteBackupRegister
-                0x0800f37c                BKP_ReadBackupRegister
-                0x0800f39c                BKP_GetFlagStatus
-                0x0800f3a8                BKP_ClearFlag
-                0x0800f3bc                BKP_GetITStatus
-                0x0800f3c8                BKP_ClearITPendingBit
-                0x0800f3dc                BKP_DeInit
- .text          0x0800f3f0      0x1d4 lib/STM32F10x_StdPeriph_Driver/libstm32fw.a(stm32f10x_dma.o)
-                0x0800f3f0                DMA_DeInit
-                0x0800f4d0                DMA_Init
-                0x0800f510                DMA_StructInit
-                0x0800f52a                DMA_Cmd
-                0x0800f53e                DMA_ITConfig
-                0x0800f550                DMA_GetCurrDataCounter
-                0x0800f556                DMA_GetFlagStatus
-                0x0800f574                DMA_ClearFlag
-                0x0800f58c                DMA_GetITStatus
-                0x0800f5ac                DMA_ClearITPendingBit
- .text          0x0800f5c4      0x104 lib/STM32F10x_StdPeriph_Driver/libstm32fw.a(stm32f10x_exti.o)
-                0x0800f5c4                EXTI_DeInit
-                0x0800f5e0                EXTI_Init
-                0x0800f660                EXTI_StructInit
-                0x0800f66e                EXTI_GenerateSWInterrupt
-                0x0800f680                EXTI_GetFlagStatus
-                0x0800f694                EXTI_ClearFlag
-                0x0800f6a0                EXTI_GetITStatus
-                0x0800f6bc                EXTI_ClearITPendingBit
- .text          0x0800f6c8      0x29c lib/STM32F10x_StdPeriph_Driver/libstm32fw.a(stm32f10x_gpio.o)
-                0x0800f6c8                GPIO_Init
-                0x0800f780                GPIO_StructInit
-                0x0800f790                GPIO_ReadInputDataBit
-                0x0800f79c                GPIO_ReadInputData
-                0x0800f7a2                GPIO_ReadOutputDataBit
-                0x0800f7ae                GPIO_ReadOutputData
-                0x0800f7b4                GPIO_SetBits
-                0x0800f7b8                GPIO_ResetBits
-                0x0800f7bc                GPIO_WriteBit
-                0x0800f7c6                GPIO_Write
-                0x0800f7ca                GPIO_PinLockConfig
-                0x0800f7da                GPIO_EventOutputConfig
-                0x0800f7f8                GPIO_EventOutputCmd
-                0x0800f804                GPIO_PinRemapConfig
-                0x0800f864                GPIO_EXTILineConfig
-                0x0800f898                GPIO_ETH_MediaInterfaceConfig
-                0x0800f8a4                GPIO_AFIODeInit
-                0x0800f8ba                GPIO_DeInit
- .text          0x0800f964      0x3cc lib/STM32F10x_StdPeriph_Driver/libstm32fw.a(stm32f10x_i2c.o)
-                0x0800f964                I2C_StructInit
-                0x0800f980                I2C_Cmd
-                0x0800f99a                I2C_DMACmd
-                0x0800f9b4                I2C_DMALastTransferCmd
-                0x0800f9ce                I2C_GenerateSTART
-                0x0800f9e8                I2C_GenerateSTOP
-                0x0800fa02                I2C_AcknowledgeConfig
-                0x0800fa1c                I2C_OwnAddress2Config
-                0x0800fa32                I2C_DualAddressCmd
-                0x0800fa4c                I2C_GeneralCallCmd
-                0x0800fa66                I2C_ITConfig
-                0x0800fa7c                I2C_SendData
-                0x0800fa80                I2C_ReceiveData
-                0x0800fa86                I2C_Send7bitAddress
-                0x0800fa96                I2C_ReadRegister
-                0x0800faae                I2C_SoftwareResetCmd
-                0x0800fac8                I2C_SMBusAlertConfig
-                0x0800fae4                I2C_TransmitPEC
-                0x0800fafe                I2C_PECPositionConfig
-                0x0800fb1a                I2C_CalculatePEC
-                0x0800fb34                I2C_GetPEC
-                0x0800fb3c                I2C_ARPCmd
-                0x0800fb56                I2C_StretchClockCmd
-                0x0800fb70                I2C_FastModeDutyCycleConfig
-                0x0800fb8c                I2C_GetLastEvent
-                0x0800fb9c                I2C_CheckEvent
-                0x0800fbb4                I2C_GetFlagStatus
-                0x0800fbe8                I2C_ClearFlag
-                0x0800fbf0                I2C_GetITStatus
-                0x0800fc0c                I2C_ClearITPendingBit
-                0x0800fc14                I2C_Init
-                0x0800fcfc                I2C_DeInit
- .text          0x0800fd30       0xd0 lib/STM32F10x_StdPeriph_Driver/libstm32fw.a(stm32f10x_pwr.o)
-                0x0800fd34                PWR_BackupAccessCmd
-                0x0800fd40                PWR_PVDCmd
-                0x0800fd4c                PWR_PVDLevelConfig
-                0x0800fd60                PWR_WakeUpPinCmd
-                0x0800fd6c                PWR_EnterSTOPMode
-                0x0800fd98                PWR_EnterSTANDBYMode
-                0x0800fdc0                PWR_GetFlagStatus
-                0x0800fdd4                PWR_ClearFlag
-                0x0800fde4                PWR_DeInit
- .text          0x0800fe00      0x384 lib/STM32F10x_StdPeriph_Driver/libstm32fw.a(stm32f10x_rcc.o)
-                0x0800fe00                RCC_DeInit
-                0x0800fe40                RCC_HSEConfig
-                0x0800fe78                RCC_AdjustHSICalibrationValue
-                0x0800fe8c                RCC_HSICmd
-                0x0800fe98                RCC_PLLConfig
-                0x0800feb0                RCC_PLLCmd
-                0x0800febc                RCC_SYSCLKConfig
-                0x0800fed0                RCC_GetSYSCLKSource
-                0x0800fee0                RCC_HCLKConfig
-                0x0800fef4                RCC_PCLK1Config
-                0x0800ff08                RCC_PCLK2Config
-                0x0800ff1c                RCC_ITConfig
-                0x0800ff38                RCC_USBCLKConfig
-                0x0800ff44                RCC_ADCCLKConfig
-                0x0800ff58                RCC_LSEConfig
-                0x0800ff78                RCC_LSICmd
-                0x0800ff84                RCC_RTCCLKConfig
-                0x0800ff94                RCC_RTCCLKCmd
-                0x0800ffa0                RCC_GetClocksFreq
-                0x08010050                RCC_AHBPeriphClockCmd
-                0x0801006c                RCC_APB2PeriphClockCmd
-                0x08010088                RCC_APB1PeriphClockCmd
-                0x080100a4                RCC_APB2PeriphResetCmd
-                0x080100c0                RCC_APB1PeriphResetCmd
-                0x080100dc                RCC_BackupResetCmd
-                0x080100e8                RCC_ClockSecuritySystemCmd
-                0x080100f4                RCC_MCOConfig
-                0x08010100                RCC_GetFlagStatus
-                0x08010128                RCC_WaitForHSEStartUp
-                0x08010154                RCC_ClearFlag
-                0x08010164                RCC_GetITStatus
-                0x08010178                RCC_ClearITPendingBit
- .text          0x08010184      0x15c lib/STM32F10x_StdPeriph_Driver/libstm32fw.a(stm32f10x_rtc.o)
-                0x08010184                RTC_ITConfig
-                0x080101a4                RTC_EnterConfigMode
-                0x080101b8                RTC_ExitConfigMode
-                0x080101cc                RTC_GetCounter
-                0x080101e0                RTC_SetCounter
-                0x080101fc                RTC_SetPrescaler
-                0x0801021c                RTC_SetAlarm
-                0x08010238                RTC_GetDivider
-                0x08010250                RTC_WaitForLastTask
-                0x08010260                RTC_WaitForSynchro
-                0x08010280                RTC_GetFlagStatus
-                0x08010294                RTC_ClearFlag
-                0x080102a8                RTC_GetITStatus
-                0x080102cc                RTC_ClearITPendingBit
- .text          0x080102e0      0x2f8 lib/STM32F10x_StdPeriph_Driver/libstm32fw.a(stm32f10x_spi.o)
-                0x080102e0                SPI_Init
-                0x0801033a                SPI_StructInit
-                0x08010354                I2S_StructInit
-                0x08010368                SPI_Cmd
-                0x08010382                I2S_Cmd
-                0x0801039c                SPI_I2S_ITConfig
-                0x080103ba                SPI_I2S_DMACmd
-                0x080103d0                SPI_I2S_SendData
-                0x080103d4                SPI_I2S_ReceiveData
-                0x080103da                SPI_NSSInternalSoftwareConfig
-                0x080103f4                SPI_SSOutputCmd
-                0x0801040e                SPI_DataSizeConfig
-                0x08010426                SPI_TransmitCRC
-                0x08010432                SPI_CalculateCRC
-                0x0801044c                SPI_GetCRC
-                0x0801045c                SPI_GetCRCPolynomial
-                0x08010462                SPI_BiDirectionalLineConfig
-                0x0801047e                SPI_I2S_GetFlagStatus
-                0x0801048a                SPI_I2S_ClearFlag
-                0x08010492                SPI_I2S_GetITStatus
-                0x080104bc                SPI_I2S_ClearITPendingBit
-                0x080104cc                I2S_Init
-                0x08010576                SPI_I2S_DeInit
- .text          0x080105d8      0x384 lib/STM32F10x_StdPeriph_Driver/libstm32fw.a(stm32f10x_usart.o)
-                0x080105d8                USART_StructInit
-                0x080105f0                USART_ClockInit
-                0x0801061a                USART_ClockStructInit
-                0x08010626                USART_Cmd
-                0x08010640                USART_ITConfig
-                0x08010676                USART_DMACmd
-                0x0801068c                USART_SetAddress
-                0x080106a4                USART_WakeUpConfig
-                0x080106bc                USART_ReceiverWakeUpCmd
-                0x080106d6                USART_LINBreakDetectLengthConfig
-                0x080106ee                USART_LINCmd
-                0x08010708                USART_SendData
-                0x08010710                USART_ReceiveData
-                0x08010718                USART_SendBreak
-                0x08010724                USART_SetGuardTime
-                0x08010736                USART_SetPrescaler
-                0x0801074a                USART_SmartCardCmd
-                0x08010764                USART_SmartCardNACKCmd
-                0x0801077e                USART_HalfDuplexCmd
-                0x08010798                USART_IrDAConfig
-                0x080107b0                USART_IrDACmd
-                0x080107ca                USART_GetFlagStatus
-                0x080107d6                USART_ClearFlag
-                0x080107de                USART_GetITStatus
-                0x08010824                USART_ClearITPendingBit
-                0x08010832                USART_Init
-                0x080108c4                USART_DeInit
- .text          0x0801095c       0x98 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-s_cos.o)
-                0x0801095c                cos
- .text          0x080109f4       0xa0 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-s_sin.o)
-                0x080109f4                sin
- .text          0x08010a94       0xac /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-w_asin.o)
-                0x08010a94                asin
- .text          0x08010b40        0x4 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-w_atan2.o)
-                0x08010b40                atan2
- .text          0x08010b44      0x358 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-w_pow.o)
-                0x08010b44                pow
- .text          0x08010e9c       0xac /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-w_sqrt.o)
-                0x08010e9c                sqrt
- .text          0x08010f48      0x420 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-e_asin.o)
-                0x08010f48                __ieee754_asin
- .text          0x08011368      0x220 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-e_atan2.o)
-                0x08011368                __ieee754_atan2
- .text          0x08011588      0xb60 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-e_pow.o)
-                0x08011588                __ieee754_pow
- .text          0x080120e8      0x418 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-e_rem_pio2.o)
-                0x080120e8                __ieee754_rem_pio2
- .text          0x08012500      0x1dc /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-e_sqrt.o)
-                0x08012500                __ieee754_sqrt
- *fill*         0x080126dc        0x4 00
- .text          0x080126e0      0x250 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-k_cos.o)
-                0x080126e0                __kernel_cos
- .text          0x08012930      0x7b4 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-k_rem_pio2.o)
-                0x08012930                __kernel_rem_pio2
- *fill*         0x080130e4        0x4 00
- .text          0x080130e8      0x170 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-k_sin.o)
-                0x080130e8                __kernel_sin
- .text          0x08013258      0x348 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-s_atan.o)
-                0x08013258                atan
- .text          0x080135a0        0x8 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-s_fabs.o)
-                0x080135a0                fabs
- .text          0x080135a8       0x10 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-s_finite.o)
-                0x080135a8                finite
- .text          0x080135b8      0x128 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-s_floor.o)
-                0x080135b8                floor
- .text          0x080136e0       0x1c /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-s_isnand.o)
-                0x080136e0                __isnand
- .text          0x080136fc        0x4 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-s_matherr.o)
-                0x080136fc                matherr
- .text          0x08013700        0xc /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-s_nan.o)
-                0x08013700                nan
- .text          0x0801370c      0x134 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-s_rint.o)
-                0x0801370c                rint
- .text          0x08013840      0x118 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-s_scalbn.o)
-                0x08013840                scalbn
- .text          0x08013958       0x18 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-s_copysign.o)
-                0x08013958                copysign
- .text          0x08013970      0x2b0 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/thumb2/libgcc.a(_divsi3.o)
-                0x08013970                __aeabi_idiv
-                0x08013970                __divsi3
-                0x08013c04                __aeabi_idivmod
- .text          0x08013c20        0x4 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/thumb2/libgcc.a(_dvmd_tls.o)
-                0x08013c20                __aeabi_ldiv0
-                0x08013c20                __aeabi_idiv0
- .text          0x08013c24      0x370 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/thumb2/libgcc.a(_arm_addsubdf3.o)
-                0x08013c24                __aeabi_drsub
-                0x08013c2c                __aeabi_dsub
-                0x08013c2c                __subdf3
-                0x08013c30                __adddf3
-                0x08013c30                __aeabi_dadd
-                0x08013ea8                __aeabi_ui2d
-                0x08013ea8                __floatunsidf
-                0x08013ec8                __floatsidf
-                0x08013ec8                __aeabi_i2d
-                0x08013eec                __extendsfdf2
-                0x08013eec                __aeabi_f2d
-                0x08013f28                __aeabi_ul2d
-                0x08013f28                __floatundidf
-                0x08013f38                __floatdidf
-                0x08013f38                __aeabi_l2d
- .text          0x08013f94      0x424 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/thumb2/libgcc.a(_arm_muldivdf3.o)
-                0x08013f94                __aeabi_dmul
-                0x08013f94                __muldf3
-                0x080141e8                __aeabi_ddiv
-                0x080141e8                __divdf3
- .text          0x080143b8      0x110 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/thumb2/libgcc.a(_arm_cmpdf2.o)
-                0x080143b8                __gtdf2
-                0x080143b8                __gedf2
-                0x080143c0                __ltdf2
-                0x080143c0                __ledf2
-                0x080143c8                __cmpdf2
-                0x080143c8                __eqdf2
-                0x080143c8                __nedf2
-                0x08014444                __aeabi_cdrcmple
-                0x08014454                __aeabi_cdcmple
-                0x08014454                __aeabi_cdcmpeq
-                0x08014464                __aeabi_dcmpeq
-                0x08014478                __aeabi_dcmplt
-                0x0801448c                __aeabi_dcmple
-                0x080144a0                __aeabi_dcmpge
-                0x080144b4                __aeabi_dcmpgt
- .text          0x080144c8       0x50 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/thumb2/libgcc.a(_arm_fixdfsi.o)
-                0x080144c8                __fixdfsi
-                0x080144c8                __aeabi_d2iz
- .text          0x08014518       0xa0 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/thumb2/libgcc.a(_arm_truncdfsf2.o)
-                0x08014518                __aeabi_d2f
-                0x08014518                __truncdfsf2
- .text          0x080145b8      0x21c /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/thumb2/libgcc.a(_arm_addsubsf3.o)
-                0x080145b8                __aeabi_frsub
-                0x080145c0                __subsf3
-                0x080145c0                __aeabi_fsub
-                0x080145c4                __aeabi_fadd
-                0x080145c4                __addsf3
-                0x08014724                __aeabi_ui2f
-                0x08014724                __floatunsisf
-                0x0801472c                __aeabi_i2f
-                0x0801472c                __floatsisf
-                0x08014748                __floatundisf
-                0x08014748                __aeabi_ul2f
-                0x08014758                __floatdisf
-                0x08014758                __aeabi_l2f
- .text          0x080147d4      0x2a0 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/thumb2/libgcc.a(_arm_muldivsf3.o)
-                0x080147d4                __mulsf3
-                0x080147d4                __aeabi_fmul
-                0x0801493c                __divsf3
-                0x0801493c                __aeabi_fdiv
- .text          0x08014a74       0xec /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/thumb2/libgcc.a(_arm_cmpsf2.o)
-                0x08014a74                __gtsf2
-                0x08014a74                __gesf2
-                0x08014a7c                __lesf2
-                0x08014a7c                __ltsf2
-                0x08014a84                __nesf2
-                0x08014a84                __eqsf2
-                0x08014a84                __cmpsf2
-                0x08014ae4                __aeabi_cfrcmple
-                0x08014aec                __aeabi_cfcmple
-                0x08014aec                __aeabi_cfcmpeq
-                0x08014afc                __aeabi_fcmpeq
-                0x08014b10                __aeabi_fcmplt
-                0x08014b24                __aeabi_fcmple
-                0x08014b38                __aeabi_fcmpge
-                0x08014b4c                __aeabi_fcmpgt
- .text          0x08014b60       0x40 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/thumb2/libgcc.a(_arm_fixunssfsi.o)
-                0x08014b60                __aeabi_f2uiz
-                0x08014b60                __fixunssfsi
- .text          0x08014ba0        0xc /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libc.a(lib_a-errno.o)
-                0x08014ba0                __errno
- .text          0x08014bac       0x20 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libc.a(lib_a-malloc.o)
-                0x08014bac                free
-                0x08014bbc                malloc
- .text          0x08014bcc      0x5a4 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libc.a(lib_a-mallocr.o)
-                0x08014bcc                _malloc_r
- .text          0x08015170        0x8 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libc.a(lib_a-mlock.o)
-                0x08015170                __malloc_lock
-                0x08015174                __malloc_unlock
- .text          0x08015178       0x28 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libc.a(lib_a-sbrkr.o)
-                0x08015178                _sbrk_r
- .text          0x080151a0       0xbc /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libc.a(lib_a-strcpy.o)
-                0x080151a0                strcpy
- .text          0x0801525c      0x268 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libc.a(lib_a-freer.o)
-                0x0801525c                _malloc_trim_r
-                0x08015304                _free_r
- .text          0x080154c4       0x30 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libcs3.a(start_c.o)
-                0x080154c4                __cs3_premain
+                0x080058b8        0x2 lib/CMSIS_CM3/startup/gcc/startup_stm32f10x_md.o
+                0x080058b8                EXTI2_IRQHandler
+                0x080058b8                TIM1_CC_IRQHandler
+                0x080058b8                PVD_IRQHandler
+                0x080058b8                EXTI3_IRQHandler
+                0x080058b8                EXTI0_IRQHandler
+                0x080058b8                I2C2_EV_IRQHandler
+                0x080058b8                ADC1_2_IRQHandler
+                0x080058b8                SPI1_IRQHandler
+                0x080058b8                TAMPER_IRQHandler
+                0x080058b8                DMA1_Channel4_IRQHandler
+                0x080058b8                USART3_IRQHandler
+                0x080058b8                RTC_IRQHandler
+                0x080058b8                DMA1_Channel7_IRQHandler
+                0x080058b8                CAN1_RX1_IRQHandler
+                0x080058b8                TIM4_IRQHandler
+                0x080058b8                I2C1_EV_IRQHandler
+                0x080058b8                DMA1_Channel6_IRQHandler
+                0x080058b8                TIM3_IRQHandler
+                0x080058b8                RCC_IRQHandler
+                0x080058b8                TIM1_TRG_COM_IRQHandler
+                0x080058b8                DMA1_Channel1_IRQHandler
+                0x080058b8                Default_Handler
+                0x080058b8                EXTI15_10_IRQHandler
+                0x080058b8                SPI2_IRQHandler
+                0x080058b8                DMA1_Channel5_IRQHandler
+                0x080058b8                EXTI4_IRQHandler
+                0x080058b8                USB_LP_CAN1_RX0_IRQHandler
+                0x080058b8                USB_HP_CAN1_TX_IRQHandler
+                0x080058b8                DMA1_Channel3_IRQHandler
+                0x080058b8                TIM1_UP_IRQHandler
+                0x080058b8                WWDG_IRQHandler
+                0x080058b8                TIM2_IRQHandler
+                0x080058b8                TIM1_BRK_IRQHandler
+                0x080058b8                EXTI1_IRQHandler
+                0x080058b8                RTCAlarm_IRQHandler
+                0x080058b8                USART2_IRQHandler
+                0x080058b8                I2C2_ER_IRQHandler
+                0x080058b8                DMA1_Channel2_IRQHandler
+                0x080058b8                CAN1_SCE_IRQHandler
+                0x080058b8                FLASH_IRQHandler
+                0x080058b8                USART1_IRQHandler
+                0x080058b8                I2C1_ER_IRQHandler
+                0x080058b8                USBWakeUp_IRQHandler
+ *fill*         0x080058ba        0x2 00
+ .text          0x080058bc       0xf8 lib/CMSIS_CM3/system_stm32f10x.o
+                0x080058bc                SystemInit
+ *fill*         0x080059b4        0x4 00
+ .text          0x080059b8      0x6b0 main.o
+                0x080059b8                Initialisation
+                0x0800601c                main
+ .text          0x08006068      0x17c usart.o
+                0x08006068                Default_Usart_Config
+                0x0800607a                __gps_send_char
+                0x08006098                Gps_Send_Str
+                0x080060b0                Gps_Send_Utf8
+                0x080060ca                __usart_send_char
+                0x080060e8                Usart_Send_Str
+                0x08006100                USART2_reconf
+                0x08006144                Usarts_Init
+ *fill*         0x080061e4        0x4 00
+ .text          0x080061e8     0x8878 Control/ekf.o
+                0x080061e8                ins_get_num_states
+                0x080061ec                INSGPSInit
+                0x0800631c                INSResetP
+                0x0800635c                INSSetState
+                0x080063c0                INSPosVelReset
+                0x08006448                INSSetPosVelVar
+                0x08006464                INSSetGyroBias
+                0x08006480                INSSetAccelVar
+                0x0800649c                INSSetGyroVar
+                0x080064b8                INSSetMagVar
+                0x080064d4                INSSetMagNorth
+                0x080064ec                CovariancePrediction
+                0x0800d836                INSCovariancePrediction
+                0x0800d85c                SerialUpdate
+                0x0800d9b4                StateEq
+                0x0800dca8                RungeKutta
+                0x0800ddd0                LinearizeFG
+                0x0800e244                MeasurementEq
+                0x0800e402                LinearizeH
+                0x0800e6cc                INSCorrection
+                0x0800e87c                VelBaroCorrection
+                0x0800e898                GpsMagCorrection
+                0x0800e8b0                FullCorrection
+                0x0800e8be                GpsBaroCorrection
+                0x0800e8dc                MagVelBaroCorrection
+                0x0800e8f8                MagCorrection
+                0x0800e918                INSStatePrediction
+ .text          0x0800ea60      0x5d0 Control/imu.o
+                0x0800ea60                run_imu
+ .text          0x0800f030       0x6a Control/loops.o
+                0x0800f030                Run_PID
+                0x0800f092                Reset_PID
+ .text          0x0800f09a       0xc8 Control/sensorcal.o
+                0x0800f09a                Calibrate_3
+ *fill*         0x0800f162        0x2 00
+ .text          0x0800f164       0xc0 lib/STM32F10x_StdPeriph_Driver/libstm32fw.a(misc.o)
+                0x0800f164                NVIC_PriorityGroupConfig
+                0x0800f178                NVIC_Init
+                0x0800f1dc                NVIC_SetVectorTable
+                0x0800f1f0                NVIC_SystemLPConfig
+                0x0800f20c                SysTick_CLKSourceConfig
+ .text          0x0800f224       0xe4 lib/STM32F10x_StdPeriph_Driver/libstm32fw.a(stm32f10x_bkp.o)
+                0x0800f224                BKP_TamperPinLevelConfig
+                0x0800f230                BKP_TamperPinCmd
+                0x0800f23c                BKP_ITConfig
+                0x0800f248                BKP_RTCOutputConfig
+                0x0800f260                BKP_SetRTCCalibrationValue
+                0x0800f278                BKP_WriteBackupRegister
+                0x0800f294                BKP_ReadBackupRegister
+                0x0800f2b4                BKP_GetFlagStatus
+                0x0800f2c0                BKP_ClearFlag
+                0x0800f2d4                BKP_GetITStatus
+                0x0800f2e0                BKP_ClearITPendingBit
+                0x0800f2f4                BKP_DeInit
+ .text          0x0800f308      0x1d4 lib/STM32F10x_StdPeriph_Driver/libstm32fw.a(stm32f10x_dma.o)
+                0x0800f308                DMA_DeInit
+                0x0800f3e8                DMA_Init
+                0x0800f428                DMA_StructInit
+                0x0800f442                DMA_Cmd
+                0x0800f456                DMA_ITConfig
+                0x0800f468                DMA_GetCurrDataCounter
+                0x0800f46e                DMA_GetFlagStatus
+                0x0800f48c                DMA_ClearFlag
+                0x0800f4a4                DMA_GetITStatus
+                0x0800f4c4                DMA_ClearITPendingBit
+ .text          0x0800f4dc      0x104 lib/STM32F10x_StdPeriph_Driver/libstm32fw.a(stm32f10x_exti.o)
+                0x0800f4dc                EXTI_DeInit
+                0x0800f4f8                EXTI_Init
+                0x0800f578                EXTI_StructInit
+                0x0800f586                EXTI_GenerateSWInterrupt
+                0x0800f598                EXTI_GetFlagStatus
+                0x0800f5ac                EXTI_ClearFlag
+                0x0800f5b8                EXTI_GetITStatus
+                0x0800f5d4                EXTI_ClearITPendingBit
+ .text          0x0800f5e0      0x29c lib/STM32F10x_StdPeriph_Driver/libstm32fw.a(stm32f10x_gpio.o)
+                0x0800f5e0                GPIO_Init
+                0x0800f698                GPIO_StructInit
+                0x0800f6a8                GPIO_ReadInputDataBit
+                0x0800f6b4                GPIO_ReadInputData
+                0x0800f6ba                GPIO_ReadOutputDataBit
+                0x0800f6c6                GPIO_ReadOutputData
+                0x0800f6cc                GPIO_SetBits
+                0x0800f6d0                GPIO_ResetBits
+                0x0800f6d4                GPIO_WriteBit
+                0x0800f6de                GPIO_Write
+                0x0800f6e2                GPIO_PinLockConfig
+                0x0800f6f2                GPIO_EventOutputConfig
+                0x0800f710                GPIO_EventOutputCmd
+                0x0800f71c                GPIO_PinRemapConfig
+                0x0800f77c                GPIO_EXTILineConfig
+                0x0800f7b0                GPIO_ETH_MediaInterfaceConfig
+                0x0800f7bc                GPIO_AFIODeInit
+                0x0800f7d2                GPIO_DeInit
+ .text          0x0800f87c      0x3cc lib/STM32F10x_StdPeriph_Driver/libstm32fw.a(stm32f10x_i2c.o)
+                0x0800f87c                I2C_StructInit
+                0x0800f898                I2C_Cmd
+                0x0800f8b2                I2C_DMACmd
+                0x0800f8cc                I2C_DMALastTransferCmd
+                0x0800f8e6                I2C_GenerateSTART
+                0x0800f900                I2C_GenerateSTOP
+                0x0800f91a                I2C_AcknowledgeConfig
+                0x0800f934                I2C_OwnAddress2Config
+                0x0800f94a                I2C_DualAddressCmd
+                0x0800f964                I2C_GeneralCallCmd
+                0x0800f97e                I2C_ITConfig
+                0x0800f994                I2C_SendData
+                0x0800f998                I2C_ReceiveData
+                0x0800f99e                I2C_Send7bitAddress
+                0x0800f9ae                I2C_ReadRegister
+                0x0800f9c6                I2C_SoftwareResetCmd
+                0x0800f9e0                I2C_SMBusAlertConfig
+                0x0800f9fc                I2C_TransmitPEC
+                0x0800fa16                I2C_PECPositionConfig
+                0x0800fa32                I2C_CalculatePEC
+                0x0800fa4c                I2C_GetPEC
+                0x0800fa54                I2C_ARPCmd
+                0x0800fa6e                I2C_StretchClockCmd
+                0x0800fa88                I2C_FastModeDutyCycleConfig
+                0x0800faa4                I2C_GetLastEvent
+                0x0800fab4                I2C_CheckEvent
+                0x0800facc                I2C_GetFlagStatus
+                0x0800fb00                I2C_ClearFlag
+                0x0800fb08                I2C_GetITStatus
+                0x0800fb24                I2C_ClearITPendingBit
+                0x0800fb2c                I2C_Init
+                0x0800fc14                I2C_DeInit
+ .text          0x0800fc48       0xd0 lib/STM32F10x_StdPeriph_Driver/libstm32fw.a(stm32f10x_pwr.o)
+                0x0800fc4c                PWR_BackupAccessCmd
+                0x0800fc58                PWR_PVDCmd
+                0x0800fc64                PWR_PVDLevelConfig
+                0x0800fc78                PWR_WakeUpPinCmd
+                0x0800fc84                PWR_EnterSTOPMode
+                0x0800fcb0                PWR_EnterSTANDBYMode
+                0x0800fcd8                PWR_GetFlagStatus
+                0x0800fcec                PWR_ClearFlag
+                0x0800fcfc                PWR_DeInit
+ .text          0x0800fd18      0x384 lib/STM32F10x_StdPeriph_Driver/libstm32fw.a(stm32f10x_rcc.o)
+                0x0800fd18                RCC_DeInit
+                0x0800fd58                RCC_HSEConfig
+                0x0800fd90                RCC_AdjustHSICalibrationValue
+                0x0800fda4                RCC_HSICmd
+                0x0800fdb0                RCC_PLLConfig
+                0x0800fdc8                RCC_PLLCmd
+                0x0800fdd4                RCC_SYSCLKConfig
+                0x0800fde8                RCC_GetSYSCLKSource
+                0x0800fdf8                RCC_HCLKConfig
+                0x0800fe0c                RCC_PCLK1Config
+                0x0800fe20                RCC_PCLK2Config
+                0x0800fe34                RCC_ITConfig
+                0x0800fe50                RCC_USBCLKConfig
+                0x0800fe5c                RCC_ADCCLKConfig
+                0x0800fe70                RCC_LSEConfig
+                0x0800fe90                RCC_LSICmd
+                0x0800fe9c                RCC_RTCCLKConfig
+                0x0800feac                RCC_RTCCLKCmd
+                0x0800feb8                RCC_GetClocksFreq
+                0x0800ff68                RCC_AHBPeriphClockCmd
+                0x0800ff84                RCC_APB2PeriphClockCmd
+                0x0800ffa0                RCC_APB1PeriphClockCmd
+                0x0800ffbc                RCC_APB2PeriphResetCmd
+                0x0800ffd8                RCC_APB1PeriphResetCmd
+                0x0800fff4                RCC_BackupResetCmd
+                0x08010000                RCC_ClockSecuritySystemCmd
+                0x0801000c                RCC_MCOConfig
+                0x08010018                RCC_GetFlagStatus
+                0x08010040                RCC_WaitForHSEStartUp
+                0x0801006c                RCC_ClearFlag
+                0x0801007c                RCC_GetITStatus
+                0x08010090                RCC_ClearITPendingBit
+ .text          0x0801009c      0x15c lib/STM32F10x_StdPeriph_Driver/libstm32fw.a(stm32f10x_rtc.o)
+                0x0801009c                RTC_ITConfig
+                0x080100bc                RTC_EnterConfigMode
+                0x080100d0                RTC_ExitConfigMode
+                0x080100e4                RTC_GetCounter
+                0x080100f8                RTC_SetCounter
+                0x08010114                RTC_SetPrescaler
+                0x08010134                RTC_SetAlarm
+                0x08010150                RTC_GetDivider
+                0x08010168                RTC_WaitForLastTask
+                0x08010178                RTC_WaitForSynchro
+                0x08010198                RTC_GetFlagStatus
+                0x080101ac                RTC_ClearFlag
+                0x080101c0                RTC_GetITStatus
+                0x080101e4                RTC_ClearITPendingBit
+ .text          0x080101f8      0x2f8 lib/STM32F10x_StdPeriph_Driver/libstm32fw.a(stm32f10x_spi.o)
+                0x080101f8                SPI_Init
+                0x08010252                SPI_StructInit
+                0x0801026c                I2S_StructInit
+                0x08010280                SPI_Cmd
+                0x0801029a                I2S_Cmd
+                0x080102b4                SPI_I2S_ITConfig
+                0x080102d2                SPI_I2S_DMACmd
+                0x080102e8                SPI_I2S_SendData
+                0x080102ec                SPI_I2S_ReceiveData
+                0x080102f2                SPI_NSSInternalSoftwareConfig
+                0x0801030c                SPI_SSOutputCmd
+                0x08010326                SPI_DataSizeConfig
+                0x0801033e                SPI_TransmitCRC
+                0x0801034a                SPI_CalculateCRC
+                0x08010364                SPI_GetCRC
+                0x08010374                SPI_GetCRCPolynomial
+                0x0801037a                SPI_BiDirectionalLineConfig
+                0x08010396                SPI_I2S_GetFlagStatus
+                0x080103a2                SPI_I2S_ClearFlag
+                0x080103aa                SPI_I2S_GetITStatus
+                0x080103d4                SPI_I2S_ClearITPendingBit
+                0x080103e4                I2S_Init
+                0x0801048e                SPI_I2S_DeInit
+ .text          0x080104f0      0x384 lib/STM32F10x_StdPeriph_Driver/libstm32fw.a(stm32f10x_usart.o)
+                0x080104f0                USART_StructInit
+                0x08010508                USART_ClockInit
+                0x08010532                USART_ClockStructInit
+                0x0801053e                USART_Cmd
+                0x08010558                USART_ITConfig
+                0x0801058e                USART_DMACmd
+                0x080105a4                USART_SetAddress
+                0x080105bc                USART_WakeUpConfig
+                0x080105d4                USART_ReceiverWakeUpCmd
+                0x080105ee                USART_LINBreakDetectLengthConfig
+                0x08010606                USART_LINCmd
+                0x08010620                USART_SendData
+                0x08010628                USART_ReceiveData
+                0x08010630                USART_SendBreak
+                0x0801063c                USART_SetGuardTime
+                0x0801064e                USART_SetPrescaler
+                0x08010662                USART_SmartCardCmd
+                0x0801067c                USART_SmartCardNACKCmd
+                0x08010696                USART_HalfDuplexCmd
+                0x080106b0                USART_IrDAConfig
+                0x080106c8                USART_IrDACmd
+                0x080106e2                USART_GetFlagStatus
+                0x080106ee                USART_ClearFlag
+                0x080106f6                USART_GetITStatus
+                0x0801073c                USART_ClearITPendingBit
+                0x0801074a                USART_Init
+                0x080107dc                USART_DeInit
+ .text          0x08010874       0x98 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-s_cos.o)
+                0x08010874                cos
+ .text          0x0801090c       0xa0 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-s_sin.o)
+                0x0801090c                sin
+ .text          0x080109ac       0xac /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-w_asin.o)
+                0x080109ac                asin
+ .text          0x08010a58        0x4 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-w_atan2.o)
+                0x08010a58                atan2
+ .text          0x08010a5c      0x358 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-w_pow.o)
+                0x08010a5c                pow
+ .text          0x08010db4       0xac /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-w_sqrt.o)
+                0x08010db4                sqrt
+ .text          0x08010e60      0x420 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-e_asin.o)
+                0x08010e60                __ieee754_asin
+ .text          0x08011280      0x220 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-e_atan2.o)
+                0x08011280                __ieee754_atan2
+ .text          0x080114a0      0xb60 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-e_pow.o)
+                0x080114a0                __ieee754_pow
+ .text          0x08012000      0x418 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-e_rem_pio2.o)
+                0x08012000                __ieee754_rem_pio2
+ .text          0x08012418      0x1dc /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-e_sqrt.o)
+                0x08012418                __ieee754_sqrt
+ *fill*         0x080125f4        0x4 00
+ .text          0x080125f8      0x250 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-k_cos.o)
+                0x080125f8                __kernel_cos
+ .text          0x08012848      0x7b4 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-k_rem_pio2.o)
+                0x08012848                __kernel_rem_pio2
+ *fill*         0x08012ffc        0x4 00
+ .text          0x08013000      0x170 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-k_sin.o)
+                0x08013000                __kernel_sin
+ .text          0x08013170      0x348 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-s_atan.o)
+                0x08013170                atan
+ .text          0x080134b8        0x8 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-s_fabs.o)
+                0x080134b8                fabs
+ .text          0x080134c0       0x10 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-s_finite.o)
+                0x080134c0                finite
+ .text          0x080134d0      0x128 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-s_floor.o)
+                0x080134d0                floor
+ .text          0x080135f8       0x1c /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-s_isnand.o)
+                0x080135f8                __isnand
+ .text          0x08013614        0x4 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-s_matherr.o)
+                0x08013614                matherr
+ .text          0x08013618        0xc /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-s_nan.o)
+                0x08013618                nan
+ .text          0x08013624      0x134 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-s_rint.o)
+                0x08013624                rint
+ .text          0x08013758      0x118 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-s_scalbn.o)
+                0x08013758                scalbn
+ .text          0x08013870       0x18 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-s_copysign.o)
+                0x08013870                copysign
+ .text          0x08013888      0x2b0 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/thumb2/libgcc.a(_divsi3.o)
+                0x08013888                __aeabi_idiv
+                0x08013888                __divsi3
+                0x08013b1c                __aeabi_idivmod
+ .text          0x08013b38        0x4 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/thumb2/libgcc.a(_dvmd_tls.o)
+                0x08013b38                __aeabi_ldiv0
+                0x08013b38                __aeabi_idiv0
+ .text          0x08013b3c      0x370 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/thumb2/libgcc.a(_arm_addsubdf3.o)
+                0x08013b3c                __aeabi_drsub
+                0x08013b44                __aeabi_dsub
+                0x08013b44                __subdf3
+                0x08013b48                __adddf3
+                0x08013b48                __aeabi_dadd
+                0x08013dc0                __aeabi_ui2d
+                0x08013dc0                __floatunsidf
+                0x08013de0                __floatsidf
+                0x08013de0                __aeabi_i2d
+                0x08013e04                __extendsfdf2
+                0x08013e04                __aeabi_f2d
+                0x08013e40                __aeabi_ul2d
+                0x08013e40                __floatundidf
+                0x08013e50                __floatdidf
+                0x08013e50                __aeabi_l2d
+ .text          0x08013eac      0x424 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/thumb2/libgcc.a(_arm_muldivdf3.o)
+                0x08013eac                __aeabi_dmul
+                0x08013eac                __muldf3
+                0x08014100                __aeabi_ddiv
+                0x08014100                __divdf3
+ .text          0x080142d0      0x110 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/thumb2/libgcc.a(_arm_cmpdf2.o)
+                0x080142d0                __gtdf2
+                0x080142d0                __gedf2
+                0x080142d8                __ltdf2
+                0x080142d8                __ledf2
+                0x080142e0                __cmpdf2
+                0x080142e0                __eqdf2
+                0x080142e0                __nedf2
+                0x0801435c                __aeabi_cdrcmple
+                0x0801436c                __aeabi_cdcmple
+                0x0801436c                __aeabi_cdcmpeq
+                0x0801437c                __aeabi_dcmpeq
+                0x08014390                __aeabi_dcmplt
+                0x080143a4                __aeabi_dcmple
+                0x080143b8                __aeabi_dcmpge
+                0x080143cc                __aeabi_dcmpgt
+ .text          0x080143e0       0x50 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/thumb2/libgcc.a(_arm_fixdfsi.o)
+                0x080143e0                __fixdfsi
+                0x080143e0                __aeabi_d2iz
+ .text          0x08014430       0xa0 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/thumb2/libgcc.a(_arm_truncdfsf2.o)
+                0x08014430                __aeabi_d2f
+                0x08014430                __truncdfsf2
+ .text          0x080144d0      0x21c /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/thumb2/libgcc.a(_arm_addsubsf3.o)
+                0x080144d0                __aeabi_frsub
+                0x080144d8                __subsf3
+                0x080144d8                __aeabi_fsub
+                0x080144dc                __aeabi_fadd
+                0x080144dc                __addsf3
+                0x0801463c                __aeabi_ui2f
+                0x0801463c                __floatunsisf
+                0x08014644                __aeabi_i2f
+                0x08014644                __floatsisf
+                0x08014660                __floatundisf
+                0x08014660                __aeabi_ul2f
+                0x08014670                __floatdisf
+                0x08014670                __aeabi_l2f
+ .text          0x080146ec      0x2a0 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/thumb2/libgcc.a(_arm_muldivsf3.o)
+                0x080146ec                __mulsf3
+                0x080146ec                __aeabi_fmul
+                0x08014854                __divsf3
+                0x08014854                __aeabi_fdiv
+ .text          0x0801498c       0xec /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/thumb2/libgcc.a(_arm_cmpsf2.o)
+                0x0801498c                __gtsf2
+                0x0801498c                __gesf2
+                0x08014994                __lesf2
+                0x08014994                __ltsf2
+                0x0801499c                __nesf2
+                0x0801499c                __eqsf2
+                0x0801499c                __cmpsf2
+                0x080149fc                __aeabi_cfrcmple
+                0x08014a04                __aeabi_cfcmple
+                0x08014a04                __aeabi_cfcmpeq
+                0x08014a14                __aeabi_fcmpeq
+                0x08014a28                __aeabi_fcmplt
+                0x08014a3c                __aeabi_fcmple
+                0x08014a50                __aeabi_fcmpge
+                0x08014a64                __aeabi_fcmpgt
+ .text          0x08014a78       0x40 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/thumb2/libgcc.a(_arm_fixunssfsi.o)
+                0x08014a78                __aeabi_f2uiz
+                0x08014a78                __fixunssfsi
+ .text          0x08014ab8        0xc /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libc.a(lib_a-errno.o)
+                0x08014ab8                __errno
+ .text          0x08014ac4       0x20 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libc.a(lib_a-malloc.o)
+                0x08014ac4                free
+                0x08014ad4                malloc
+ .text          0x08014ae4      0x5a4 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libc.a(lib_a-mallocr.o)
+                0x08014ae4                _malloc_r
+ .text          0x08015088        0x8 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libc.a(lib_a-mlock.o)
+                0x08015088                __malloc_lock
+                0x0801508c                __malloc_unlock
+ .text          0x08015090       0x28 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libc.a(lib_a-sbrkr.o)
+                0x08015090                _sbrk_r
+ .text          0x080150b8       0xbc /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libc.a(lib_a-strcpy.o)
+                0x080150b8                strcpy
+ .text          0x08015174      0x268 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libc.a(lib_a-freer.o)
+                0x08015174                _malloc_trim_r
+                0x0801521c                _free_r
+ .text          0x080153dc       0x30 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libcs3.a(start_c.o)
+                0x080153dc                __cs3_premain
  .text.cs3.init
-                0x080154f4       0x5c /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libcs3.a(start_c.o)
-                0x080154f4                __cs3_start_c
- .text          0x08015550       0x44 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libcs3unhosted.a(unhosted-sbrk.o)
-                0x08015550                _sbrk
+                0x0801540c       0x5c /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libcs3.a(start_c.o)
+                0x0801540c                __cs3_start_c
+ .text          0x08015468       0x44 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libcs3unhosted.a(unhosted-sbrk.o)
+                0x08015468                _sbrk
  .text.cs3.init
-                0x08015594       0x10 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libcs3unhosted.a(unhosted-start.o)
-                0x08015594                _start
- .text          0x080155a4        0x2 lib/libcs3-lanchon-stm32.a(lanchon_stm32_isr_interrupt.o)
-                0x080155a4                MemManageException
-                0x080155a4                BusFaultException
-                0x080155a4                DMAChannel7_IRQHandler
-                0x080155a4                DebugMonitor
-                0x080155a4                SVCHandler
-                0x080155a4                HardFaultException
-                0x080155a4                __STM32ReservedException8
-                0x080155a4                USB_HP_CAN_TX_IRQHandler
-                0x080155a4                __STM32DefaultExceptionHandler
-                0x080155a4                DMAChannel1_IRQHandler
-                0x080155a4                CAN_SCE_IRQHandler
-                0x080155a4                __STM32ReservedException10
-                0x080155a4                __STM32ReservedException13
-                0x080155a4                NMIException
-                0x080155a4                DMAChannel4_IRQHandler
-                0x080155a4                SysTickHandler
-                0x080155a4                PendSVC
-                0x080155a4                CAN_RX1_IRQHandler
-                0x080155a4                ADC_IRQHandler
-                0x080155a4                DMAChannel5_IRQHandler
-                0x080155a4                DMAChannel2_IRQHandler
-                0x080155a4                USB_LP_CAN_RX0_IRQHandler
-                0x080155a4                __STM32ReservedException7
-                0x080155a4                UsageFaultException
-                0x080155a4                DMAChannel6_IRQHandler
-                0x080155a4                DMAChannel3_IRQHandler
-                0x080155a4                __STM32ReservedException9
- *fill*         0x080155a6        0x2 00
- .text          0x080155a8       0x50 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libc.a(lib_a-init.o)
-                0x080155a8                __libc_init_array
+                0x080154ac       0x10 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libcs3unhosted.a(unhosted-start.o)
+                0x080154ac                _start
+ .text          0x080154bc        0x2 lib/libcs3-lanchon-stm32.a(lanchon_stm32_isr_interrupt.o)
+                0x080154bc                MemManageException
+                0x080154bc                BusFaultException
+                0x080154bc                DMAChannel7_IRQHandler
+                0x080154bc                DebugMonitor
+                0x080154bc                SVCHandler
+                0x080154bc                HardFaultException
+                0x080154bc                __STM32ReservedException8
+                0x080154bc                USB_HP_CAN_TX_IRQHandler
+                0x080154bc                __STM32DefaultExceptionHandler
+                0x080154bc                DMAChannel1_IRQHandler
+                0x080154bc                CAN_SCE_IRQHandler
+                0x080154bc                __STM32ReservedException10
+                0x080154bc                __STM32ReservedException13
+                0x080154bc                NMIException
+                0x080154bc                DMAChannel4_IRQHandler
+                0x080154bc                SysTickHandler
+                0x080154bc                PendSVC
+                0x080154bc                CAN_RX1_IRQHandler
+                0x080154bc                ADC_IRQHandler
+                0x080154bc                DMAChannel5_IRQHandler
+                0x080154bc                DMAChannel2_IRQHandler
+                0x080154bc                USB_LP_CAN_RX0_IRQHandler
+                0x080154bc                __STM32ReservedException7
+                0x080154bc                UsageFaultException
+                0x080154bc                DMAChannel6_IRQHandler
+                0x080154bc                DMAChannel3_IRQHandler
+                0x080154bc                __STM32ReservedException9
+ *fill*         0x080154be        0x2 00
+ .text          0x080154c0       0x50 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libc.a(lib_a-init.o)
+                0x080154c0                __libc_init_array
  *(.plt)
  *(.gnu.warning)
  *(.glue_7t)
@@ -1038,112 +1037,111 @@ END GROUP
  *(.vfp11_veneer)
  .vfp11_veneer  0x00000000        0x0 linker stubs
  *(.rodata .rodata.* .gnu.linkonce.r.*)
- .rodata        0x080155f8        0x8 Sensors/bmp085.o
- .rodata        0x08015600      0x888 Sensors/earth_field.o
+ .rodata        0x08015510        0x8 Sensors/bmp085.o
+ .rodata        0x08015518      0x888 Sensors/earth_field.o
  .rodata.str1.1
-                0x08015e88        0x9 Sensors/earth_field.o
- *fill*         0x08015e91        0x3 00
- .rodata        0x08015e94        0x8 Sensors/pitot.o
- .rodata        0x08015e9c       0xc4 Sensors/ubx.o
+                0x08015da0        0x9 Sensors/earth_field.o
+ *fill*         0x08015da9        0x3 00
+ .rodata        0x08015dac        0x8 Sensors/pitot.o
+ .rodata        0x08015db4       0xc4 Sensors/ubx.o
  .rodata.str1.1
-                0x08015f60      0x13b Sensors/ubx.o
+                0x08015e78      0x13b Sensors/ubx.o
  .rodata.str1.1
-                0x0801609b        0xf Util/Fatfs/ff.o
- *fill*         0x080160aa        0x2 00
- .rodata        0x080160ac        0xc Util/Fatfs/rtc.o
- .rodata        0x080160b8       0x14 Util/rprintf.o
+                0x08015fb3        0xf Util/Fatfs/ff.o
+ *fill*         0x08015fc2        0x2 00
+ .rodata        0x08015fc4        0xc Util/Fatfs/rtc.o
+ .rodata        0x08015fd0       0x14 Util/rprintf.o
  .rodata.str1.1
-                0x080160cc        0x6 Util/rprintf.o
- *fill*         0x080160d2        0x2 00
- .rodata        0x080160d4       0x1c i2c.o
- .rodata        0x080160f0       0x60 main.o
+                0x08015fe4        0x6 Util/rprintf.o
+ *fill*         0x08015fea        0x2 00
+ .rodata        0x08015fec       0x1c i2c.o
+ .rodata        0x08016008       0x60 main.o
  .rodata.str1.1
-                0x08016150      0x299 main.o
-                                0x2a7 (size before relaxing)
- *fill*         0x080163e9        0x3 00
- .rodata        0x080163ec       0x90 Control/imu.o
+                0x08016068      0x26f main.o
+ *fill*         0x080162d7        0x1 00
+ .rodata        0x080162d8       0x90 Control/imu.o
  .rodata.str1.4
-                0x0801647c        0x5 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-w_asin.o)
+                0x08016368        0x5 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-w_asin.o)
                                   0xc (size before relaxing)
- *fill*         0x08016481        0x3 00
+ *fill*         0x0801636d        0x3 00
  .rodata.str1.4
-                0x08016484        0x4 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-w_pow.o)
+                0x08016370        0x4 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-w_pow.o)
  .rodata.str1.4
-                0x08016488        0x5 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-w_sqrt.o)
+                0x08016374        0x5 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-w_sqrt.o)
                                   0x8 (size before relaxing)
- *fill*         0x0801648d        0x3 00
- .rodata        0x08016490       0x30 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-e_pow.o)
+ *fill*         0x08016379        0x7 00
+ .rodata        0x08016380       0x30 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-e_pow.o)
  .rodata.str1.4
                 0x00000000        0x4 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-e_pow.o)
- .rodata        0x080164c0      0x188 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-e_rem_pio2.o)
- .rodata        0x08016648       0x50 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-k_rem_pio2.o)
- .rodata        0x08016698       0x40 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-s_atan.o)
- .rodata        0x080166d8       0x10 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-s_rint.o)
+ .rodata        0x080163b0      0x188 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-e_rem_pio2.o)
+ .rodata        0x08016538       0x50 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-k_rem_pio2.o)
+ .rodata        0x08016588       0x40 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-s_atan.o)
+ .rodata        0x080165c8       0x10 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-s_rint.o)
  .rodata.str1.4
-                0x080166e8        0x4 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libc.a(lib_a-impure.o)
+                0x080165d8        0x4 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libc.a(lib_a-impure.o)
  *(.ARM.extab* .gnu.linkonce.armextab.*)
  *(.gcc_except_table)
  *(.eh_frame_hdr)
  *(.eh_frame)
-                0x080166ec                . = ALIGN (0x4)
+                0x080165dc                . = ALIGN (0x4)
  *(.init)
- .init          0x080166ec        0x4 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/thumb2/crti.o
-                0x080166ec                _init
- .init          0x080166f0        0x8 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/thumb2/crtn.o
-                0x080166f8                . = ALIGN (0x4)
-                0x080166f8                __preinit_array_start = .
+ .init          0x080165dc        0x4 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/thumb2/crti.o
+                0x080165dc                _init
+ .init          0x080165e0        0x8 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/thumb2/crtn.o
+                0x080165e8                . = ALIGN (0x4)
+                0x080165e8                __preinit_array_start = .
  *(.preinit_array)
-                0x080166f8                __preinit_array_end = .
-                0x080166f8                . = ALIGN (0x4)
-                0x080166f8                __init_array_start = .
+                0x080165e8                __preinit_array_end = .
+                0x080165e8                . = ALIGN (0x4)
+                0x080165e8                __init_array_start = .
  *(SORT(.init_array.*))
  *(.init_array)
- .init_array    0x080166f8        0x4 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/thumb2/crtbegin.o
-                0x080166fc                __init_array_end = .
-                0x080166fc                . = ALIGN (0x4)
+ .init_array    0x080165e8        0x4 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/thumb2/crtbegin.o
+                0x080165ec                __init_array_end = .
+                0x080165ec                . = ALIGN (0x4)
  *crtbegin.o(.ctors)
  *(EXCLUDE_FILE(*crtend.o) .ctors)
  *(SORT(.ctors.*))
  *crtend.o(.ctors)
-                0x080166fc                . = ALIGN (0x4)
+                0x080165ec                . = ALIGN (0x4)
  *(.fini)
- .fini          0x080166fc        0x4 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/thumb2/crti.o
-                0x080166fc                _fini
- .fini          0x08016700        0x8 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/thumb2/crtn.o
-                0x08016708                . = ALIGN (0x4)
-                0x08016708                __fini_array_start = .
+ .fini          0x080165ec        0x4 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/thumb2/crti.o
+                0x080165ec                _fini
+ .fini          0x080165f0        0x8 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/thumb2/crtn.o
+                0x080165f8                . = ALIGN (0x4)
+                0x080165f8                __fini_array_start = .
  *(.fini_array)
- .fini_array    0x08016708        0x4 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/thumb2/crtbegin.o
+ .fini_array    0x080165f8        0x4 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/thumb2/crtbegin.o
  *(SORT(.fini_array.*))
-                0x0801670c                __fini_array_end = .
+                0x080165fc                __fini_array_end = .
  *crtbegin.o(.dtors)
  *(EXCLUDE_FILE(*crtend.o) .dtors)
  *(SORT(.dtors.*))
  *crtend.o(.dtors)
-                0x0801670c                . = ALIGN (0x4)
-                0x0801670c                __cs3_regions = .
-                0x0801670c        0x4 LONG 0x0
-                0x08016710        0x4 LONG 0x8016720 __cs3_region_init_ram
-                0x08016714        0x4 LONG 0x20000000 __cs3_region_start_ram
-                0x08016718        0x4 LONG 0x530 __cs3_region_init_size_ram
-                0x0801671c        0x4 LONG 0x11b8 __cs3_region_zero_size_ram
-                0x08016720                __exidx_start = .
+                0x080165fc                . = ALIGN (0x4)
+                0x080165fc                __cs3_regions = .
+                0x080165fc        0x4 LONG 0x0
+                0x08016600        0x4 LONG 0x8016610 __cs3_region_init_ram
+                0x08016604        0x4 LONG 0x20000000 __cs3_region_start_ram
+                0x08016608        0x4 LONG 0x530 __cs3_region_init_size_ram
+                0x0801660c        0x4 LONG 0x11b8 __cs3_region_zero_size_ram
+                0x08016610                __exidx_start = .
 
-.v4_bx          0x08016720        0x0
+.v4_bx          0x08016610        0x0
  .v4_bx         0x00000000        0x0 linker stubs
 
 .ARM.exidx
  *(.ARM.exidx* .gnu.linkonce.armexidx.*)
-                0x08016720                __exidx_end = .
+                0x08016610                __exidx_end = .
 
-.text.align     0x08016720        0x0
-                0x08016720                . = ALIGN (0x8)
-                0x08016720                _etext = .
+.text.align     0x08016610        0x0
+                0x08016610                . = ALIGN (0x8)
+                0x08016610                _etext = .
                 0x08020000                __cs3_region_end_rom = (__cs3_region_start_rom + 0x20000)
                 0x00020000                __cs3_region_size_rom = 0x20000
                 0x00000001                __cs3_region_num = 0x1
 
-.data           0x20000000      0x530 load address 0x08016720
+.data           0x20000000      0x530 load address 0x08016610
                 0x20000000                __cs3_region_start_ram = .
  *(.cs3.region-head.ram)
  *(.jcr)
@@ -1173,7 +1171,7 @@ END GROUP
                 0x20000530                . = ALIGN (0x8)
                 0x20000530                _edata = .
 
-.bss            0x20000530     0x11b8 load address 0x08016c50
+.bss            0x20000530     0x11b8 load address 0x08016b40
  *(.shbss)
  *(.bss .bss.* .gnu.linkonce.b.*)
  .bss           0x20000530        0x1 /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/thumb2/crtbegin.o
@@ -1194,10 +1192,10 @@ END GROUP
                 0x20000730                Home_Position
                 0x2000073c                Long_To_Meters_Home
                 0x20000970                f_err_code
-                0x20000974                Nav_Flag
-                0x20000978                Nav_Global
-                0x200009ac                Balt
-                0x200009b0                Waypoint_Global
+                0x20000974                Balt
+                0x20000978                Waypoint_Global
+                0x20000984                Nav_Global
+                0x200009b8                Nav_Flag
                 0x200009bc                New_Waypoint_Flagged
                 0x200009c0                Ground_Flag
  .bss           0x200009c4      0xbf8 Control/ekf.o
@@ -1227,7 +1225,7 @@ END GROUP
                 0x200016e8                __end = .
                 0x20005000                __cs3_region_end_ram = (__cs3_region_start_ram + 0x5000)
                 0x00005000                __cs3_region_size_ram = 0x5000
-                0x08016720                __cs3_region_init_ram = LOADADDR (.data)
+                0x08016610                __cs3_region_init_ram = LOADADDR (.data)
                 0x00000530                __cs3_region_init_size_ram = (_edata - ADDR (.data))
                 0x000011b8                __cs3_region_zero_size_ram = (_end - _edata)
                 0x00000001                __cs3_region_num = 0x1
@@ -2207,7 +2205,6 @@ __aeabi_d2f                                       /home/laurence/CodeSourcery/So
                                                   main.o
                                                   Util/rprintf.o
                                                   Util/coords.o
-                                                  Sensors/pitot.o
                                                   Sensors/earth_field.o
                                                   Sensors/bmp085.o
 __aeabi_d2iz                                      /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/thumb2/libgcc.a(_arm_fixdfsi.o)
@@ -2276,7 +2273,6 @@ __aeabi_dmul                                      /home/laurence/CodeSourcery/So
                                                   /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-w_pow.o)
                                                   Control/imu.o
                                                   main.o
-                                                  Sensors/pitot.o
                                                   Sensors/earth_field.o
                                                   Sensors/bmp085.o
 __aeabi_drsub                                     /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/thumb2/libgcc.a(_arm_addsubdf3.o)
@@ -2301,7 +2297,6 @@ __aeabi_f2d                                       /home/laurence/CodeSourcery/So
                                                   Control/ekf.o
                                                   main.o
                                                   Util/coords.o
-                                                  Sensors/pitot.o
                                                   Sensors/earth_field.o
                                                   Sensors/bmp085.o
 __aeabi_f2uiz                                     /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/thumb2/libgcc.a(_arm_fixunssfsi.o)
@@ -2315,6 +2310,7 @@ __aeabi_fadd                                      /home/laurence/CodeSourcery/So
                                                   Util/coords.o
                                                   Sensors/earth_field.o
 __aeabi_fcmpeq                                    /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/thumb2/libgcc.a(_arm_cmpsf2.o)
+                                                  main.o
                                                   Util/rprintf.o
                                                   Sensors/earth_field.o
 __aeabi_fcmpge                                    /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/thumb2/libgcc.a(_arm_cmpsf2.o)
@@ -2344,6 +2340,7 @@ __aeabi_fmul                                      /home/laurence/CodeSourcery/So
                                                   main.o
                                                   Util/rprintf.o
                                                   Util/coords.o
+                                                  Sensors/pitot.o
                                                   Sensors/earth_field.o
 __aeabi_frsub                                     /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/thumb2/libgcc.a(_arm_addsubsf3.o)
 __aeabi_fsub                                      /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/thumb2/libgcc.a(_arm_addsubsf3.o)
@@ -2364,6 +2361,7 @@ __aeabi_i2f                                       /home/laurence/CodeSourcery/So
                                                   Control/imu.o
                                                   main.o
                                                   Util/rprintf.o
+                                                  Sensors/pitot.o
                                                   Sensors/earth_field.o
 __aeabi_idiv                                      /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/thumb2/libgcc.a(_divsi3.o)
                                                   /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/../../../../arm-none-eabi/lib/thumb2/libm.a(lib_a-k_rem_pio2.o)
@@ -2376,7 +2374,6 @@ __aeabi_ldiv0                                     /home/laurence/CodeSourcery/So
 __aeabi_ui2d                                      /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/thumb2/libgcc.a(_arm_addsubdf3.o)
 __aeabi_ui2f                                      /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/thumb2/libgcc.a(_arm_addsubsf3.o)
                                                   main.o
-                                                  Sensors/pitot.o
                                                   Sensors/earth_field.o
                                                   Sensors/bmp085.o
 __aeabi_ul2d                                      /home/laurence/CodeSourcery/Sourcery_G++_Lite/bin/../lib/gcc/arm-none-eabi/4.4.1/thumb2/libgcc.a(_arm_addsubdf3.o)

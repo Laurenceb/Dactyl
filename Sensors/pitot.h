@@ -6,7 +6,9 @@
 //temperature using 50hz mode
 #define LTC2481_TMP 0x0A
 //use double speed (~15hz) conversion with 60hz rejection for increased bandwidth, 128 times gain
-#define LTC2481_ADC 0xE5
+//#define LTC2481_ADC 0xE5
+//256 gain, normal speed
+#define LTC2481_ADC 0xE4
 //function prototypes
 I2C_Returntype Pitot_Set_Press_Conv(void);
 I2C_Returntype Pitot_Set_Temp_Conv(void);

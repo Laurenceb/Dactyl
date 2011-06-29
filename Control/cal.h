@@ -10,8 +10,8 @@
 //Note gyro calibration hasnt been completed, using datasheet sensitivity and leaving out bias as ekf handles it
 #define GYR_CAL_6 { 0,0.00121414,0,0, 0,0,0.00121414,0, 0,0,0,0.00121414}
 //Pitot offset cal
-#define PITOT_OFFSET 560ul
+#define PITOT_OFFSET (int32_t)560
 //Pitot gain cal
-#define PITOT_GAIN 0.243
+#define PITOT_GAIN (float)0.243
 //Calibrate function
 void Calibrate_3(Float_Vector* dataout, Vector* data, float* cal_);

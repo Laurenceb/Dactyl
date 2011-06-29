@@ -77,7 +77,7 @@ void run_imu() {
 			if(p_count==1)Gyr_Stat(&Gyro_Data);
 			break;
 		case 2:			
-			if(p_count++==2) {//Also read the pitot output every 9 iterations (13.9Hz) - this also checks for ACK - indicating data
+			if(p_count++==6/*2*/) {//Read the pitot output every 18(9) iterations(13.9Hz) -this also checks for ACK - indicating data
 				if(!Pitot_Read_Conv((uint32_t*)&Pitot_Pressure)) {//Read the pitot - we dont need to setup a conversion
 					Pitot_Pressure=Pitot_Conv((uint32_t)Pitot_Pressure);//Align and sign the adc value - 1lsb=~0.24Pa
 					AirSpeed=Pitot_convert_Airspeed(Pitot_Pressure);//TODO- use this to estimate windspeed (atm its using Pa)
