@@ -103,6 +103,24 @@ void Timer_GPIO_Enable(void)
 }
 
 /**
+  * @brief  Configure the PWM Ouput Channels as inputs (will enable the PWM feedthrough hardware).
+  * @param  None
+  * @retval None
+  */
+void Timer_GPIO_Disable(void)
+{
+  GPIO_InitTypeDef GPIO_InitStructure;
+  /* GPIOB Configuration:TIM4 Channel1, 2 as alternate function push-pull (PWM OUT 2 and 3 on v1.0 pcb)*/
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6 | GPIO_Pin_7;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+  GPIO_Init(GPIOB, &GPIO_InitStructure);
+  /* GPIOA Configuration:TIM1 Channel1, 4 as alternative function push-pull (PWM OUT 1 and 4 on v1.0 pcb)*/
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8 | GPIO_Pin_11;
+  GPIO_Init(GPIOA, &GPIO_InitStructure);
+}
+
+/**
   * @brief  Set the PWM channel (uses channel difinitions as printed on the pcb)
   * @param  Channel number and pwm period in microseconds
   * @retval -2=invalid lenght, -1=wrong channel, 0=success

@@ -4,4 +4,5 @@
 void Init_Timers(void);
 void Timer_RCC_Configuration(void);
 void Timer_GPIO_Enable(void);
+void Timer_GPIO_Disable(void);
 int PWM_Set(int Channel, int Pulse);

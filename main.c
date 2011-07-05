@@ -229,6 +229,7 @@ void Initialisation() {
 	Set_RTC_From_GPS(Gps.week,Gps.time);	//First set the RTC correctly, so it can be used by filesystem
 	if((f_err_code = f_mount(0, &FATFS_Obj)))Usart_Send_Str((char*)"FatFs mount error\r\n");//this should only error if internal error
 	Init_Timers();				//Start PWM output timers running (need to enable GPIO seperately)
+	Enable_Servos();			//Setup the GPIO pins to drive the servos
 	EXTI6_Config();				//Configure the interrupt from gyro that runs the EKF
 	Gyr_Read(&mag);				//Kick start the ISR by reading the gyro to set data ready to low 
 }

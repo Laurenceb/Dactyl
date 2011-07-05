@@ -18,10 +18,15 @@ extern float Long_To_Meters_Home;
 extern volatile Ubx_Gps_Type Gps;
 extern volatile Nav_Type Nav_Global,Nav;	
 extern volatile uint32_t Nav_Flag,New_Waypoint_Flagged,Ground_Flag;	
-
+//Just here for debug
 extern volatile float Balt;	
 
-void run_imu() {
+/**
+  * @brief  This function runs the EKF, talks to aux sensors with a state machine and applys control loops to servos (main control task loop)
+  * @param  None
+  * @retval None
+  */
+void run_imu(void) {
 	//Static variables
 	static uint32_t state=0,p_count=0,b_count=1;//State allows the I2C comms to be broken down between seperate calls
 	static Control_type control;		//The control structure
@@ -135,7 +140,7 @@ void run_imu() {
 		Run_PID(&(control.rudder),&(control.airframe.rudder),ac.y,gy.z-Nav.gyro_bias[2]);
 		//Apply the feedforward, linking rudder to roll offset
 		control.rudder.out+=control.airframe.rudder_feedforward*control.roll_setpoint.out;
-		//Apply_Servos(&control); - TODO impliment servo driver function here using pwm
+		Apply_Servos(&control);//Servo driver function called here using pwm
 	}
 	//else{}//any control code to run whilst in ground mode goes here		
 }
