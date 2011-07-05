@@ -81,7 +81,7 @@ void run_imu() {
 				if(!Pitot_Read_Conv((uint32_t*)&Pitot_Pressure)) {//Read the pitot - we dont need to setup a conversion
 					Pitot_Pressure=Pitot_Conv((uint32_t)Pitot_Pressure);//Align and sign the adc value - 1lsb=~0.24Pa
 					AirSpeed=Pitot_convert_Airspeed(Pitot_Pressure);//TODO- use this to estimate windspeed (atm its using Pa)
-					Balt=AirSpeed;//Note debug
+					Balt=(float)Pitot_Pressure;//AirSpeed;//Note debug
 				}
 				p_count=0;
 			}

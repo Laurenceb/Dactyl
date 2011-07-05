@@ -43,8 +43,8 @@ I2C_Returntype Pitot_Read_Conv(uint32_t* adc) {
   * @retval Corrected value
   */
 int32_t Pitot_Conv(uint32_t d) {
-	if(d&0x00400000)return (d>>6)|0xFFFF0000;//-ive result
-	else return (d>>6)&0x0000FFFF;	//+ive result
+	if(d&0x00400000)return ((d>>6)|0xFFFF0000);//-ive result
+	else return ((d>>6)&0x0000FFFF);	//+ive result
 }
 
 /**

@@ -39,6 +39,7 @@ I2C_Returntype I2C_Conf(uint8_t* Confstr,uint8_t Bytes) {			//Sets up an i2c dev
 		if(Time>I2C_TIMEOUT) return I2C_SACK_TIMEOUT;
 		if(SET==I2C_GetFlagStatus(I2C1, I2C_FLAG_AF)) {
 			I2C_ClearFlag(I2C1, I2C_FLAG_AF);
+			I2C_GenerateSTOP( I2C1, ENABLE );			//Enable the STOP here - so hardware is ready again
 			return I2C_SACK_FAILURE;				//Slave did not ack
 		}
 	}
@@ -75,7 +76,8 @@ I2C_Returntype I2C_Read(uint8_t* Data_Pointer,uint8_t Bytes, uint8_t Addr, uint8
 			if(Time>I2C_TIMEOUT) return I2C_SACK_TIMEOUT;		//Checks that the slave acknowledged
 			if(SET==I2C_GetFlagStatus(I2C1, I2C_FLAG_AF)) {
 				I2C_ClearFlag(I2C1, I2C_FLAG_AF);
-				return I2C_SACK_FAILURE;				//Slave did not ack
+				I2C_GenerateSTOP( I2C1, ENABLE );		//Enable the STOP here - so hardware is ready again
+				return I2C_SACK_FAILURE;			//Slave did not ack
 			}
 		}
 		Time=0;
@@ -100,6 +102,7 @@ I2C_Returntype I2C_Read(uint8_t* Data_Pointer,uint8_t Bytes, uint8_t Addr, uint8
 		if(Time>I2C_TIMEOUT) return I2C_SACK_TIMEOUT;			//Checks that the slave acknowledged
 		if(SET==I2C_GetFlagStatus(I2C1, I2C_FLAG_AF)) {
 			I2C_ClearFlag(I2C1, I2C_FLAG_AF);
+			I2C_GenerateSTOP( I2C1, ENABLE );			//Enable the STOP here - so hardware is ready again
 			return I2C_SACK_FAILURE;				//Slave did not ack
 		}
 	}									//We now auto switch to rx mode
