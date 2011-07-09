@@ -87,7 +87,9 @@ typedef struct
 //^turns on status updates
 //#define NEW_BAUD 115200UL
 #define NEW_BAUD 57600UL
-#define GPS_DEFAULT_BAUD 9600UL		//some modules have 38400/9600/4800 (dont ask)
+#define GPS_DEFAULT_BAUD 9600UL		//some modules have 38400/9600/4800 (dont ask!)
+//GPS rate for imu functions
+#define GPS_RATE 5
 
 //Function prototypes
 void Gps_Process_Byte(uint8_t c,Ubx_Gps_Type* gps);

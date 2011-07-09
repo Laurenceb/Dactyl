@@ -8,6 +8,18 @@
 #define UBX_DEG_TO_RADS (float)1.745329252e-9
 //For the wind tracking filter
 #define WIND_TAU 0.25
+//Initialisation of the control structure - TODO swap out placeholders for something useful
+#define DEFAULT_CONTROL {{0,0},{0,0},{0,0},{0,0},{0,0},{0,INIT_THROTTLE},{CRUISE_AIRSPEED,RUDDER_FEEDFORWARD,PITCH_SET_FILT,ROLL_SET_FILT,AILERON_FILT,ELEVATOR_FILT,RUDDER_FILT,THROTTLE_FILT}}
+#define INIT_THROTTLE -0.25
+#define CRUISE_AIRSPEED 7.0
+#define RUDDER_FEEDFORWARD 0.1
+#define PITCH_SET_FILT {LIMITS,0.1,0.01,0.0}
+#define ROLL_SET_FILT {LIMITS,0.1,0.01,0.0}
+#define AILERON_FILT {LIMITS,0.1,0.01,0.1}
+#define ELEVATOR_FILT {LIMITS,0.1,0.01,0.1}
+#define RUDDER_FILT {LIMITS,0.1,0.01,0.1}
+#define THROTTLE_FILT {LIMITS,0.1,0.01,0.1}
+#define LIMITS -0.2,0.2
 
 //datatypes
 typedef struct{

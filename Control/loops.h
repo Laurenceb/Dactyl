@@ -10,8 +10,8 @@ typedef struct {
 	float integ_uplim;
 	float integ_lolim;
 	float P;
-	float D;
 	float I;
+	float D;
 } PID_ctrl_type;
 
 //function prototypes

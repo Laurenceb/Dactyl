@@ -31,19 +31,20 @@ extern volatile float Balt;
 void run_imu(void) {
 	//Static variables
 	static uint32_t state=0,p_count=0,b_count=1;//State allows the I2C comms to be broken down between seperate calls
-	static Control_type control;		//The control structure
+	static uint32_t Iterations=0;		//Number of ekf iterations
+	static Control_type control=DEFAULT_CONTROL;//The control structure
 	#pragma pack(1)				/*make sure these are packed*/
 	static Ubx_Gps_Type gps;		//This is our local copy - theres is also a global, be careful with copying
 	static Gyr_Status Gyro_Data;
 	static Float_Vector ac,Wind;		//The accel is not always avaliable - 100hz update
-	static float AirSpeed=0,Baro_Alt;
+	static float AirSpeed=0,Baro_Alt,Body_x_To_x=0,Body_x_To_y=0,Mean_Alt_Err=0;
 	static int32_t Pitot_Pressure;		//Pressure is static so it can be used for air density
 	static uint32_t Baro_Pressure;		//Baro pressure is static for use in air density calculations
 	//Non Static
 	Vector m;
 	#pragma pack()
 	Float_Vector ma,gy,gps_velocity,gps_position,target_vector,waypoint;
-	float Delta_Time=DELTA_TIME,x_down,y_down,h_offset,N_t_x,N_t_y,time_to_waypoint,Body_x_To_x,Body_x_To_y,Horiz_t;
+	float Delta_Time=DELTA_TIME,x_down,y_down,h_offset,N_t_x,N_t_y,time_to_waypoint,Horiz_t;
 	uint16_t SensorsUsed=0;			//We by default have no sensors
 	int32_t Baro_Temperature; 
 	//Setup the calibration arrays
@@ -108,8 +109,11 @@ void run_imu(void) {
 		gps_velocity.y=(float)gps.veast*0.01;
 		gps_velocity.z=(float)gps.vdown*0.01;
 		SensorsUsed|=POS_SENSORS|HORIZ_SENSORS|VERT_SENSORS;//Set the flagbits for the gps update
-		//Correct Sea level pressure TODO make more kalman filtery to estimate sea level pressure
-		Sea_Level_Pressure+=12.25*(gps.altitude*0.001-Baro_Alt)*0.01;//At moment uses a fixed gain of 0.01/200ms iteration period
+		//Correct Sea level pressure - average the gps altitude over first 100 seconds and apply correction when filter initialised
+		if(Iterations++>100*GPS_RATE)
+			Sea_Level_Pressure+=12.25*(gps.altitude*0.001-Baro_Alt-Mean_Alt_Err)*0.01/GPS_RATE;//At moment fixed tau; 0.01/second
+		else
+			Mean_Alt_Err+=(0.01/GPS_RATE)*(gps.altitude*0.001-Baro_Alt);//For 100 seconds average to find remenant altitude error
 		if(!Gps.packetflag)Gps=gps;			//Copy the data over to the main 'thread' if the global unlocked
 		gps.packetflag=0x00;				//Reset the flag
 	}
