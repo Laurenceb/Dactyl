@@ -9,6 +9,7 @@
 #include "usart.h"
 #include "i2c.h"
 #include "dma.h"
+#include "pwm.h"
 #include "gpio.h"
 #include "interrupts.h"
 //Include for printf if wanted
@@ -22,9 +23,10 @@
 #include "Sensors/WorldMagModel.h"
 #include "Sensors/WMMInternal.h"	//Used to get constants
 //Control headers
-#include "Control/imu.h"
+//#include "Control/imu.h"
 #include "Control/types.h"
 #include "Control/cal.h"
+#include "Control/servos.h"
 //Utilities headers
 #include "Util/delay.h"
 #include "Util/rprintf.h"

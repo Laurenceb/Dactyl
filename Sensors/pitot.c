@@ -1,8 +1,10 @@
 //Dactyl project v1.0
+#include "math.h"
 #include "stm32f10x.h"
 #include "pitot.h"
 #include "../i2c.h"
 #include "../Control/cal.h"
+#include "../Util/atmospherics.h"
 
 /**
   * @brief  Sets up a pressure conversion
@@ -48,10 +50,10 @@ int32_t Pitot_Conv(uint32_t d) {
 }
 
 /**
-  * @brief  Reads the corrected adc data and returns float with pressure difference in pascals (not actual airspeed)
-  * @param  Uncorrected value (int32_t)
-  * @retval Corrected value (float)
+  * @brief  Reads the corrected adc data and returns float with airspeed TODO(This reallspeedy needs temperature compensation)
+  * @param  Uncorrected value (int32_t), altitude in meters (float), barometric pressure (float)
+  * @retval Corrected value ms^-1 (float)
   */
-float Pitot_convert_Airspeed(int32_t P) {
-	return ((float)(P-PITOT_OFFSET))*PITOT_GAIN;
+float Pitot_convert_Airspeed(int32_t P,float Altitude, float Baro_pressure) {
+	return sqrt(((float)(P-PITOT_OFFSET))*PITOT_GAIN*2/Air_Density(Altitude,Baro_pressure));
 }

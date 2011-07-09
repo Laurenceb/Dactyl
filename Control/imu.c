@@ -1,9 +1,11 @@
 //Dactyl project v1.0
+#include "math.h"
 #include "insgps.h"
-#include "imu.h"
+//#include "imu.h"
 #include "cal.h"
 #include "types.h"
 #include "loops.h"
+#include "servos.h"
 #include "../i2c.h"
 #include "../dma.h"
 #include "../gpio.h"
@@ -33,17 +35,17 @@ void run_imu(void) {
 	#pragma pack(1)				/*make sure these are packed*/
 	static Ubx_Gps_Type gps;		//This is our local copy - theres is also a global, be careful with copying
 	static Gyr_Status Gyro_Data;
-	static Float_Vector ac,Wind;			//The accel is not always avalibale - 100hz update
+	static Float_Vector ac,Wind;		//The accel is not always avaliable - 100hz update
 	static float AirSpeed=0,Baro_Alt;
+	static int32_t Pitot_Pressure;		//Pressure is static so it can be used for air density
+	static uint32_t Baro_Pressure;		//Baro pressure is static for use in air density calculations
 	//Non Static
 	Vector m;
 	#pragma pack()
 	Float_Vector ma,gy,gps_velocity,gps_position,target_vector,waypoint;
 	float Delta_Time=DELTA_TIME,x_down,y_down,h_offset,N_t_x,N_t_y,time_to_waypoint,Body_x_To_x,Body_x_To_y,Horiz_t;
 	uint16_t SensorsUsed=0;			//We by default have no sensors
-	uint32_t Baro_Pressure;
 	int32_t Baro_Temperature; 
-	int32_t Pitot_Pressure;
 	//Setup the calibration arrays
 	float Acc_Cal_Dat[12]=ACC_CAL_6;
 	float Mag_Cal_Dat[12]=MAG_CAL_6;
@@ -85,7 +87,7 @@ void run_imu(void) {
 			if(p_count++==6/*2*/) {//Read the pitot output every 18(9) iterations(13.9Hz) -this also checks for ACK - indicating data
 				if(!Pitot_Read_Conv((uint32_t*)&Pitot_Pressure)) {//Read the pitot - we dont need to setup a conversion
 					Pitot_Pressure=Pitot_Conv((uint32_t)Pitot_Pressure);//Align and sign the adc value - 1lsb=~0.24Pa
-					AirSpeed=Pitot_convert_Airspeed(Pitot_Pressure);//use this to estimate windspeed
+					AirSpeed=Pitot_convert_Airspeed(Pitot_Pressure,Nav.Pos[2],(float)Baro_Pressure);//estimate windspeed
 					Wind.x*=WIND_TAU;Wind.y*=WIND_TAU;	//Low pass filter
 					Wind.x+=(1-WIND_TAU)*(Nav.Vel[0]-AirSpeed*Body_x_To_x);//This assumes horizontal wind and neglidgible slip
 					Wind.y+=(1-WIND_TAU)*(Nav.Vel[1]-AirSpeed*Body_x_To_y);
@@ -123,10 +125,10 @@ void run_imu(void) {
 	target_vector.z=waypoint.z-Nav.Pos[2];			//Now work out the eta at the waypoint (just the x,y/North,East position)
 	Horiz_t=sqrt(pow(target_vector.x,2)+pow(target_vector.y,2));//Horizontal distance to target
 	N_t_x=target_vector.x/Horiz_t;
-	N_t_y=target_vector.y/Horiz_t;			//Normalised horizontal target vector
+	N_t_y=target_vector.y/Horiz_t;				//Normalised horizontal target vector
 	time_to_waypoint=Horiz_t/(control.airframe.airspeed+Wind.x*N_t_x+Wind.y*N_t_y);//Time if we travel in a straight line
 	N_t_x=target_vector.x-Wind.x*time_to_waypoint;
-	N_t_y=target_vector.y-Wind.y*time_to_waypoint;	//Modify the aiming point to account for cross track error
+	N_t_y=target_vector.y-Wind.y*time_to_waypoint;		//Modify the aiming point to account for cross track error
 	AirSpeed=sqrt(pow(Nav.Vel[0]-Wind.x,2)+pow(Nav.Vel[1]-Wind.y,2)+pow(Nav.Vel[2],2));//Work out true airspeed assume horizontal wind
 	//Move the body x,y axes into earth NED frame using Reb, looking at z=down components of body x and y
 	x_down=2 * (Nav.q[1] * Nav.q[3] - Nav.q[0] * Nav.q[2]);
@@ -136,7 +138,7 @@ void run_imu(void) {
 	Body_x_To_y=2*Nav.q[1] * Nav.q[2] + Nav.q[0] * Nav.q[3];//These are saved for subsequent iterations as static variables
 	h_offset=Body_x_To_x * N_t_y - Body_x_To_y * N_t_x;
 	//Run the control loops if we arent controlled from the ground
-	if(!Ground_Flag) {//TODO implement ground control using input capture and sanity check
+	if(!Ground_Flag) {//TODO implement ground control using PWM input capture and sanity check
 		//Pitch setpoint control pid (actually a PI) -- Note- uses dynamic pressure 
 		Run_PID(&(control.pitch_setpoint),&(control.airframe.pitch_setpoint),control.airframe.airspeed-AirSpeed,0);
 		//Roll setpoint set by heading error
