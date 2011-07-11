@@ -16,7 +16,11 @@ typedef struct
 	int32_t vdown;
 	int32_t longitude;				//degrees/10^-7
 	int32_t latitude;
-	int32_t altitude;				//height/mm
+	int32_t altitude;				//height above ellipsoid in mm
+	int32_t mslaltitude;				//height above mean sea level in mm
+	uint32_t horizontal_error;			//horizontal error estimate in mm
+	uint32_t vertical_error;			//vertical error in mm
+	uint32_t speedacc;				//speed accuracy in cm/s
 	uint8_t packetflag;				//packetflag lets us see when our packet has been updated
 	uint8_t status;					//type of fix
 	uint8_t nosats;					//number of tracked satellites
@@ -37,11 +41,12 @@ typedef struct
 #define WEEK_POS 43
 #define SVINFO_DATA 0x30
 #define POS_OFFSET 44
-#define POS_START 12
+#define POS_START 0
 #define POS_END 25
 #define VEL_OFFSET 40 
 #define VEL_START 20
 #define VEL_END 37
+#define VEL_ACC_END 4
 #define SYNC_1 0xB5
 #define SYNC_2 0x62
 

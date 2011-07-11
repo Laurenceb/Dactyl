@@ -74,6 +74,8 @@ void Gps_Process_Byte(uint8_t c,Ubx_Gps_Type* gps)//The raw USART data is fed in
 				{
 					if(Lenght<VEL_END && Lenght>VEL_START)
 						((uint8_t*)gps)[VEL_OFFSET-Lenght]=c;
+					if(Lenght<VEL_ACC_END && Lenght>VEL_ACC_END-4)
+						((uint8_t*)&(gps->speedacc))[VEL_ACC_END-Lenght-1]=c;
 				}
 				if(Id==SOL_DATA)
 				{

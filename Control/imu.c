@@ -88,7 +88,7 @@ void run_imu(void) {
 			if(p_count++==2) {//Read the pitot output every 9 iterations(13.9Hz) -this also checks for ACK - indicating data
 				if(!Pitot_Read_Conv((uint32_t*)&Pitot_Pressure)) {//Read the pitot - we dont need to setup a conversion
 					Pitot_Pressure=Pitot_Conv((uint32_t)Pitot_Pressure);//Align and sign the adc value - 1lsb=~0.24Pa
-					AirSpeed=Pitot_convert_Airspeed(Pitot_Pressure,(float)gps.altitude*0.001,(float)Baro_Pressure);//windspeed
+					AirSpeed=Pitot_convert_Airspeed(Pitot_Pressure,(float)gps.mslaltitude*0.001,(float)Baro_Pressure);//windspeed
 					Wind.x*=WIND_TAU;Wind.y*=WIND_TAU;	//Low pass filter
 					Wind.x+=(1-WIND_TAU)*(Nav.Vel[0]-AirSpeed*Body_x_To_x);//This assumes horizontal wind and neglidgible slip
 					Wind.y+=(1-WIND_TAU)*(Nav.Vel[1]-AirSpeed*Body_x_To_y);
@@ -104,16 +104,16 @@ void run_imu(void) {
 	if(gps.packetflag==REQUIRED_DATA){	
 		gps_position.x=((float)gps.latitude-Home_Position.x)*LAT_TO_METERS;//Remember, NED frame, and gps altitude needs *=-1
 		gps_position.y=((float)gps.longitude-Home_Position.y)*Long_To_Meters_Home;//This is a global set with home position
-		gps_position.z=-((float)gps.altitude*0.001)-Home_Position.z;//Home is in raw gps coordinates - apart from altitude in m
+		gps_position.z=-((float)gps.mslaltitude*0.001)-Home_Position.z;//Home is in raw gps coordinates - apart from altitude in m
 		gps_velocity.x=(float)gps.vnorth*0.01;		//Ublox velocity is in cm/s
 		gps_velocity.y=(float)gps.veast*0.01;
 		gps_velocity.z=(float)gps.vdown*0.01;
 		SensorsUsed|=POS_SENSORS|HORIZ_SENSORS|VERT_SENSORS;//Set the flagbits for the gps update
 		//Correct Sea level pressure - average the gps altitude over first 100 seconds and apply correction when filter initialised
 		if(Iterations++>100*GPS_RATE)
-			Sea_Level_Pressure+=12.25*((float)gps.altitude*0.001-Baro_Alt-Mean_Alt_Err)*0.01/GPS_RATE;//At moment fixed tau; 0.01/second
+			Sea_Level_Pressure+=12.25*((float)gps.mslaltitude*0.001-Baro_Alt-Mean_Alt_Err)*0.01/GPS_RATE;//At moment fixed tau; 0.01/second
 		else
-			Mean_Alt_Err+=(0.01/(float)GPS_RATE)*((float)gps.altitude*0.001-Baro_Alt);//100s average to find remenant altitude error
+			Mean_Alt_Err+=(0.01/(float)GPS_RATE)*((float)gps.mslaltitude*0.001-Baro_Alt);//100s average to find remenant altitude error
 		if(!Gps.packetflag)Gps=gps;			//Copy the data over to the main 'thread' if the global unlocked
 		gps.packetflag=0x00;				//Reset the flag
 	}

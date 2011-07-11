@@ -164,9 +164,9 @@ void Initialisation() {
 			Gps_Process_Byte((uint8_t)(Pop_From_Buffer(&Gps_Buffer)),&Gps);
 	}
 	Usart_Send_Str((char*)"\r\nGot GPS fix:");//Print out the fix for debug purposes
-	printf("%ld,%ld,%ld,%ld,%ld,%ld,%1x,%1x\r\n",\
-	Gps.latitude,Gps.longitude,Gps.altitude,\
-	Gps.vnorth,Gps.veast,Gps.vdown,Gps.status,Gps.nosats);
+	printf("%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%1x\r\n",\
+	Gps.latitude,Gps.longitude,Gps.mslaltitude,\
+	Gps.vnorth,Gps.veast,Gps.vdown,Gps.horizontal_error,Gps.vertical_error,Gps.speedacc,Gps.nosats);
 	//Record the bmp085 temperature
 	Baro_Setup_Temperature();
 	Delay(0x4FFFF);
@@ -183,7 +183,7 @@ void Initialisation() {
 		}
 		Home_Position.x+=(float)Gps.latitude;
 		Home_Position.y+=(float)Gps.longitude;
-		Home_Position.z-=(float)Gps.altitude;//NED frame - alititude is negative
+		Home_Position.z-=(float)Gps.mslaltitude;//NED frame - alititude is negative
 		if(err&0x01) {			//On odd iterations we convert the temperature
 			Bmp_Gettemp();
 			Baro_Setup_Pressure();

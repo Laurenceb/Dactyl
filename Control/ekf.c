@@ -116,12 +116,17 @@ void INSResetP(float PDiag[NUMX])
 
 	// if PDiag[i] nonzero then clear row and column and set diagonal element
 	for (i=0;i<NUMX;i++){
-		if (PDiag != 0){
+		if (PDiag[i] != 0){
 			for (j=0;j<NUMX;j++)
 				P[i][j]=P[j][i]=0;
 			P[i][i]=PDiag[i];
 		}
 	}
+}
+
+void INSResetRGPS(float GPSVar[3])
+{	// This function takes argument of gps horizontal error, vertical error, and speed error. Best we can get from ublox? TODO investigate DOP
+	R[0] = R[1] = GPSVar[0]
 }
 
 void INSSetState(float pos[3], float vel[3], float q[4], float gyro_bias[3])
