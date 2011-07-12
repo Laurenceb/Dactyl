@@ -44,7 +44,7 @@ void run_imu(void) {
 	Vector m;
 	#pragma pack()
 	Float_Vector ma,gy,gps_velocity,gps_position,target_vector,waypoint;
-	float Delta_Time=DELTA_TIME,x_down,y_down,h_offset,N_t_x,N_t_y,time_to_waypoint,Horiz_t;
+	float Delta_Time=DELTA_TIME,x_down,y_down,h_offset,N_t_x,N_t_y,time_to_waypoint,Horiz_t,GPS_Errors[4];
 	uint16_t SensorsUsed=0;			//We by default have no sensors
 	int32_t Baro_Temperature; 
 	//Setup the calibration arrays
@@ -108,6 +108,11 @@ void run_imu(void) {
 		gps_velocity.x=(float)gps.vnorth*0.01;		//Ublox velocity is in cm/s
 		gps_velocity.y=(float)gps.veast*0.01;
 		gps_velocity.z=(float)gps.vdown*0.01;
+		GPS_Errors[0]=pow((float)gps.horizontal_error*0.001,2)*GPS_SPECTRAL_FUDGE_FACTOR/2.0;//Fudge factor for spectral noise density 
+		GPS_Errors[1]=pow((float)gps.vertical_error*0.001,2)*GPS_SPECTRAL_FUDGE_FACTOR;//Fudge factor is defined in ubx.h/gps header file
+		GPS_Errors[2]=pow((float)gps.speedacc*0.01,2)*GPS_SPECTRAL_FUDGE_FACTOR*GPS_Errors[0]/(GPS_Errors[0]+GPS_Errors[1]);
+		GPS_Errors[3]=GPS_Errors[2]*GPS_Errors[1]/GPS_Errors[0];//Ublox5 only gives us 3D speed accuracy? Weight with position errors
+		INSResetRGPS(GPS_Errors);			//Adjust the measurement covariance matrix with reported gps error
 		SensorsUsed|=POS_SENSORS|HORIZ_SENSORS|VERT_SENSORS;//Set the flagbits for the gps update
 		//Correct Sea level pressure - average the gps altitude over first 100 seconds and apply correction when filter initialised
 		if(Iterations++>100*GPS_RATE)

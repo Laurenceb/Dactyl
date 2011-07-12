@@ -124,9 +124,12 @@ void INSResetP(float PDiag[NUMX])
 	}
 }
 
-void INSResetRGPS(float GPSVar[3])
+void INSResetRGPS(float GPSVar[4])
 {	// This function takes argument of gps horizontal error, vertical error, and speed error. Best we can get from ublox? TODO investigate DOP
-	R[0] = R[1] = GPSVar[0]
+	R[0] = R[1] = GPSVar[0];
+	R[2] = GPSVar[1];
+	R[3] = R[4] = GPSVar[2];
+	R[5] = GPSVar [3];
 }
 
 void INSSetState(float pos[3], float vel[3], float q[4], float gyro_bias[3])

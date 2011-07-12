@@ -92,9 +92,12 @@ typedef struct
 //^turns on status updates
 //#define NEW_BAUD 115200UL
 #define NEW_BAUD 57600UL
-#define GPS_DEFAULT_BAUD 9600UL		//some modules have 38400/9600/4800 (dont ask!)
+#define GPS_DEFAULT_BAUD 9600UL		/*some modules have 38400/9600/4800 (dont ask!)*/
 //GPS rate for imu functions
 #define GPS_RATE 5
+//GPS error guassian white noise approximation factors
+#define GPS_NOISE_BANDWIDTH 0.2		/*this is a rough approximation if ionospheric noise dominates, approx as uniform density from 0-0.2hz*/
+#define GPS_SPECTRAL_FUDGE_FACTOR (float)GPS_RATE/(2.0*GPS_NOISE_BANDWIDTH)
 
 //Function prototypes
 void Gps_Process_Byte(uint8_t c,Ubx_Gps_Type* gps);
