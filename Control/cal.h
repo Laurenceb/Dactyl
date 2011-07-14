@@ -6,7 +6,8 @@
 //Note that the magno was calibrated inside a steel frames building - field in mG seems slightly too low
 #define MAG_CAL_6 { 166.14,1.26556,0,0, -61.084,0,1.21083,0, 149.36,0,0,1.25174}
 //Note accel is in meters per second squared - set to +-4G mode
-#define ACC_CAL_6 { 0.058573,0.0012223,0,0, 0.015166,0,0.0012263,0, -0.118921,0,0,0.0012010}
+//#define ACC_CAL_6 { 0.058573,0.0012223,0,0, 0.015166,0,0.0012263,0, -0.118921,0,0,0.0012010}
+#define ACC_CAL_6 { 0.058573,0.00061093,0,0, 0.015166,0,0.00061292,0, -0.118921,0,0,0.00060028}/*+-2G*/
 //Note gyro calibration hasnt been completed, using datasheet sensitivity and leaving out bias as ekf handles it
 #define GYR_CAL_6 { 0,0.00121414,0,0, 0,0,0.00121414,0, 0,0,0,0.00121414}
 //Pitot offset cal

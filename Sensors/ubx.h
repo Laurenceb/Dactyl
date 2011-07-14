@@ -46,7 +46,7 @@ typedef struct
 #define VEL_OFFSET 40 
 #define VEL_START 20
 #define VEL_END 37
-#define VEL_ACC_END 4
+#define VEL_ACC_END 9
 #define SYNC_1 0xB5
 #define SYNC_2 0x62
 
