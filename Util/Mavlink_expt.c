@@ -1,6 +1,7 @@
 //Dactyl project v1.0
 
-
+#include <string.h>
+#include "stm32f10x.h"
 #include "mavlink.h"
 
 extern Mavlink_Config_Type Mavlink_config;	//This is global, holds the configuration for supported packets and their properties
@@ -18,9 +19,10 @@ void Mavlink_Process_Byte(uint8_t c,Mavlink_Port_Type* msg) {//The raw USART/ISM
 	switch(msg->state)			//Run packet parser state machine
 	{
 		case 0:				//Start by waiting for the first sync byte
-			if(c==MAVLINK_SYNC)
+			if(c==MAVLINK_SYNC) {
 				msg->state=1;
 				msg->checksum=0xFFFF;//X.25 checksum initialise
+			}
 			else
 				msg->state=0;
 			break;
@@ -45,16 +47,15 @@ void Mavlink_Process_Byte(uint8_t c,Mavlink_Port_Type* msg) {//The raw USART/ISM
 			else
 				msg->state=0;
 			break;
-		case 5:				//The message id
-			msg->id=c;		//Check that the message is supported- it appears in id string
-			if((msg->packetno=memchr(&(Mavlink_config.supported_packets),c,Mavlink_config.num_packs))!=NULL)
+		case 5:				//Check that the message is supported- it appears in id string
+			if((msg->packetno=memchr(&(Mavlink_config.supported_packets),c,Mavlink_config.num_packets))!=NULL)
 				msg->state=6;	//packetno holds packet number - allows matching with global data pointers+semaphores
 			else
 				msg->state=0;	//Packet is not implimented
 			break;
 		case 6:				//The data follows
 			msg->rx_buffer[msg->bytes_written++]=c;//received byte placed in temporary rx_buffer until receipt of checksum
-			if(msg->bytes_written==msg->lenght || msg->bytes_written==Mavlink_config.lenghts[packetno])//End of the data
+			if(msg->bytes_written==msg->lenght || msg->bytes_written==Mavlink_config.lenghts[msg->packetno])//End of data
 				msg->state=7;
 			break;
 		case 7:				//Check the checksum, MSB first
@@ -72,7 +73,7 @@ void Mavlink_Process_Byte(uint8_t c,Mavlink_Port_Type* msg) {//The raw USART/ISM
 			}
 			msg->state=0;		//Reset state upon successful packet reception
 	}	
-	if(mag->state && msg->state<8) {	//In the valid range to add to the checksum - X.25 checksum algorythm over bytes 1-n+6
+	if(msg->state && msg->state<8) {	//In the valid range to add to the checksum - X.25 checksum algorythm over bytes 1-n+6
 		tmp=c ^ (uint8_t)(msg->checksum & 0x00ff);
 		tmp^= (tmp<<4);
 		msg->checksum = ((msg->checksum)>>8) ^ (tmp<<8) ^ (tmp <<3) ^ (tmp>>4);
@@ -85,24 +86,24 @@ void Mavlink_Process_Byte(uint8_t c,Mavlink_Port_Type* msg) {//The raw USART/ISM
   * @retval void
   */
 void Mavlink_Generate_Packet(uint8_t packetno,Mavlink_Port_Type* msg) {
-	if(!Mavlink_config.semaphores[packetno])
-		return void;			//If the data is locked, this function does not have permission to run
-	Mavlink_config.semaphores[packetno]=0;	//Lock the data by setting it to zero
-	uint16_t checksum=0xFFFF,i,tmp;		//General perpose counter and checksum
-	msg->txbuffer[0]=MAVLINK_SYNC;		//Sync byte comes first
-	msg->txbuffer[1]=Mavlink_config.lenghts[packetno];//Lenght as defined in config structure
-	msg->txbuffer[2]=msg->sequence++;	//Each channel has its own sequence counter
-	msg->txbuffer[3]=Mavlink_config.system;	//System id
-	msg->txbuffer[4]=Mavlink_config.component;//Component id
-	msg->txbuffer[5]=Mavlink_config.supported_packets[packetno];//packet id byte
-	memcpy(&(msg->txbuffer),Mavlink_config.datapointers[packetno],msg->txbuffer[1]);//Now we copy the payload
-	Mavlink_config.semaphores[packetno]=0xFF;//Unlock the data by setting it
-	for(i=1;i<msg->txbuffer[1]+6;i++) {	//note that we bypass the msg.checksum, and place all data directly in the msg.txbuffer
-		tmp=c ^ (uint8_t)(checksum & 0x00ff);
-		tmp^= (tmp<<4);
-		checksum = (checksum>>8) ^ (tmp<<8) ^ (tmp <<3) ^ (tmp>>4);
+	if(Mavlink_config.semaphores[packetno]) {//If the data is locked, this function does not have permission to run
+		Mavlink_config.semaphores[packetno]=0;//Lock the data by setting it to zero
+		uint16_t checksum=0xFFFF,i,tmp;	//General perpose counter and checksum
+		msg->tx_buffer[0]=MAVLINK_SYNC;	//Sync byte comes first
+		msg->tx_buffer[1]=Mavlink_config.lenghts[packetno];//Lenght as defined in config structure
+		msg->tx_buffer[2]=msg->sequence++;//Each channel has its own sequence counter
+		msg->tx_buffer[3]=Mavlink_config.systemid;//System id
+		msg->tx_buffer[4]=Mavlink_config.componentid;//Component id
+		msg->tx_buffer[5]=Mavlink_config.supported_packets[packetno];//packet id byte
+		memcpy(&(msg->tx_buffer),(uint8_t*)Mavlink_config.datapointers[packetno],msg->tx_buffer[1]);//Now we copy the payload
+		Mavlink_config.semaphores[packetno]=0xFF;//Unlock the data by setting it
+		for(i=1;i<msg->tx_buffer[1]+6;i++) {//note that we bypass the msg.checksum, and 
+			tmp=msg->tx_buffer[i] ^ (uint8_t)(checksum & 0x00ff);//place all data directly in the msg.txbuffer
+			tmp^= (tmp<<4);
+			checksum = (checksum>>8) ^ (tmp<<8) ^ (tmp <<3) ^ (tmp>>4);
+		}
+		msg->tx_buffer[i++]=(checksum>>8)&0x00FF;
+		msg->tx_buffer[i]=checksum&0x00FF;
+		msg->txbytes=i;			//Holds the number of bytes in tx buffer
 	}
-	msg->txbuffer[i++]=(checksum>>8)&0x00FF;
-	msg->txbuffer[i]=checksum&0x00FF;
-	msg->txbytes=i;				//Holds the number of bytes in tx buffer
 }
