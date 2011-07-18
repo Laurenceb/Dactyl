@@ -473,7 +473,8 @@ void stm32_dma_transfer(
 	SPI_I2S_DMACmd(SPI_SD, SPI_I2S_DMAReq_Rx | SPI_I2S_DMAReq_Tx, ENABLE);
 
 	/* Wait until DMA1_Channel 3 Transfer Complete */
-	/// not needed: while (DMA_GetFlagStatus(DMA_FLAG_SPI_SD_TC_TX) == RESET) { ; }
+	/// not needed: - Needed for other devices to share bus; block until bus is ready to use
+	while (DMA_GetFlagStatus(DMA_FLAG_SPI_SD_TC_TX) == RESET) { ; }
 	/* Wait until DMA1_Channel 2 Receive Complete */
 	while (DMA_GetFlagStatus(DMA_FLAG_SPI_SD_TC_RX) == RESET) { ; }
 	// same w/o function-call:
