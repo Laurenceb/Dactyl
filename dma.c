@@ -12,7 +12,7 @@ void DMA_Configuration(Buffer_Type* buffer)
 { /* Feed this function a pointer to the circular buffer, and a size integer */
   DMA_InitTypeDef DMA_InitStructure;
   /* USART2 RX DMA1 Channel (triggered by USART2 Rx event) Config */
-  DMA_DeInit(USART2_DMA1);  
+  DMA_DeInit(USART2RX_DMA1);  
   DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
   DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
   DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte;
@@ -24,18 +24,47 @@ void DMA_Configuration(Buffer_Type* buffer)
   DMA_InitStructure.DMA_MemoryBaseAddr = (uint32_t)&(buffer->data);
   DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralSRC;
   DMA_InitStructure.DMA_BufferSize = (uint32_t)buffer->size;
-  DMA_Init(USART2_DMA1, &DMA_InitStructure);
+  DMA_Init(USART2RX_DMA1, &DMA_InitStructure);
+}
+
+/**
+  * @brief  Configures the DMA for USART1 Tx,Rx as enabled or disabled
+  * @param  logical flag for enabled (True), Buffer pointers for Tx and Rx
+  * @retval None
+  * Note this is coded for USART1 Tx,Rx on stm32f10x. The FatFS code handles DMA init/deinit itself and shares these channels
+  */
+void DMA_USART1_Configuration(uint8_t enabled, Buffer_Type* tx_buffer, Buffer_Type* rx_buffer) {
+  DMA_InitTypeDef DMA_InitStructure;
+  /* USART1 RX/TX DMA1 Channel (triggered by USART1 Rx/Tx event) Config */
+  DMA_DeInit(USART1RX_DMA1);
+  DMA_DeInit(USART1TX_DMA1); 
+  DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
+  DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
+  DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte;
+  DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_Byte;
+  DMA_InitStructure.DMA_Mode = DMA_Mode_Normal;
+  DMA_InitStructure.DMA_Priority = DMA_Priority_High;
+  DMA_InitStructure.DMA_M2M = DMA_M2M_Disable;  
+  DMA_InitStructure.DMA_PeripheralBaseAddr = USART1_BASE+USART_Mode_Rx;
+  DMA_InitStructure.DMA_MemoryBaseAddr = (uint32_t)&(rx_buffer->data);
+  DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralSRC;
+  DMA_InitStructure.DMA_BufferSize = (uint32_t)rx_buffer->size;
+  DMA_Init(USART1RX_DMA1, &DMA_InitStructure);//init the dma servicing usart1 in non circular mode, transmits all tx buffer
+  DMA_InitStructure.DMA_PeripheralBaseAddr = USART1_BASE+USART_Mode_Tx;//and receives any data into rx buffer
+  DMA_InitStructure.DMA_MemoryBaseAddr = (uint32_t)&(tx_buffer->data);//Bytes_In_Buffer can be used to find any received data
+  DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralDST;
+  DMA_InitStructure.DMA_BufferSize = (uint32_t)tx_buffer->size;
+  DMA_Init(USART1TX_DMA1, &DMA_InitStructure);	
 }
 
 /**
   * @brief  Returns number of bytes in the buffer.
-  * @param  Buffer pointer
+  * @param  Buffer pointer, DMA Channel to use
   * @retval bytes in buffer
-  * Note this is hardcoded for USART2 Rx - the GPS
   */
-int16_t Bytes_In_Buffer(Buffer_Type* buffer)
+int16_t Bytes_In_Buffer(Buffer_Type* buffer, DMA_Channel_TypeDef* Channel)
 {
-	return ((buffer->size-DMA_GetCurrDataCounter(DMA1_Channel6)-buffer->tail)%buffer->size);
+	return ((buffer->size-DMA_GetCurrDataCounter(Channel)-buffer->tail)%buffer->size);
 }
 
 /**
@@ -43,10 +72,10 @@ int16_t Bytes_In_Buffer(Buffer_Type* buffer)
   * @param  Buffer pointer
   * @retval int16 with bytes with value -1 if nothing in buffer 
   */
-int16_t Get_From_Buffer(Buffer_Type* buffer)
+int16_t Get_From_Buffer(Buffer_Type* buffer, DMA_Channel_TypeDef* Channel)
 {
 	uint8_t d=(buffer->data)[buffer->tail];//read data at tail
-	if(Bytes_In_Buffer(buffer))
+	if(Bytes_In_Buffer(buffer,Channel))
 	{
 		buffer->tail=(buffer->tail+1)%buffer->size;
 		return (int16_t)d;	//returns the byte
@@ -72,7 +101,7 @@ uint8_t Pop_From_Buffer(Buffer_Type* buffer)
   * @param Buffer pointer
   * @retval None
   */
-void Flush_Buffer(Buffer_Type* buffer)
+void Flush_Buffer(Buffer_Type* buffer, DMA_Channel_TypeDef* Channel)
 {
-	while(Get_From_Buffer(buffer)>0);//loop until we reach end of buffer
+	while(Get_From_Buffer(buffer, Channel)>0);//loop until we reach end of buffer
 }

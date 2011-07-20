@@ -88,7 +88,7 @@ void Initialisation() {
 	Gps_Buffer.size=BUFFER_SIZE;Gps_Buffer.tail=0;//Set the buffer size to the defined one here
 	DMA_Configuration(&Gps_Buffer);
 	// Enable the DMA for USART2
-	DMA_Cmd(USART2_DMA1, ENABLE);
+	DMA_Cmd(USART2RX_DMA1, ENABLE);
 	// Set up the USARTs for outputting sensor information
     	Usarts_Init();
 	//Greeting
@@ -151,7 +151,7 @@ void Initialisation() {
 		printf("Pitot error: %d\r\n",err);
 	if(!Config_Gps()) Usart_Send_Str((char*)"Setup GPS ok - awaiting fix\r\n");//If not the function printfs its error
 	while(Gps.status!=UBLOX_3D) {		//Wait for a 3D fix
-		while(Bytes_In_Buffer(&Gps_Buffer))//Dump all the data
+		while(Bytes_In_Buffer(&Gps_Buffer,USART2RX_DMA1))//Dump all the data
 			Gps_Process_Byte((uint8_t)(Pop_From_Buffer(&Gps_Buffer)),&Gps);
 		if(Gps.packetflag==REQUIRED_DATA){		
 			putchar(0x30+Gps.nosats);putchar(0x2C);//Number of sats seperated by commas
@@ -160,7 +160,7 @@ void Initialisation() {
 	}
 	Gps.packetflag=0x00;			//Reset
 	while(Gps.packetflag!=REQUIRED_DATA) {	//Wait for all fix data
-		while(Bytes_In_Buffer(&Gps_Buffer))//Dump all the data
+		while(Bytes_In_Buffer(&Gps_Buffer,USART2RX_DMA1))//Dump all the data
 			Gps_Process_Byte((uint8_t)(Pop_From_Buffer(&Gps_Buffer)),&Gps);
 	}
 	Usart_Send_Str((char*)"\r\nGot GPS fix:");//Print out the fix for debug purposes
@@ -178,7 +178,7 @@ void Initialisation() {
 	for(err=0;err<50;err++) {		//GPS is configured for 5Hz output, so average 50 samples
 		Gps.packetflag=0x00;		//Reset
 		while(Gps.packetflag!=REQUIRED_DATA) {		//Wait for all fix data
-			while(Bytes_In_Buffer(&Gps_Buffer))	//Dump all the data
+			while(Bytes_In_Buffer(&Gps_Buffer,USART2RX_DMA1))//Dump all the data
 				Gps_Process_Byte((uint8_t)(Pop_From_Buffer(&Gps_Buffer)),&Gps);
 		}
 		Home_Position.x+=(float)Gps.latitude;

@@ -149,6 +149,16 @@ void assert_failed(uint8_t* file, uint32_t line)
 
 #endif
 
+/**
+  * @brief  Sends data through USART1 using DMA, blocks until complete
+  * @param  data: pointer to the source data
+  * @param  bytes: number of bytes to transmit
+  * @retval None
+  */
+void usart1_send_data_dma(char* data, uint16_t bytes) {
+	
+}
+
 //Private functions
 void __usart_send_char(char data) {
     USART_SendData(USART1_USART, data);

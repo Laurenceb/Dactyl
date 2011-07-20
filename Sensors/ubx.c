@@ -159,7 +159,7 @@ uint8_t Get_UBX_Ack(uint8_t Class, uint8_t Id) {
  	while(1) {				//Test for success
 		if(ackByteID > 9)return UBX_OK;	//All packets in order!
 		if(counter++>GPS_RESPONSE_TIMEOUT)return UBX_FAIL; //Timeout if no valid response in 3 seconds
-		if(Bytes_In_Buffer(&Gps_Buffer)) {//Make sure data is available to read
+		if(Bytes_In_Buffer(&Gps_Buffer,USART1RX_DMA1)) {//Make sure data is available to read
 			b=Pop_From_Buffer(&Gps_Buffer);
 			//putchar(b);
  			if(b==ackPacket[ackByteID])//Check that bytes arrive correct sequence
@@ -195,7 +195,7 @@ uint8_t Config_Gps(void) {
 	Gps_Send_Str(rmc_off);
 	Gps_Send_Str(gga_off);
 	Delay(GPS_DELAY);			//Wait for the gps to process this
-	Flush_Buffer(&Gps_Buffer);		//Wipe the DMA buffer - it will have been overwritten with NMEA
+	Flush_Buffer(&Gps_Buffer,USART2RX_DMA1);//Wipe the DMA buffer - it will have been overwritten with NMEA
 	Gps_Send_Utf8(usart_conf);
 	if(Get_UBX_Ack(usart_conf[3],usart_conf[4])) {
 		printf("Ack Error -Usart config\r\n");
