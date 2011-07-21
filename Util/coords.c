@@ -119,7 +119,7 @@ void RneFromLLA(double LLA[3], float Rne[3][3])
 	Rne[2][1] = -cosLat * sinLon;
 	Rne[2][2] = -sinLat;
 }
-
+#endif
 // ****** find roll, pitch, yaw from quaternion ********
 void Quaternion2RPY(const float q[4], float rpy[3])
 {
@@ -141,7 +141,7 @@ void Quaternion2RPY(const float q[4], float rpy[3])
 
 	//TODO: consider the cases where |R13| ~= 1, |pitch| ~= pi/2
 }
-
+#if FULL_CONV==1
 // ****** find quaternion from roll, pitch, yaw ********
 void RPY2Quaternion(const float rpy[3], float q[4])
 {
