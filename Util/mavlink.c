@@ -4,7 +4,14 @@
 #include "stm32f10x.h"
 #include "mavlink.h"
 
-extern Mavlink_Config_Type Mavlink_config;	//This is global, holds the configuration for supported packets and their properties
+extern uint8_t* Mavlink_Attitude_Data=0;	//Pointer to the attitude packet data
+//This is global, holds the configuration for supported packets and their properties
+uint8_t Mavlink_packets[]={30};			//This is an array of message ids that are supported
+uint8_t Mavlink_lenghts[]={32};			//Array of message lenghts - payload in bytes
+uint8_t Mavlink_semaphores[]={1};		//Semaphores array, initialise as unlocked (true)
+uint8_t* Mavlink_data[]={(const uint8_t*)Mavlink_Attitude_Data};//Array of data pointers
+//Note system and component id set at 1,1 here. We only have one supported packet TODO add more packets
+Mavlink_Config_Type Mavlink_config={0x01,0x01,1,Mavlink_packets,Mavlink_data,Mavlink_lenghts,Mavlink_semaphores};
 
 
 /**

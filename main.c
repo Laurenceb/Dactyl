@@ -54,14 +54,21 @@ volatile float Balt;
 int main(void) {;
 	rprintfInit(__usart_send_char);//inititalise reduced printf functionality
 	Initialisation();//initialise all hardware
-	for(;;) {/* THIS IS JUST SOME PLACEHOLDER TEST STUFF */
+	for(;;) {
+		if(Nav_Flag) {
+			//All hardcoded USART1 MAVlink streams go here
+			//All hardcoded ISM MAVlink streams go here
+
+		}
+		/*
+		// THIS IS JUST SOME PLACEHOLDER TEST STUFF 
 		if(Nav_Flag){	//wait for some EKF data to be ready
 		printf("%4f,%4f,%4f,%4f,%4f,%4f,%4f,%4f,%4f,%4f,",Nav_Global.Pos[0],Nav_Global.Pos[1],Nav_Global.Pos[2],\
 		Nav_Global.Vel[0],Nav_Global.Vel[1],Nav_Global.Vel[2],Nav_Global.q[0],Nav_Global.q[1],Nav_Global.q[2],\
 		Nav_Global.q[3]);
 		printf("%4f,%4f,%4f,%2f\r\n",Nav_Global.gyro_bias[0],Nav_Global.gyro_bias[1],Nav_Global.gyro_bias[2],Balt);
 		Nav_Flag=0;	//We now have to reaquire the nav data
-		}
+		}*/
 		/*if(Balt!=-1.0){
 			printf("%5f\r\n",Balt);
 			Balt=-1.0;

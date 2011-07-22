@@ -23,7 +23,7 @@ typedef struct {
 	uint8_t componentid;
 	uint8_t num_packets;
 	uint8_t* supported_packets;//string of supported packets
-	uint32_t* datapointers;	//Pointer to the array of pointers (as 32bit address space locations) to the data contained with packets
+	uint8_t** datapointers;	//Pointer to the array of pointers to the data contained with packets
 	uint8_t* lenghts;	//Array of packet lenghts
 	uint8_t* semaphores;	//Used to control access to the data
 } Mavlink_Config_Type;		//Config info for the mavlink setup on the vehicle/device component
