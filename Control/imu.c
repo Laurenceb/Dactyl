@@ -99,7 +99,7 @@ void run_imu(void) {
 	}
 	if(++state==3)	state=0;
 	//Process the GPS data
-	while(Bytes_In_Buffer(&Gps_Buffer))			//Dump all the data from DMA
+	while(Bytes_In_Buffer(&Gps_Buffer,USART2RX_DMA1))	//Dump all the data from DMA
 		Gps_Process_Byte((uint8_t)(Pop_From_Buffer(&Gps_Buffer)),&gps);
 	if(gps.packetflag==REQUIRED_DATA){	
 		gps_position.x=((float)gps.latitude-Home_Position.x)*LAT_TO_METERS;//Remember, NED frame, and gps altitude needs *=-1

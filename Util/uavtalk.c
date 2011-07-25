@@ -124,7 +124,7 @@ void UAVtalk_Process_Byte(uint8_t c,UAVtalk_Port_Type* msg) {//The raw USART/ISM
   * @param  Pointer to the UAVtalk port structure, set the object_no, instance where required, and the type beforehand
   * @retval void
   */
-void UAVtalk_Generate_Packet(UAVtalk_Port_Type* msg, Buffer_type, Buffer_Type* buff) {
+void UAVtalk_Generate_Packet(UAVtalk_Port_Type* msg, Buffer_Type* buff) {
 	int16_t i=0;
 	if(msg->object_no>=0) {			//If the object exists
 		i=UAVtalk_conf.lenghts[msg->object_no];//i holds the number of data payload bytes
@@ -137,21 +137,22 @@ void UAVtalk_Generate_Packet(UAVtalk_Port_Type* msg, Buffer_type, Buffer_Type* b
 	}
 	if(i>0) {				//If we are able to run
 		UAVtalk_conf.semaphores[msg->object_no]=0;//Lock the data by setting it to zero
-		msg->tx_buffer[0]=UAVTALK_SYNC;	//Sync byte comes first
-		msg->tx_buffer[1]=(UAVtalk_conf.version<<4)|(msg->type&0x0F);//Type of message as setup beforehand- also protocol version
-		msg->tx_buffer[2]=(uint8_t)(i&0x00FF);//The number of payload bytes
-		msg->tx_buffer[3]=(uint8_t)((i>>8)&0x00FF);//Little endian
-		msg->tx_buffer[4]=(uint8_t)(UAVtalk_conf.object_ids[msg->object_no]&0x000000FF);//Little endian object id
-		msg->tx_buffer[5]=(uint8_t)((UAVtalk_conf.object_ids[msg->object_no]>>8)&0x000000FF);
-		msg->tx_buffer[6]=(uint8_t)((UAVtalk_conf.object_ids[msg->object_no]>>16)&0x000000FF);
-		msg->tx_buffer[7]=(uint8_t)((UAVtalk_conf.object_ids[msg->object_no]>>24)&0x000000FF);
-		msg->tx_buffer[8]=(uint8_t)(msg->instance_id&0x00FF);
-		msg->tx_buffer[9]=(uint8_t)(msg->instance_id>>8);//Instance - little endian
+		buff->data[0]=UAVTALK_SYNC;	//Sync byte comes first
+		buff->data[1]=(UAVtalk_conf.version<<4)|(msg->type&0x0F);//Type of message as setup beforehand- also protocol version
+		buff->data[2]=(uint8_t)(i&0x00FF);//The number of payload bytes
+		buff->data[3]=(uint8_t)((i>>8)&0x00FF);//Little endian
+		buff->data[4]=(uint8_t)(UAVtalk_conf.object_ids[msg->object_no]&0x000000FF);//Little endian object id
+		buff->data[5]=(uint8_t)((UAVtalk_conf.object_ids[msg->object_no]>>8)&0x000000FF);
+		buff->data[6]=(uint8_t)((UAVtalk_conf.object_ids[msg->object_no]>>16)&0x000000FF);
+		buff->data[7]=(uint8_t)((UAVtalk_conf.object_ids[msg->object_no]>>24)&0x000000FF);
+		buff->data[8]=(uint8_t)(msg->instance_id&0x00FF);
+		buff->data[9]=(uint8_t)(msg->instance_id>>8);//Instance - little endian
 		//Copy the data into the reset of the tx buffer
-		memcpy(&(msg->tx_buffer[10]),(uint8_t*)UAVtalk_conf.object_pointers[msg->object_no],i);
+		memcpy(&(buff->data[10]),(uint8_t*)UAVtalk_conf.object_pointers[msg->object_no],i);
 		UAVtalk_conf.semaphores[msg->object_no]=0xFF;//Unlock the data by setting it
 		i+=10;				//Packet overhead is 11 bytes - CRC8 does not run over the CRC8
-		msg->tx_buffer[i]=CRC_updateCRC(0,msg->rx_buffer,i);//Add to CRC8 to end
-		msg->txbytes=i+1;		//Holds the number of bytes in tx buffer
+		buff->data[i]=CRC_updateCRC(0,msg->rx_buffer,i);//Add to CRC8 to end
+		buff->size=i+1;			//Holds the number of bytes in tx buffer
+		buff->tail=0;			//Make sure the tail is zero
 	}
 }

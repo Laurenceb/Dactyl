@@ -8,7 +8,7 @@
 //Periferal headers
 #include "usart.h"
 #include "i2c.h"
-#include "dma.h"
+//#include "dma.h" - included from uavtalk
 #include "pwm.h"
 #include "gpio.h"
 #include "interrupts.h"
@@ -58,13 +58,11 @@ int main(void) {;
 	rprintfInit(__usart_send_char);//inititalise reduced printf functionality
 	Initialisation();//initialise all hardware
 	for(;;) {
+		//All USART1 UAVtalk streams go here
+		UAVtalk_Generate_Packet(&uavtalk_usart_port, &Usart1tx);//setup the packet first - load the dma buffer (this sends objectid in the port)
+		usart1_send_data_dma(&Usart1tx,&Usart1rx);//enable the usart1 dma, dma for spi2 cannot be used now
+		//Now we process and received data (the dma has to be turned off afterwards so spi can be used)
 		if(Nav_Flag) {
-			//All hardcoded USART1 UAVtalk streams go here
-			UAVtalk_Generate_Packet(&uavtalk_usart_port);
-			usart1_send_data_dma(&Usart1tx,&Usart1rx);
-			//All hardcoded ISM MAVlink streams go here
-
-		}
 		/*
 		// THIS IS JUST SOME PLACEHOLDER TEST STUFF 
 		if(Nav_Flag){	//wait for some EKF data to be ready

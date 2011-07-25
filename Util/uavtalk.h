@@ -1,5 +1,5 @@
 //Dactyl project v1.0
-
+#include "../dma.h"
 //UAVtalk definitions
 #define UAVTALK_VERSION 1
 #define UAVTALK_SYNC 0x3C
@@ -15,6 +15,7 @@ typedef struct {
 	uint16_t instance_id;
 	int16_t object_no;
 	uint8_t checksum;
+	uint8_t rx_buffer[UAVTALK_MAX_DATA_LEN];
 	uint16_t bytes_written;
 } UAVtalk_Port_Type;		//This is a uavtalk port instance
 
