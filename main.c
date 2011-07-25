@@ -33,11 +33,12 @@
 #include "Util/Fatfs/ff.h"
 #include "Util/time.h"
 #include "Util/coords.h"
+#include "Util/uavtalk.h"
 //Control loop headers
 #include "Control/insgps.h"
 
 //globals go here - this is the only place in the project where globals accessed globally are declared
-Buffer_Type Gps_Buffer;		//GPS data buffer
+Buffer_Type Gps_Buffer, Usart1tx, Usart1rx;//GPS data buffer, USART1 tx and rx buffers
 Float_Vector Home_Position,Waypoint_Global;//Home position for setting NED space, Waypoint in NED
 float Long_To_Meters_Home;	//Conversion factor for longditude to meters
 volatile Ubx_Gps_Type Gps;	//Global Gps, there is also a static gps in the ekf/imu filter code
@@ -50,13 +51,17 @@ volatile uint32_t Ground_Flag;
 FRESULT f_err_code;
 static FATFS FATFS_Obj;
 volatile float Balt;
+//UAVtalk globals
+UAVtalk_Port_Type uavtalk_usart_port;
 
 int main(void) {;
 	rprintfInit(__usart_send_char);//inititalise reduced printf functionality
 	Initialisation();//initialise all hardware
 	for(;;) {
 		if(Nav_Flag) {
-			//All hardcoded USART1 MAVlink streams go here
+			//All hardcoded USART1 UAVtalk streams go here
+			UAVtalk_Generate_Packet(&uavtalk_usart_port);
+			usart1_send_data_dma(&Usart1tx,&Usart1rx);
 			//All hardcoded ISM MAVlink streams go here
 
 		}

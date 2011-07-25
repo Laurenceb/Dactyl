@@ -7,6 +7,7 @@
 //the USART1 Rx DMA - connects to DEBUG connector
 #define USART1RX_DMA1 DMA1_Channel5
 #define USART1TX_DMA1 DMA1_Channel4
+#define USART1TX_DMA_COMPLETE DMA1_FLAG_TC4
 
 /* Private functions ---------------------------------------------------------*/
 

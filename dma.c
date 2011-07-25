@@ -35,7 +35,7 @@ void DMA_Configuration(Buffer_Type* buffer)
   */
 void DMA_USART1_Configuration(uint8_t enabled, Buffer_Type* tx_buffer, Buffer_Type* rx_buffer) {
   if(enabled) {
-  	DMA_InitTypeDef DMA_InitStructure;
+  	  DMA_InitTypeDef DMA_InitStructure;
 	  /* USART1 RX/TX DMA1 Channel (triggered by USART1 Rx/Tx event) Config */
 	  DMA_DeInit(USART1RX_DMA1);
 	  DMA_DeInit(USART1TX_DMA1); 
