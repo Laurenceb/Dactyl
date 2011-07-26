@@ -19,7 +19,7 @@ extern Float_Vector Home_Position,Waypoint_Global;
 extern float Long_To_Meters_Home;
 extern volatile Ubx_Gps_Type Gps;
 extern volatile Nav_Type Nav_Global,Nav;	
-extern volatile uint32_t Nav_Flag,New_Waypoint_Flagged,Ground_Flag;	
+extern volatile uint32_t Nav_Flag,New_Waypoint_Flagged,Ground_Flag,Millis;	
 //Just here for debug
 extern volatile float Balt;	
 
@@ -53,6 +53,8 @@ void run_imu(void) {
 	float Gyr_Cal_Dat[12]=GYR_CAL_6;
 	//Check for the avaliable sensors
 	uint8_t Sensors=Get_MEMS_DRDY();
+	//Change the system timer
+	Millis+=DELTA_TIME*1000;		//Time is in milliseconds NOTE this will roll over after 4Mseconds system uptime
 	//Now read the sensors, convert to float from uint16_t and apply the calibration
 	if(Sensors&ACC_DATA_READY) {
 		Acc_Read(&m);

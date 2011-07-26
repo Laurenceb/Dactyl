@@ -53,16 +53,36 @@ static FATFS FATFS_Obj;
 volatile float Balt;
 //UAVtalk globals
 UAVtalk_Port_Type uavtalk_usart_port;
+volatile uint32_t Millis;
 
-int main(void) {;
+int main(void) {
+	uint32_t timeout=0;
 	rprintfInit(__usart_send_char);//inititalise reduced printf functionality
 	Initialisation();//initialise all hardware
 	for(;;) {
 		//All USART1 UAVtalk streams go here
-		UAVtalk_Generate_Packet(&uavtalk_usart_port, &Usart1tx);//setup the packet first - load dma buffer (this sends objectid in the port)
 		usart1_send_data_dma(&Usart1tx,&Usart1rx);//enable the usart1 dma, dma for spi2 cannot be used now - blocks until tx complete
+		timeout=Millis;				//Set the timer
+		do {
+			while(Bytes_In_Buffer(&Usart1rx, USART1RX_DMA1)) {//if there is any data on the mavlink port, there may be a packet
+				UAVtalk_Process_Byte(Pop_From_Buffer(&Usart1rx),&uavtalk_usart_port);//grab a byte from the usart dma buffer
+			}
+		}while(Millis-timeout<UAVTALK_RX_TIMEOUT_MS);//We need to give up at some point as there may be no/corrupted data
 		//Now we process and received data (the dma has to be turned off afterwards so spi can be used)
-		if(Nav_Flag) {
+		if(uavtalk_usart_port.type&0x0F) {	//A response is required
+			if(uavtalk_usart_port.type&0x0F==1)//object request
+				uavtalk_usart_port.type&=~0x01;//clear the type least significant bit so we send an object back
+			if(uavtalk_usart_port.type&0x0F==2)//We need to send an ack
+				uavtalk_usart_port.type|=0x01;//Set the least significant bit (ACK type)
+			UAVtalk_Generate_Packet(&uavtalk_usart_port, &Usart1tx);//setup the packet first - load dma buffer
+		}
+		else	//We find a streamed object to place in the buffer instead
+			UAVtalk_Run_Streams(&uavtalk_usart_port, &Usart1tx,Millis);//Run the stream function with the current time
+		if(Nav_Flag) {//the isr has run for guidance
+			//TODO-watchdog reset goes here
+			
+			Nav_Flag=0;			//Reset the flag
+		}
 		/*
 		// THIS IS JUST SOME PLACEHOLDER TEST STUFF 
 		if(Nav_Flag){	//wait for some EKF data to be ready
@@ -142,7 +162,7 @@ void Initialisation() {
 		Bmp_Gettemp();				//Global Temperature is now setup
 		Baro_Setup_Pressure();			//Setup Press conversion
 		Delay(0x4FFFF);
-		Baro_Read_Full_ADC(&raw_pressure);		//grab from baro adc
+		Baro_Read_Full_ADC(&raw_pressure);	//Grab from baro adc
 		Bmp_Simp_Conv(&device_temperature,&raw_pressure);//convert to pressure - calibrated temperature output
 		printf("Baro pressure is %ld Pascals, temperature is %ld C\r\n",raw_pressure,device_temperature/10);//Debug
 	}

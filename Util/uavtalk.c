@@ -121,7 +121,7 @@ void UAVtalk_Process_Byte(uint8_t c,UAVtalk_Port_Type* msg) {//The raw USART/ISM
 
 /**
   * @brief  Generates a UAVtalk packet
-  * @param  Pointer to the UAVtalk port structure, set the object_no, instance where required, and the type beforehand
+  * @param  Pointer to the UAVtalk port structure, set the object_no, instance where required, and the type beforehand, output buffer pointer
   * @retval void
   */
 void UAVtalk_Generate_Packet(UAVtalk_Port_Type* msg, Buffer_Type* buff) {
@@ -155,4 +155,27 @@ void UAVtalk_Generate_Packet(UAVtalk_Port_Type* msg, Buffer_Type* buff) {
 		buff->size=i+1;			//Holds the number of bytes in tx buffer
 		buff->tail=0;			//Make sure the tail is zero
 	}
+}
+
+/**
+  * @brief  Runs UAVtalk packet generator
+  * @param  Pointer to the UAVtalk port structure, pointer to ouput buffer, system time in ms
+  * @retval void
+  */
+void UAVtalk_Run_Streams(UAVtalk_Port_Type* port,Buffer_Type* buff,uint32_t uptime) {
+	uint16_t i=0;
+	uint8_t packet_gen=0;			//Logical to let us know a packet has been generated
+	static uint32_t millis=0;
+	port->type=0x00;			//We only stream basic objects
+	for(i=0;i<UAVtalk_conf.num_stream_objects;i++) {//Loop through the Objects trying to find something to send
+		UAVtalk_conf.stream_timers[i]-=(uptime-millis);//Adjust timer
+		if(UAVtalk_conf.stream_timers[i]<0 && !packet_gen) {//Timer expired
+			port->object_no=UAVtalk_conf.stream_object_nos[i];//Set the appropriate object number (i.e. 0,1,2,3,4 as in objectid array)
+			//Note we do not set the instance here (TODO find out if its essential)
+			UAVtalk_Generate_Packet(port,buff);//Generate the expired packet
+			UAVtalk_conf.stream_timers[i]=UAVtalk_conf.stream_intervals[i];//Reset to default
+			packet_gen=1;
+		}
+	}
+	millis=uptime;				//Set our local time variable
 }

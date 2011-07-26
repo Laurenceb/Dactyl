@@ -43,7 +43,7 @@ void DMA_USART1_Configuration(uint8_t enabled, Buffer_Type* tx_buffer, Buffer_Ty
 	  DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
 	  DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte;
 	  DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_Byte;
-	  DMA_InitStructure.DMA_Mode = DMA_Mode_Normal;
+	  DMA_InitStructure.DMA_Mode = DMA_Mode_Circular;
 	  DMA_InitStructure.DMA_Priority = DMA_Priority_High;
 	  DMA_InitStructure.DMA_M2M = DMA_M2M_Disable;  
 	  DMA_InitStructure.DMA_PeripheralBaseAddr = USART1_BASE+USART_Mode_Rx;
@@ -54,6 +54,7 @@ void DMA_USART1_Configuration(uint8_t enabled, Buffer_Type* tx_buffer, Buffer_Ty
 	  DMA_InitStructure.DMA_PeripheralBaseAddr = USART1_BASE+USART_Mode_Tx;//and receives any data into rx buffer
 	  DMA_InitStructure.DMA_MemoryBaseAddr = (uint32_t)&(tx_buffer->data);//Bytes_In_Buffer can be used to find any received data
 	  DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralDST;
+	  DMA_InitStructure.DMA_Mode = DMA_Mode_Normal;//Tx needs to be normal mode
 	  DMA_InitStructure.DMA_BufferSize = (uint32_t)tx_buffer->size;
 	  DMA_Init(USART1TX_DMA1, &DMA_InitStructure);
   }

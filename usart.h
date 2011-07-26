@@ -5,7 +5,7 @@
 #include "stm32f10x.h"
 #include <stdio.h>
 #include "Sensors/ubx.h"
-
+#include "../dma.h"
 
 //Defines - USART 1 and 2 used
 
@@ -32,6 +32,7 @@ void USART2_reconf(uint32_t new_baud);
 void Usart_Send_Str(char* str);
 void Gps_Send_Str(char* str);
 void Gps_Send_Utf8(char* str);
+void usart1_send_data_dma(Buffer_Type* tx_buffer, Buffer_Type* rx_buffer);
 
 /* Private function prototypes -----------------------------------------------*/
 #ifdef USE_LIBC_PRINTF	/*define in main.h to set the printf function that is used */
