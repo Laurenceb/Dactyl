@@ -54,6 +54,8 @@ volatile float Balt;
 //UAVtalk globals
 UAVtalk_Port_Type uavtalk_usart_port;
 volatile uint32_t Millis;
+uint8_t UAVtalk_Attitude_Array[28];//Used to hold the attitude object data
+//more objects can go here if required (best to try and use existing variables) 
 
 int main(void) {
 	uint32_t timeout=0;
@@ -80,7 +82,8 @@ int main(void) {
 			UAVtalk_Run_Streams(&uavtalk_usart_port, &Usart1tx,Millis);//Run the stream function with the current time
 		if(Nav_Flag) {//the isr has run for guidance
 			//TODO-watchdog reset goes here
-			
+			memcpy(UAVtalk_Attitude_Array,&Nav_Global.q[0],16);//copy over the quaternion
+			Quaternion2RPY(&Nav_Global.q[0],UAVtalk_Attitude_Array[12]);//Generate rpy and copy into the byte array
 			Nav_Flag=0;			//Reset the flag
 		}
 		/*

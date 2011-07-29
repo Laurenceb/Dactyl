@@ -7,12 +7,25 @@
 
 
 //This is global, holds the configuration for supported packets and their properties
-uint8_t UAVtalk_objects[]={0xffffffff};		//This is an array of message ids that are supported
+uint32_t UAVtalk_objects[]={0xffffffff};	//This is an array of message ids that are supported
 uint8_t UAVtalk_lenghts[]={28};			//Array of message lenghts - payload in bytes
 uint8_t UAVtalk_semaphores[]={1};		//Semaphores array, initialise as unlocked (true)
 uint8_t* UAVtalk_pointers[]={(const uint8_t*)NULL};//Array of data pointers
-//Note system and component id set at 1,1 here. We only have one supported packet TODO add more packets
-UAVtalk_Config_Type UAVtalk_conf={UAVTALK_VERSION,1,UAVtalk_objects,UAVtalk_pointers,UAVtalk_lenghts,UAVtalk_semaphores};
+uint8_t UAVtalk_stream_objs[]={1};		//First object is streamd
+uint16_t UAVtalk_stream_timeouts[]={100};	//Send every 100ms
+//Note we only have one supported packet TODO add more packets
+UAVtalk_Config_Type UAVtalk_conf={UAVTALK_VERSION,1,UAVtalk_objects,UAVtalk_pointers,UAVtalk_lenghts,UAVtalk_semaphores,1,UAVtalk_stream_objs,\
+UAVtalk_stream_timeouts,0};
+
+/**
+  * @brief  Sets the object pointer to point to data
+  * @param  Number of the Object, pointer to associated data
+  * @retval None
+  */
+void UAVtalk_Register_Object(uint32_t object_no, uint8_t* object_pointer) {
+	UAVtalk_pointers[object_no]=object_pointer;
+}
+
 
 /**
   * @brief  Implimentation of memchr using 32bit characters and returning -1 not NULL
@@ -71,7 +84,7 @@ void UAVtalk_Process_Byte(uint8_t c,UAVtalk_Port_Type* msg) {//The raw USART/ISM
 			break;
 		case 7:
 			msg->object_id|=(uint32_t)c<<24;//Search for the 32 bit id in the array of objects
-			msg->object_no=memchr_32(UAVtalk_conf.object_ids,msg->object_id,UAVtalk_conf.num_objects);//-1 if nonexistant
+			msg->object_no=memchr_32(msg->object_id,UAVtalk_conf.object_ids,UAVtalk_conf.num_objects);//-1 if nonexistant
 			if(msg->object_no>=0)
 				msg->state=8;	//Object exists
 			else if(msg->type&0x0F==1 || msg->type&0x0F==2)//Object request of object with ACK, and does not exist
