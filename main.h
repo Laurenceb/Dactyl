@@ -8,6 +8,8 @@
 #define USART1RX_DMA1 DMA1_Channel5
 #define USART1TX_DMA1 DMA1_Channel4
 #define USART1TX_DMA_COMPLETE DMA1_FLAG_TC4
+//Watchdog timeout
+#define MAIN_LOOP_TIMEOUT 250	/*250ms*/
 
 /* Private functions ---------------------------------------------------------*/
 

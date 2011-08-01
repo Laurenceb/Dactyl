@@ -1,5 +1,6 @@
 /*Dactyl project -*/
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 // Load CMSIS and peripheral library and configuration
 #include "stm32f10x.h"
@@ -12,6 +13,7 @@
 #include "pwm.h"
 #include "gpio.h"
 #include "interrupts.h"
+#include "watchdog.h"
 //Include for printf if wanted
 #ifdef USE_LIBC_PRINTF
 	#include <stdio.h>
@@ -81,11 +83,12 @@ int main(void) {
 		else	//We find a streamed object to place in the buffer instead
 			UAVtalk_Run_Streams(&uavtalk_usart_port, &Usart1tx,Millis);//Run the stream function with the current time
 		if(Nav_Flag) {//the isr has run for guidance
-			//TODO-watchdog reset goes here
+			Watchdog_Reset(); 		//Watchdog reset goes here - requires the guidance to be running also
 			memcpy(UAVtalk_Attitude_Array,&Nav_Global.q[0],16);//copy over the quaternion
-			Quaternion2RPY(&Nav_Global.q[0],UAVtalk_Attitude_Array[12]);//Generate rpy and copy into the byte array
+			Quaternion2RPY((float*)&Nav_Global.q[0],(float*)&UAVtalk_Attitude_Array[12]);//Generate rpy, copy to byte array
 			Nav_Flag=0;			//Reset the flag
 		}
+		usart1_disable_dma();			//Disable the DMA so the DMA is ready for use by SPI2
 		/*
 		// THIS IS JUST SOME PLACEHOLDER TEST STUFF 
 		if(Nav_Flag){	//wait for some EKF data to be ready
@@ -266,5 +269,6 @@ void Initialisation() {
 	Init_Timers();				//Start PWM output timers running (need to enable GPIO seperately)
 	Enable_Servos();			//Setup the GPIO pins to drive the servos
 	EXTI6_Config();				//Configure the interrupt from gyro that runs the EKF
-	Gyr_Read(&mag);				//Kick start the ISR by reading the gyro to set data ready to low 
+	Gyr_Read(&mag);				//Kick start the ISR by reading the gyro to set data ready to low
+	Watchdog_Config(MAIN_LOOP_TIMEOUT);	//Start the watchdog running
 }

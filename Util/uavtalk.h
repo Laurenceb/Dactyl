@@ -30,7 +30,7 @@ typedef struct {
 	uint8_t num_stream_objects;//Number of streamed objects
 	uint8_t* stream_object_nos;//Array of streamed object numbers
 	uint16_t* stream_intervals;//Array of tx intervals in ms
-	uint32_t* stream_timers;//Timers for the streams
+	int32_t* stream_timers;//Timers for the streams
 } UAVtalk_Config_Type;		//Config info for the UAVtalk setup on the vehicle/device component
 
 //function prototypes

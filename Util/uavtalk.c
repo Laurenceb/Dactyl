@@ -46,7 +46,6 @@ int16_t memchr_32(uint32_t objectid, uint32_t* object_ids, uint16_t numobjects) 
   * note that this now not handle ACK - read the msg type and generate ACK where appropriate
   */
 void UAVtalk_Process_Byte(uint8_t c,UAVtalk_Port_Type* msg) {//The raw USART/ISM data is fed in
-	uint8_t tmp;
 	switch(msg->state)			//Run packet parser state machine
 	{
 		case 0:				//Start by waiting for the first sync byte
@@ -87,7 +86,7 @@ void UAVtalk_Process_Byte(uint8_t c,UAVtalk_Port_Type* msg) {//The raw USART/ISM
 			msg->object_no=memchr_32(msg->object_id,UAVtalk_conf.object_ids,UAVtalk_conf.num_objects);//-1 if nonexistant
 			if(msg->object_no>=0)
 				msg->state=8;	//Object exists
-			else if(msg->type&0x0F==1 || msg->type&0x0F==2)//Object request of object with ACK, and does not exist
+			else if((msg->type&0x0F)==1 || (msg->type&0x0F)==2)//Object request of object with ACK, and does not exist
 				msg->state=8;	//We will generate a NACK as object nonexistant 
 			else
 				msg->state=0;	//Error
@@ -178,7 +177,7 @@ void UAVtalk_Generate_Packet(UAVtalk_Port_Type* msg, Buffer_Type* buff) {
 void UAVtalk_Run_Streams(UAVtalk_Port_Type* port,Buffer_Type* buff,uint32_t uptime) {
 	uint16_t i=0;
 	uint8_t packet_gen=0;			//Logical to let us know a packet has been generated
-	static uint32_t millis=0;
+	static uint32_t millis=0;		//Local time variable
 	port->type=0x00;			//We only stream basic objects
 	for(i=0;i<UAVtalk_conf.num_stream_objects;i++) {//Loop through the Objects trying to find something to send
 		UAVtalk_conf.stream_timers[i]-=(uptime-millis);//Adjust timer

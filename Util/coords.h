@@ -41,10 +41,10 @@ void RneFromLLA(double LLA[3], float Rne[3][3]);
 
     // ****** find rotation matrix from rotation vector
 void Rv2Rot(float Rv[3], float R[3][3]);
-
+#endif
 	// ****** find roll, pitch, yaw from quaternion ********
 void Quaternion2RPY(const float q[4], float rpy[3]);
-
+#if FULL_CONV==1
 	// ****** find quaternion from roll, pitch, yaw ********
 void RPY2Quaternion(const float rpy[3], float q[4]);
 

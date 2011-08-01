@@ -33,6 +33,7 @@ void Usart_Send_Str(char* str);
 void Gps_Send_Str(char* str);
 void Gps_Send_Utf8(char* str);
 void usart1_send_data_dma(Buffer_Type* tx_buffer, Buffer_Type* rx_buffer);
+void usart1_disable_dma(void);
 
 /* Private function prototypes -----------------------------------------------*/
 #ifdef USE_LIBC_PRINTF	/*define in main.h to set the printf function that is used */
