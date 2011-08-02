@@ -7,13 +7,13 @@
 
 
 //This is global, holds the configuration for supported packets and their properties
-uint32_t UAVtalk_objects[]={0xffffffff};	//This is an array of message ids that are supported
+uint32_t UAVtalk_objects[]={0x33DAD5E6};	//This is an array of message ids that are supported
 uint8_t UAVtalk_lenghts[]={28};			//Array of message lenghts - payload in bytes
 uint8_t UAVtalk_semaphores[]={1};		//Semaphores array, initialise as unlocked (true)
 uint8_t* UAVtalk_pointers[]={(const uint8_t*)NULL};//Array of data pointers
 uint8_t UAVtalk_stream_objs[]={1};		//First object is streamd
 uint16_t UAVtalk_stream_timeouts[]={100};	//Send every 100ms
-//Note we only have one supported packet TODO add more packets
+//Note we only have one supported packet TODO add more packets - so far only AttitudeActual
 UAVtalk_Config_Type UAVtalk_conf={UAVTALK_VERSION,1,UAVtalk_objects,UAVtalk_pointers,UAVtalk_lenghts,UAVtalk_semaphores,1,UAVtalk_stream_objs,\
 UAVtalk_stream_timeouts,0};
 
