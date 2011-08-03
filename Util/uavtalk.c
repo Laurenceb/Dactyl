@@ -22,8 +22,9 @@ UAVtalk_stream_timeouts,0};
   * @param  Number of the Object, pointer to associated data
   * @retval None
   */
-void UAVtalk_Register_Object(uint32_t object_no, uint8_t* object_pointer) {
-	UAVtalk_pointers[object_no]=object_pointer;
+void UAVtalk_Register_Object(uint16_t object_no, uint8_t* object_pointer) {
+	if(object_no<UAVtalk_conf.num_objects)//Make sure the object number exists
+		UAVtalk_conf.object_pointers[object_no]=object_pointer;
 }
 
 

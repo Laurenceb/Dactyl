@@ -31,7 +31,7 @@ typedef struct{
 	PID_ctrl_type elevator;
 	PID_ctrl_type rudder;
 	PID_ctrl_type throttle;	
-	//other members of the struct can go here
+	//Other members of struct can go here
 }	Airframe_type;
 
 typedef struct{

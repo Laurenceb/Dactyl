@@ -63,6 +63,7 @@ int main(void) {
 	uint32_t timeout=0;
 	rprintfInit(__usart_send_char);//inititalise reduced printf functionality
 	Initialisation();//initialise all hardware
+	UAVtalk_Register_Object(0,UAVtalk_Attitude_Array);//Initialise UAVtalk objects here
 	for(;;) {
 		//All USART1 UAVtalk streams go here
 		usart1_send_data_dma(&Usart1tx,&Usart1rx);//enable the usart1 dma, dma for spi2 cannot be used now - blocks until tx complete
@@ -87,6 +88,12 @@ int main(void) {
 			memcpy(UAVtalk_Attitude_Array,&Nav_Global.q[0],16);//copy over the quaternion
 			Quaternion2RPY((float*)&Nav_Global.q[0],(float*)&UAVtalk_Attitude_Array[12]);//Generate rpy, copy to byte array
 			Nav_Flag=0;			//Reset the flag
+		}
+		//Process waypoints here - waypoints are in local NED meter co-ordinates relative to home position
+		if(pow(waypoint_used.x-Nav_Global.Pos[0],2)+pow(waypoint_used.y-Nav_Global.Pos[1],2)<pow(waypoint_horiz,2)&&\
+		pow(waypoint_used.z-Nav_Global.Pos[2],2)<waypoint_vert) {
+			Waypoint_Global=Waypoints[waypoint_index++];//Load the next waypoint
+			New_Waypoint_Flagged=1;		//Set the flag to let guidance know new waypoint is ready
 		}
 		usart1_disable_dma();			//Disable the DMA so the DMA is ready for use by SPI2
 		/*
