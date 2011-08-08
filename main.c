@@ -65,7 +65,8 @@ int main(void) {
 	rprintfInit(__usart_send_char);//inititalise reduced printf functionality
 	Initialisation();//initialise all hardware
 	UAVtalk_Register_Object(0,UAVtalk_Attitude_Array);//Initialise UAVtalk objects here
-	UAVtalk_Register_Object(1,&Waypoint_Global);//The desired position points to the waypoint
+	UAVtalk_Register_Object(1,&Nav_Global);//The actual position points to the first three elements of the global kalman state
+	UAVtalk_Register_Object(2,&Waypoint_Global);//The desired position points to the waypoint
 	for(;;) {
 		//All USART1 UAVtalk streams go here
 		usart1_send_data_dma(&Usart1tx,&Usart1rx);//enable the usart1 dma, dma for spi2 cannot be used now - blocks until tx complete
@@ -91,8 +92,9 @@ int main(void) {
 			Quaternion2RPY((float*)&Nav_Global.q[0],(float*)&UAVtalk_Attitude_Array[12]);//Generate rpy, copy to byte array
 			Nav_Flag=0;			//Reset the flag
 			UAVtalk_conf.semaphores[ATTITUDE]=WRITE;//Mark the attitude packet as written (Note this needs to be done with all streams)
+			UAVtalk_conf.semaphores[POSITION_ACTUAL]=WRITE;//Mark the position as written (Note this object points directly to kalman)
 		}//Next, check if we received a desired position
-		if(uavtalk_usart_port.object_no==2 && UAVtalk_conf.semaphores[1]==WRITE) {//Note the guidance could do this, but its clearer here
+		if(uavtalk_usart_port.object_no==POSITION_DESIRED_NO && UAVtalk_conf.semaphores[1]==WRITE) {//Note the guidance could do this
 			New_Waypoint_Flagged=1;		//set the flag so the guidance knows data is ready
 			UAVtalk_conf.semaphores[POSITION_DESIRED_NO]==READ;//mark the object as read 	
 		}

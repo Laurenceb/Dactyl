@@ -8,13 +8,13 @@
 
 //This is global, holds the configuration for supported packets and their properties
 //Note that the object ids and lenghts are held in flash as they dont change
-//Objects are Attitude, Position_desired
-const uint32_t UAVtalk_objects[]={0x33DAD5E6,0x33C9EAB4};//This is an array of message ids that are supported
-const uint8_t UAVtalk_lenghts[]={28,12};	//Array of message lenghts - payload in bytes
-uint8_t UAVtalk_semaphores[]={0,0};		//Semaphores array, initialise as read (false)
-uint8_t* UAVtalk_pointers[]={(const uint8_t*)NULL,(const uint8_t*)NULL};//Array of data pointers
-uint8_t UAVtalk_stream_objs[]={0};		//First object is streamed (Attitude)
-uint16_t UAVtalk_stream_timeouts[]={100};	//Send every 100ms
+//Objects are Attitude, Position_actual, Position_desired
+const uint32_t UAVtalk_objects[]={0x33DAD5E6,0xF9691DA4,0x33C9EAB4};//This is an array of message ids that are supported
+const uint8_t UAVtalk_lenghts[]={28,12,12};	//Array of message lenghts - payload in bytes
+uint8_t UAVtalk_semaphores[]={0,0,0};		//Semaphores array, initialise as read (false)
+uint8_t* UAVtalk_pointers[]={(const uint8_t*)NULL,(const uint8_t*)NULL,(const uint8_t*)NULL};//Array of data pointers
+uint8_t UAVtalk_stream_objs[]={0,1};		//First 2 objects are streamed (Attitude,Position)
+uint16_t UAVtalk_stream_timeouts[]={100,100};	//Send every 100ms
 //Note we only have one supported packet TODO add more packets - so far only AttitudeActual
 UAVtalk_Config_Type UAVtalk_conf={UAVTALK_VERSION,1,UAVtalk_objects,UAVtalk_pointers,UAVtalk_lenghts,UAVtalk_semaphores,1,UAVtalk_stream_objs,\
 UAVtalk_stream_timeouts,0};

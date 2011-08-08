@@ -11,8 +11,9 @@
 #define READ 0
 #define WRITE 1
 //macros for the object numbers
-#define POSITION_DESIRED_NO 1
 #define ATTITUDE 0
+#define POSITION_ACTUAL 1
+#define POSITION_DESIRED_NO 2
 
 //datatype declarations
 typedef struct {
