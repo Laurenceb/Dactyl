@@ -57,6 +57,7 @@ volatile float Balt;
 UAVtalk_Port_Type uavtalk_usart_port;
 volatile uint32_t Millis;
 uint8_t UAVtalk_Attitude_Array[28];//Used to hold the attitude object data
+extern UAVtalk_Config_Type UAVtalk_conf;//We need this here to set semaphores
 //more objects can go here if required (best to try and use existing variables) 
 
 int main(void) {
@@ -64,6 +65,7 @@ int main(void) {
 	rprintfInit(__usart_send_char);//inititalise reduced printf functionality
 	Initialisation();//initialise all hardware
 	UAVtalk_Register_Object(0,UAVtalk_Attitude_Array);//Initialise UAVtalk objects here
+	UAVtalk_Register_Object(1,&Waypoint_Global);//The desired position points to the waypoint
 	for(;;) {
 		//All USART1 UAVtalk streams go here
 		usart1_send_data_dma(&Usart1tx,&Usart1rx);//enable the usart1 dma, dma for spi2 cannot be used now - blocks until tx complete
@@ -88,13 +90,21 @@ int main(void) {
 			memcpy(UAVtalk_Attitude_Array,&Nav_Global.q[0],16);//copy over the quaternion
 			Quaternion2RPY((float*)&Nav_Global.q[0],(float*)&UAVtalk_Attitude_Array[12]);//Generate rpy, copy to byte array
 			Nav_Flag=0;			//Reset the flag
+			UAVtalk_conf.semaphores[ATTITUDE]=WRITE;//Mark the attitude packet as written (Note this needs to be done with all streams)
+		}//Next, check if we received a desired position
+		if(uavtalk_usart_port.object_no==2 && UAVtalk_conf.semaphores[1]==WRITE) {//Note the guidance could do this, but its clearer here
+			New_Waypoint_Flagged=1;		//set the flag so the guidance knows data is ready
+			UAVtalk_conf.semaphores[POSITION_DESIRED_NO]==READ;//mark the object as read 	
 		}
 		//Process waypoints here - waypoints are in local NED meter co-ordinates relative to home position
+		//TODO multiple waypoints needs to be integrated into the GCS, macro flag enables the multiple waypoint functionality
+		#ifdef MULTIPLE_WAYPOINTS
 		if(pow(waypoint_used.x-Nav_Global.Pos[0],2)+pow(waypoint_used.y-Nav_Global.Pos[1],2)<pow(waypoint_horiz,2)&&\
 		pow(waypoint_used.z-Nav_Global.Pos[2],2)<waypoint_vert) {
 			Waypoint_Global=Waypoints[waypoint_index++];//Load the next waypoint
 			New_Waypoint_Flagged=1;		//Set the flag to let guidance know new waypoint is ready
 		}
+		#endif
 		usart1_disable_dma();			//Disable the DMA so the DMA is ready for use by SPI2
 		/*
 		// THIS IS JUST SOME PLACEHOLDER TEST STUFF 

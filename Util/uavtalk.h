@@ -1,4 +1,5 @@
 //Dactyl project v1.0
+#pragma once
 #include "../dma.h"
 //UAVtalk definitions
 #define UAVTALK_VERSION 1
@@ -6,6 +7,12 @@
 #define UAVTALK_MAX_DATA_LEN 64
 #define UAVTALK_MAX_PACKET_LEN UAVTALK_MAX_DATA_LEN+11
 #define UAVTALK_RX_TIMEOUT_MS 15
+
+#define READ 0
+#define WRITE 1
+//macros for the object numbers
+#define POSITION_DESIRED_NO 1
+#define ATTITUDE 0
 
 //datatype declarations
 typedef struct {
