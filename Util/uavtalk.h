@@ -13,7 +13,9 @@
 //macros for the object numbers
 #define ATTITUDE 0
 #define POSITION_ACTUAL 1
-#define POSITION_DESIRED_NO 2
+#define VELOCITY_ACTUAL 2
+#define BARO_ACTUAL 3
+#define POSITION_DESIRED_NO 4
 
 //datatype declarations
 typedef struct {
@@ -46,3 +48,6 @@ void UAVtalk_Process_Byte(uint8_t c,UAVtalk_Port_Type* msg);
 void UAVtalk_Generate_Packet(UAVtalk_Port_Type* msg, Buffer_Type* buff);
 void UAVtalk_Run_Streams(UAVtalk_Port_Type* port,Buffer_Type* buff,uint32_t uptime);
 void UAVtalk_Register_Object(uint16_t object_no, uint8_t* object_pointer);
+
+//global variables (configuration structure)
+extern UAVtalk_Config_Type UAVtalk_conf;//We need this here to set semaphores

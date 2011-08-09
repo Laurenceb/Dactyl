@@ -8,13 +8,13 @@
 
 //This is global, holds the configuration for supported packets and their properties
 //Note that the object ids and lenghts are held in flash as they dont change
-//Objects are Attitude, Position_actual, Position_desired
-const uint32_t UAVtalk_objects[]={0x33DAD5E6,0xF9691DA4,0x33C9EAB4};//This is an array of message ids that are supported
-const uint8_t UAVtalk_lenghts[]={28,12,12};	//Array of message lenghts - payload in bytes
-uint8_t UAVtalk_semaphores[]={0,0,0};		//Semaphores array, initialise as read (false)
-uint8_t* UAVtalk_pointers[]={(const uint8_t*)NULL,(const uint8_t*)NULL,(const uint8_t*)NULL};//Array of data pointers
-uint8_t UAVtalk_stream_objs[]={0,1};		//First 2 objects are streamed (Attitude,Position)
-uint16_t UAVtalk_stream_timeouts[]={100,100};	//Send every 100ms
+//Objects are Attitude, Position_actual, Velocity_actual, Baro_actual, Position_desired
+const uint32_t UAVtalk_objects[]={0x33DAD5E6,0xF9691DA4,0x43007EB0,0x99622E6A,0x33C9EAB4};//This is an array of message ids that are supported
+const uint8_t UAVtalk_lenghts[]={28,12,12,12,12};//Array of message lenghts - payload in bytes
+volatile uint8_t UAVtalk_semaphores[]={0,0,0,0,0};//Semaphores array, initialise as read (false)
+uint8_t* UAVtalk_pointers[]={(const uint8_t*)NULL,(const uint8_t*)NULL,(const uint8_t*)NULL,(const uint8_t*)NULL,(const uint8_t*)NULL};//Pointers
+uint8_t UAVtalk_stream_objs[]={0,1,2,3};	//First 4 objects are streamed (Attitude,Position,Velocity,Baro)
+uint16_t UAVtalk_stream_timeouts[]={100,100,100,100};//Send every 100ms
 //Note we only have one supported packet TODO add more packets - so far only AttitudeActual
 UAVtalk_Config_Type UAVtalk_conf={UAVTALK_VERSION,1,UAVtalk_objects,UAVtalk_pointers,UAVtalk_lenghts,UAVtalk_semaphores,1,UAVtalk_stream_objs,\
 UAVtalk_stream_timeouts,0};
@@ -146,11 +146,9 @@ void UAVtalk_Generate_Packet(UAVtalk_Port_Type* msg, Buffer_Type* buff) {
 		if(UAVtalk_conf.semaphores[msg->object_no]==READ)//If the data has already been read, we do not have permission to run
 			i=-1;			//-ive i means we cant send a packet
 	}
-	else {
-		i=0;
-		msg->type=4;			//Send a NACK packet to indicate object non existant
-	}
-	if(i>0) {				//If we are able to run
+	else	msg->type=4;			//Set type to NACK packet to indicate object non existant
+	if((msg->type&0x0F)>2) i=0;		//If we have type ACK or NACK we send no payload
+	if(i>=0) {				//If we are able to run
 		//UAVtalk_conf.semaphores[msg->object_no]=0;//Lock the data by setting it to zero
 		buff->data[0]=UAVTALK_SYNC;	//Sync byte comes first
 		buff->data[1]=(UAVtalk_conf.version<<4)|(msg->type&0x0F);//Type of message as setup beforehand- also protocol version
@@ -162,8 +160,8 @@ void UAVtalk_Generate_Packet(UAVtalk_Port_Type* msg, Buffer_Type* buff) {
 		buff->data[7]=(uint8_t)((UAVtalk_conf.object_ids[msg->object_no]>>24)&0x000000FF);
 		buff->data[8]=(uint8_t)(msg->instance_id&0x00FF);
 		buff->data[9]=(uint8_t)(msg->instance_id>>8);//Instance - little endian
-		//Copy the data into the reset of the tx buffer
-		memcpy(&(buff->data[10]),(uint8_t*)UAVtalk_conf.object_pointers[msg->object_no],i);
+		//Copy the data into the rest of the tx buffer - if there is a payload
+		if(i) memcpy(&(buff->data[10]),(uint8_t*)UAVtalk_conf.object_pointers[msg->object_no],i);
 		UAVtalk_conf.semaphores[msg->object_no]=READ;//Mark the data as read from (write before read semaphore in operation)
 		i+=10;				//Packet overhead is 11 bytes - CRC8 does not run over the CRC8
 		buff->data[i]=CRC_updateCRC(0,msg->rx_buffer,i);//Add to CRC8 to end

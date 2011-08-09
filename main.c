@@ -57,7 +57,7 @@ volatile float Balt;
 UAVtalk_Port_Type uavtalk_usart_port;
 volatile uint32_t Millis;
 uint8_t UAVtalk_Attitude_Array[28];//Used to hold the attitude object data
-extern UAVtalk_Config_Type UAVtalk_conf;//We need this here to set semaphores
+volatile float UAVtalk_Altitude_Array[3];//Used to hold baro altitude data
 //more objects can go here if required (best to try and use existing variables) 
 
 int main(void) {
@@ -65,8 +65,10 @@ int main(void) {
 	rprintfInit(__usart_send_char);//inititalise reduced printf functionality
 	Initialisation();//initialise all hardware
 	UAVtalk_Register_Object(0,UAVtalk_Attitude_Array);//Initialise UAVtalk objects here
-	UAVtalk_Register_Object(1,&Nav_Global);//The actual position points to the first three elements of the global kalman state
-	UAVtalk_Register_Object(2,&Waypoint_Global);//The desired position points to the waypoint
+	UAVtalk_Register_Object(1,(uint8_t*)&Nav_Global);//The actual position points to the first three elements of the global kalman state
+	UAVtalk_Register_Object(2,(uint8_t*)&Nav_Global.Pos[0]);//The actual velocity points to the fourth element of the global kalman state
+	UAVtalk_Register_Object(3,(uint8_t*)UAVtalk_Altitude_Array);//The baro_actual points to the global baro data array
+	UAVtalk_Register_Object(4,(uint8_t*)&Waypoint_Global);//The desired position points to the waypoint
 	for(;;) {
 		//All USART1 UAVtalk streams go here
 		usart1_send_data_dma(&Usart1tx,&Usart1rx);//enable the usart1 dma, dma for spi2 cannot be used now - blocks until tx complete
@@ -93,6 +95,7 @@ int main(void) {
 			Nav_Flag=0;			//Reset the flag
 			UAVtalk_conf.semaphores[ATTITUDE]=WRITE;//Mark the attitude packet as written (Note this needs to be done with all streams)
 			UAVtalk_conf.semaphores[POSITION_ACTUAL]=WRITE;//Mark the position as written (Note this object points directly to kalman)
+			UAVtalk_conf.semaphores[VELOCITY_ACTUAL]=WRITE;
 		}//Next, check if we received a desired position
 		if(uavtalk_usart_port.object_no==POSITION_DESIRED_NO && UAVtalk_conf.semaphores[1]==WRITE) {//Note the guidance could do this
 			New_Waypoint_Flagged=1;		//set the flag so the guidance knows data is ready

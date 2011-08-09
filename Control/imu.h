@@ -1,4 +1,5 @@
 //Dactyl project v1.0
+#pragma once
 #include "stm32f10x.h"
 #include "loops.h"
 //interation time - 125Hz loop

@@ -1,7 +1,7 @@
 //Dactyl project v1.0
 #include "math.h"
 #include "insgps.h"
-//#include "imu.h"
+#include "imu.h"
 #include "cal.h"
 #include "types.h"
 #include "loops.h"
@@ -12,6 +12,7 @@
 #include "../Sensors/ubx.h"
 #include "../Sensors/bmp085.h"
 #include "../Sensors/pitot.h"
+#include "../Util/uavtalk.h"
 
 //Globals from main
 extern Buffer_Type Gps_Buffer;
@@ -19,7 +20,8 @@ extern Float_Vector Home_Position,Waypoint_Global;
 extern float Long_To_Meters_Home;
 extern volatile Ubx_Gps_Type Gps;
 extern volatile Nav_Type Nav_Global,Nav;	
-extern volatile uint32_t Nav_Flag,New_Waypoint_Flagged,Ground_Flag,Millis;	
+extern volatile uint32_t Nav_Flag,New_Waypoint_Flagged,Ground_Flag,Millis;
+extern volatile float UAVtalk_Altitude_Array[3];	
 //Just here for debug
 extern volatile float Balt;	
 
@@ -75,6 +77,10 @@ void run_imu(void) {
 				Bmp_Simp_Conv(&Baro_Temperature,&Baro_Pressure);//Convert to a pressure in Pa
 				Baro_Alt=Baro_Convert_Pressure(Baro_Pressure);//Convert to an altitude - relative to GPS geoid
 				SensorsUsed|=BARO_SENSOR;//we have used the baro sensor
+				UAVtalk_Altitude_Array[0]=Baro_Alt;//populate the Baro_altitude UAVtalk packet from here
+				UAVtalk_Altitude_Array[1]=(float)Baro_Temperature/10.0;//note that as baro_actual has three independant 32bit
+				UAVtalk_Altitude_Array[2]=Baro_Pressure;//variables, it can be set directly from here without passing data back
+				UAVtalk_conf.semaphores[BARO_ACTUAL]=WRITE;//Set the semaphore to indicate this has been written
 			}
 			else Bmp_Gettemp();//Temperature data will be ready
 			if(b_count==10) {//Next we setup the new conversion
