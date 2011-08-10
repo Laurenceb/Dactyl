@@ -25,7 +25,7 @@
 #include "Sensors/WorldMagModel.h"
 #include "Sensors/WMMInternal.h"	//Used to get constants
 //Control headers
-//#include "Control/imu.h"
+#include "Control/imu.h"
 #include "Control/types.h"
 #include "Control/cal.h"
 #include "Control/servos.h"
@@ -36,12 +36,13 @@
 #include "Util/time.h"
 #include "Util/coords.h"
 #include "Util/uavtalk.h"
+#include "Util/gravity.h"
 //Control loop headers
 #include "Control/insgps.h"
 
 //globals go here - this is the only place in the project where globals accessed globally are declared
 Buffer_Type Gps_Buffer, Usart1tx, Usart1rx;//GPS data buffer, USART1 tx and rx buffers
-Float_Vector Home_Position,Waypoint_Global;//Home position for setting NED space, Waypoint in NED
+Float_Vector Waypoint_Global;	//Waypoint in NED
 float Long_To_Meters_Home;	//Conversion factor for longditude to meters
 volatile Ubx_Gps_Type Gps;	//Global Gps, there is also a static gps in the ekf/imu filter code
 volatile Nav_Type Nav_Global;	//EKF state
@@ -58,6 +59,7 @@ UAVtalk_Port_Type uavtalk_usart_port;
 volatile uint32_t Millis;
 uint8_t UAVtalk_Attitude_Array[28];//Used to hold the attitude object data
 volatile float UAVtalk_Altitude_Array[3];//Used to hold baro altitude data
+Home_Position_Type Home_Position;//The home position
 //more objects can go here if required (best to try and use existing variables) 
 
 int main(void) {
@@ -69,6 +71,7 @@ int main(void) {
 	UAVtalk_Register_Object(2,(uint8_t*)&Nav_Global.Pos[0]);//The actual velocity points to the fourth element of the global kalman state
 	UAVtalk_Register_Object(3,(uint8_t*)UAVtalk_Altitude_Array);//The baro_actual points to the global baro data array
 	UAVtalk_Register_Object(4,(uint8_t*)&Waypoint_Global);//The desired position points to the waypoint
+	UAVtalk_Register_Object(5,(uint8_t*)&Home_Position);//Home position structure, this is set at initialisation
 	for(;;) {
 		//All USART1 UAVtalk streams go here
 		usart1_send_data_dma(&Usart1tx,&Usart1rx);//enable the usart1 dma, dma for spi2 cannot be used now - blocks until tx complete
@@ -80,14 +83,14 @@ int main(void) {
 		}while(Millis-timeout<UAVTALK_RX_TIMEOUT_MS);//We need to give up at some point as there may be no/corrupted data
 		//Now we process and received data (the dma has to be turned off afterwards so spi can be used)
 		if(uavtalk_usart_port.type&0x0F) {	//A response is required
-			if(uavtalk_usart_port.type&0x0F==1)//object request
-				uavtalk_usart_port.type&=~0x01;//clear the type least significant bit so we send an object back
-			if(uavtalk_usart_port.type&0x0F==2)//We need to send an ack
-				uavtalk_usart_port.type|=0x01;//Set the least significant bit (ACK type)
+			if((uavtalk_usart_port.type&0x0F)==1)//object request
+				uavtalk_usart_port.type&=~0x01;//clear the type least significant bit so we send an object back (OBJ type=0)
+			if((uavtalk_usart_port.type&0x0F)==2)//We need to send an ack to the object that was sent
+				uavtalk_usart_port.type|=0x01;//Set the least significant bit (ACK type=3)
 			UAVtalk_Generate_Packet(&uavtalk_usart_port, &Usart1tx);//setup the packet first - load dma buffer
 		}
 		else	//We find a streamed object to place in the buffer instead
-			UAVtalk_Run_Streams(&uavtalk_usart_port, &Usart1tx,Millis);//Run the stream function with the current time
+			UAVtalk_Run_Streams(&uavtalk_usart_port, &Usart1tx, Millis);//Run the stream function with the current time
 		if(Nav_Flag) {//the isr has run for guidance
 			Watchdog_Reset(); 		//Watchdog reset goes here - requires the guidance to be running also
 			memcpy(UAVtalk_Attitude_Array,&Nav_Global.q[0],16);//copy over the quaternion
@@ -96,10 +99,11 @@ int main(void) {
 			UAVtalk_conf.semaphores[ATTITUDE]=WRITE;//Mark the attitude packet as written (Note this needs to be done with all streams)
 			UAVtalk_conf.semaphores[POSITION_ACTUAL]=WRITE;//Mark the position as written (Note this object points directly to kalman)
 			UAVtalk_conf.semaphores[VELOCITY_ACTUAL]=WRITE;
+			UAVtalk_conf.semaphores[HOME_LOCATION]=WRITE;//Note this is just done so the home can be repeatedly read, its only set once
 		}//Next, check if we received a desired position
 		if(uavtalk_usart_port.object_no==POSITION_DESIRED_NO && UAVtalk_conf.semaphores[1]==WRITE) {//Note the guidance could do this
 			New_Waypoint_Flagged=1;		//set the flag so the guidance knows data is ready
-			UAVtalk_conf.semaphores[POSITION_DESIRED_NO]==READ;//mark the object as read 	
+			UAVtalk_conf.semaphores[POSITION_DESIRED_NO]=READ;//mark the object as read 	
 		}
 		//Process waypoints here - waypoints are in local NED meter co-ordinates relative to home position
 		//TODO multiple waypoints needs to be integrated into the GCS, macro flag enables the multiple waypoint functionality
@@ -130,6 +134,9 @@ int main(void) {
 void Initialisation() {
 	float Field[3],mean_pressure=0,Zeros[]={0,0,0}, Rbe[3][3], q[4], mag_len;
         float ge[3]={0,0,-9.81};
+	int64_t home[4]={0,0,0};
+	double LLA[3]={0,0,0};
+	double ECEF[3]={0,0,0};
 	//Setup the calibration arrays - Note: might be worth moving this somewhere else as its used in the imu code as well
 	float Acc_Cal_Dat[12]=ACC_CAL_6;
 	float Mag_Cal_Dat[12]=MAG_CAL_6;
@@ -239,9 +246,9 @@ void Initialisation() {
 			while(Bytes_In_Buffer(&Gps_Buffer,USART2RX_DMA1))//Dump all the data
 				Gps_Process_Byte((uint8_t)(Pop_From_Buffer(&Gps_Buffer)),&Gps);
 		}
-		Home_Position.x+=(float)Gps.latitude;
-		Home_Position.y+=(float)Gps.longitude;
-		Home_Position.z-=(float)Gps.mslaltitude;//NED frame - alititude is negative
+		home[0]+=(float)Gps.latitude;
+		home[1]+=(float)Gps.longitude;
+		home[2]-=(float)Gps.mslaltitude;//NED frame - alititude is negative
 		if(err&0x01) {			//On odd iterations we convert the temperature
 			Bmp_Gettemp();
 			Baro_Setup_Pressure();
@@ -253,16 +260,16 @@ void Initialisation() {
 			mean_pressure+=raw_pressure;
 		}
 	}
-	Home_Position.x/=(float)err;		//Home is in raw units of degrees x 10^7
-	Home_Position.y/=(float)err;
-	Home_Position.z/=((float)err*1000.0);	//Find average position - note altitude converted to meters
+	Home_Position.Latitude=home[0]/err;	//Home is in raw units of degrees x 10^7
+	Home_Position.Longitude=home[1]/err;
+	Home_Position.Altitude=home[2]/((float)err*1000.0);//Find average position - note altitude converted to meters
 	mean_pressure/=(float)(err>>1);		//Average pressure in pascals
-	Long_To_Meters_Home=LAT_TO_METERS*cos(UBX_DEG_TO_RADS*Home_Position.x);
+	Long_To_Meters_Home=LAT_TO_METERS*cos(UBX_DEG_TO_RADS*Home_Position.Latitude);
 	printf("Home position set\r\n");
 	//Init the ekf, must do this before the mag model
 	INSGPSInit();
 	//Now we initialise the magnetic model - init function is called from the get vector function
-	if((err=WMM_GetMagVector(Home_Position.x*1e-7,Home_Position.y*1e-7,-Home_Position.z,Gps.week,Field)))
+	if((err=WMM_GetMagVector(Home_Position.Latitude*1e-7,Home_Position.Longitude*1e-7,-Home_Position.Altitude,Gps.week,Field)))
 		printf("Mag model run error %d\r\n",err);
 	else
 		printf("Mag model completed, B(mG NED frame)=%1f,%1f,%1f\r\n",Field[0],Field[1],Field[2]);
@@ -270,6 +277,21 @@ void Initialisation() {
 	mag_len = sqrt(pow(Field[0],2) + pow(Field[1],2) + pow(Field[2],2));
 	Field[0]/=mag_len;Field[1]/=mag_len;Field[2]/=mag_len;
 	INSSetMagNorth(Field);			//Configure the Earths field in the EKF
+	//Use the Field and GPS position to set the home position
+	Home_Position.Set=1;//Set the SET byte to indicate to the GCS that home is set onboard the UAV
+	LLA[0]=Home_Position.Latitude*1e-7;
+	LLA[1]=Home_Position.Longitude*1e-7;//Note that altitude uses the last gps datapoint to find the giodal seperation
+	LLA[2]=Home_Position.Altitude-((Gps.mslaltitude-Gps.altitude)/1000.0);//NWGS84 geometeric altitude, so ECEF coord conversion works better
+	LLA2ECEF(LLA,ECEF);
+	Home_Position.ECEF[0]=ECEF[0]*100.0;
+	Home_Position.ECEF[1]=ECEF[1]*100.0;
+	Home_Position.ECEF[2]=ECEF[2]*100.0;
+	RneFromLLA(LLA, (float (*)[3])Home_Position.RNE);
+	memcpy(Home_Position.Be,Field,12);
+	Home_Position.g_e=Ge_From_Latitude(Home_Position.Latitude,Home_Position.Altitude);
+	ge[2]=-Home_Position.g_e;		//Set the gravity in Home
+	//Set the earths gravity
+	INSSetGravity(Home_Position.g_e);
 	//Use home position to initialise the ekf - assume that we intialise stationary with no gyro bias, and grab accel and magno data
 	Mag_Read(&mag);
 	Calibrate_3(&mag_corr,&mag,Mag_Cal_Dat);
@@ -281,7 +303,7 @@ void Initialisation() {
 	INSSetState(Zeros,Zeros,q,Zeros);	//Home position is defined as the origin
 	//Use the Baro output to find sea level pressure, remeber home altitude is negative
 	printf("Baro pressure is %f Pascals, temperature is %f C\r\n",mean_pressure,(float)device_temperature/10.0);
-	Sea_Level_Pressure=mean_pressure*pow((1+2.255808e-5*Home_Position.z),-5.255);//convert to sea level pressure -bmp085 datasheet
+	Sea_Level_Pressure=mean_pressure*pow((1+2.255808e-5*Home_Position.Altitude),-5.255);//convert to sea level pressure -bmp085 datasheet
 	//Sea_Level_Pressure=mean_pressure;	//Set home position (Down=0) to the reference zero altitude
 	printf("Sea level pressure is %f\r\n",Sea_Level_Pressure);
 	//Try initialising the uSD card and mounting the filesystem - if there is no card inserted it will error when we try to use files/dir

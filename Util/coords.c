@@ -33,8 +33,8 @@
 
 #define RAD2DEG (180.0/M_PI)
 #define DEG2RAD (M_PI/180.0)
-//allow compilation of most of this to be turned off
-#if FULL_CONV==1
+
+
 // ****** convert Lat,Lon,Alt to ECEF  ************
 void LLA2ECEF(double LLA[3], double ECEF[3])
 {
@@ -54,7 +54,8 @@ void LLA2ECEF(double LLA[3], double ECEF[3])
 	ECEF[1] = (N + LLA[2]) * cosLat * sinLon;
 	ECEF[2] = ((1 - e * e) * N + LLA[2]) * sinLat;
 }
-
+//allow compilation of most of this to be turned off
+#if FULL_CONV==1
 // ****** convert ECEF to Lat,Lon,Alt (ITERATIVE!) *********
 uint16_t ECEF2LLA(double ECEF[3], double LLA[3])
 {
@@ -98,7 +99,7 @@ uint16_t ECEF2LLA(double ECEF[3], double LLA[3])
 
 	return (iter < MAX_ITER);
 }
-
+#endif
 // ****** find ECEF to NED rotation matrix ********
 void RneFromLLA(double LLA[3], float Rne[3][3])
 {
@@ -119,7 +120,7 @@ void RneFromLLA(double LLA[3], float Rne[3][3])
 	Rne[2][1] = -cosLat * sinLon;
 	Rne[2][2] = -sinLat;
 }
-#endif
+
 // ****** find roll, pitch, yaw from quaternion ********
 void Quaternion2RPY(const float q[4], float rpy[3])
 {

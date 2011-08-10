@@ -64,6 +64,7 @@ void INSSetGyroBias(float gyro_bias[3]);
 void INSSetAccelVar(float accel_var[3]);
 void INSSetGyroVar(float gyro_var[3]);
 void INSSetMagNorth(float B[3]);
+void INSSetGravity(float G);
 void INSSetMagVar(float scaled_mag_var[3]);
 void INSPosVelReset(float pos[3], float vel[3]);
 

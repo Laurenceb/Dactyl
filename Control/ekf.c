@@ -61,6 +61,7 @@ void LinearizeH(float X[NUMX], float Be[3], float H[NUMV][NUMX]);
 // Private variables - these should only be accessed from within ekf.c or code running within the isr/ekf thread
 float F[NUMX][NUMX], G[NUMX][NUMW], H[NUMV][NUMX];	// linearized system matrices
 							// global to init to zero and maintain zero elements
+float Ge=9.81;
 float Be[3];			// local magnetic unit vector in NED frame
 float P[NUMX][NUMX], X[NUMX];	// covariance matrix and state vector
 float Q[NUMW], R[NUMV];		// input noise and measurement noise variances
@@ -213,6 +214,11 @@ void INSSetMagNorth(float B[3])
 	Be[0] = B[0];
 	Be[1] = B[1];
 	Be[2] = B[2];
+}
+
+void INSSetGravity(float G)
+{
+	Ge=G;
 }
 
 void INSStatePrediction(float gyro_data[3], float accel_data[3], float dT)
@@ -1466,7 +1472,7 @@ void StateEq(float X[NUMX], float U[NUMU], float Xdot[NUMX])
 	    az;
 	Xdot[5] =
 	    2 * (q1 * q3 - q0 * q2) * ax + 2 * (q2 * q3 + q0 * q1) * ay +
-	    (q0 * q0 - q1 * q1 - q2 * q2 + q3 * q3) * az + 9.81;
+	    (q0 * q0 - q1 * q1 - q2 * q2 + q3 * q3) * az + Ge;
 
 	// qdot = Q*w
 	Xdot[6] = (-q1 * wx - q2 * wy - q3 * wz) / 2;

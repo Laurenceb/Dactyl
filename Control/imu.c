@@ -6,6 +6,7 @@
 #include "types.h"
 #include "loops.h"
 #include "servos.h"
+#include "../main.h"
 #include "../i2c.h"
 #include "../dma.h"
 #include "../gpio.h"
@@ -15,8 +16,9 @@
 #include "../Util/uavtalk.h"
 
 //Globals from main
+extern Home_Position_Type Home_Position;
 extern Buffer_Type Gps_Buffer;
-extern Float_Vector Home_Position,Waypoint_Global;
+extern Float_Vector Waypoint_Global;
 extern float Long_To_Meters_Home;
 extern volatile Ubx_Gps_Type Gps;
 extern volatile Nav_Type Nav_Global,Nav;	
@@ -110,9 +112,9 @@ void run_imu(void) {
 	while(Bytes_In_Buffer(&Gps_Buffer,USART2RX_DMA1))	//Dump all the data from DMA
 		Gps_Process_Byte((uint8_t)(Pop_From_Buffer(&Gps_Buffer)),&gps);
 	if(gps.packetflag==REQUIRED_DATA){	
-		gps_position.x=((float)gps.latitude-Home_Position.x)*LAT_TO_METERS;//Remember, NED frame, and gps altitude needs *=-1
-		gps_position.y=((float)gps.longitude-Home_Position.y)*Long_To_Meters_Home;//This is a global set with home position
-		gps_position.z=-((float)gps.mslaltitude*0.001)-Home_Position.z;//Home is in raw gps coordinates - apart from altitude in m
+		gps_position.x=(float)(gps.latitude-Home_Position.Latitude)*LAT_TO_METERS;//Remember, NED frame, and gps altitude needs *=-1
+		gps_position.y=(float)(gps.longitude-Home_Position.Longitude)*Long_To_Meters_Home;//This is a global set with home position
+		gps_position.z=-((float)gps.mslaltitude*0.001)-Home_Position.Altitude;//Home is in raw gps coordinates - apart from altitude in m
 		gps_velocity.x=(float)gps.vnorth*0.01;		//Ublox velocity is in cm/s
 		gps_velocity.y=(float)gps.veast*0.01;
 		gps_velocity.z=(float)gps.vdown*0.01;
@@ -133,7 +135,7 @@ void run_imu(void) {
 	//Run the EKF - we feed it vector pointers but it expects float arrays - alignment has to be correct
 	INSStatePrediction((float*)&gy,(float*)&ac,Delta_Time);	//Run the EKF and incorporate the avaliable sensors
 	INSCovariancePrediction(Delta_Time);
-	INSCorrection((float*)&ma,(float*)&gps_position,(float*)&gps_velocity,Baro_Alt+Home_Position.z,SensorsUsed);
+	INSCorrection((float*)&ma,(float*)&gps_position,(float*)&gps_velocity,Baro_Alt+Home_Position.Altitude,SensorsUsed);
 	if(!Nav_Flag) {Nav_Global=Nav; Nav_Flag=(uint32_t)0x01;}//Copy over Nav state if its been unlocked
 	//EKF is finished, time to run the guidance
 	if(New_Waypoint_Flagged) {waypoint=Waypoint_Global; New_Waypoint_Flagged=0;}//Check for any new waypoints that may have been set

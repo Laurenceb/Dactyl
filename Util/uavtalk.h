@@ -16,6 +16,7 @@
 #define VELOCITY_ACTUAL 2
 #define BARO_ACTUAL 3
 #define POSITION_DESIRED_NO 4
+#define HOME_LOCATION 5
 
 //datatype declarations
 typedef struct {

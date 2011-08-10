@@ -30,15 +30,15 @@
 #ifndef COORDINATECONVERSIONS_H_
 #define COORDINATECONVERSIONS_H_
 
-#if FULL_CONV==1
+
     // ****** convert Lat,Lon,Alt to ECEF  ************
 void LLA2ECEF(double LLA[3], double ECEF[3]);
-
+#if FULL_CONV==1
     // ****** convert ECEF to Lat,Lon,Alt (ITERATIVE!) *********
 uint16_t ECEF2LLA(double ECEF[3], double LLA[3]);
-
+#endif
 void RneFromLLA(double LLA[3], float Rne[3][3]);
-
+#if FULL_CONV==1
     // ****** find rotation matrix from rotation vector
 void Rv2Rot(float Rv[3], float R[3][3]);
 #endif
@@ -77,5 +77,5 @@ void quat_copy(const float q[4], float qnew[4]);
 void quat_mult(const float q1[4], const float q2[4], float qout[4]);
 void rot_mult(float R[3][3], const float vec[3], float vec_out[3]);
 
-#endif // COORDINATECONVERSIONS_H_
+#endif /* COORDINATECONVERSIONS_H_ */
 
