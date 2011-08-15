@@ -1,5 +1,6 @@
 //Dactyl project v1.0
 
+//#include <stdio.h>
 #include <string.h>
 #include "stm32f10x.h"
 #include "uavtalk.h"
@@ -8,17 +9,17 @@
 
 //This is global, holds the configuration for supported packets and their properties
 //Note that the object ids and lenghts are held in flash as they dont change
-//Objects are Attitude, Position_actual, Velocity_actual, Baro_actual, Position_desired
-const uint32_t UAVtalk_objects[]={0x33DAD5E6,0xF9691DA4,0x43007EB0,0x99622E6A,0x33C9EAB4,0x53E8110E};//This is an array of supported messgae ids
-const uint8_t UAVtalk_lenghts[]={28,12,12,12,12,77};//Array of message lenghts - payload in bytes
-volatile uint8_t UAVtalk_semaphores[]={0,0,0,0,0,0};//Semaphores array, initialise as read (false)
-uint8_t* UAVtalk_pointers[]={(const uint8_t*)NULL,(const uint8_t*)NULL,(const uint8_t*)NULL,(const uint8_t*)NULL,(const uint8_t*)NULL,\
-	(const uint8_t*)NULL};//Pointers
+//Objects are Attitude, Position_actual, Velocity_actual, Baro_actual, Position_desired, Home, Flighttelemstats, GCStelemstats
+const uint32_t UAVtalk_objects[]={0x33DAD5E6,0xF9691DA4,0x43007EB0,0x99622E6A,0x33C9EAB4,0x53E8110E,0x3F75B7E8,0xB6C346E4};//Array of supported ids
+const uint8_t UAVtalk_lenghts[]={28,12,12,12,12,77,21,21};//Array of message lenghts - payload in bytes
+volatile uint8_t UAVtalk_semaphores[NUM_OBJECTS];//Semaphores array, initialise as read (false)
+uint8_t* UAVtalk_pointers[NUM_OBJECTS];		//Initialsed as zero, or (const uint8_t*)NULL)) Pointers to the objects
 uint8_t UAVtalk_stream_objs[]={0,1,2,3};	//First 4 objects are streamed (Attitude,Position,Velocity,Baro)
 uint16_t UAVtalk_stream_timeouts[]={100,100,100,100};//Send every 100ms
-//Note we only have one supported packet TODO add more packets - so far only AttitudeActual
-UAVtalk_Config_Type UAVtalk_conf={UAVTALK_VERSION,1,UAVtalk_objects,UAVtalk_pointers,UAVtalk_lenghts,UAVtalk_semaphores,1,UAVtalk_stream_objs,\
-UAVtalk_stream_timeouts,0};
+uint32_t UAVtalk_stream_timers[NUM_STREAMS];	//Timers will be set to zero as they are global
+//Note we can add more packets as needed, be careful not to saturate the link with too many streamed packets
+UAVtalk_Config_Type UAVtalk_conf={UAVTALK_VERSION,NUM_OBJECTS,UAVtalk_objects,UAVtalk_pointers,UAVtalk_lenghts,UAVtalk_semaphores,NUM_STREAMS,\
+UAVtalk_stream_objs,UAVtalk_stream_timeouts,UAVtalk_stream_timers};
 
 /**
   * @brief  Sets the object pointer to point to data

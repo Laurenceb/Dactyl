@@ -60,6 +60,8 @@ volatile uint32_t Millis;
 uint8_t UAVtalk_Attitude_Array[28];//Used to hold the attitude object data
 volatile float UAVtalk_Altitude_Array[3];//Used to hold baro altitude data
 Home_Position_Type Home_Position;//The home position
+Telemetery_Stats_Type GCS_Telem;//Telemetery - used for handshaking
+Telemetery_Stats_Type Flight_Telem;
 //more objects can go here if required (best to try and use existing variables) 
 
 int main(void) {

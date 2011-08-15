@@ -4,7 +4,7 @@
 //UAVtalk definitions
 #define UAVTALK_VERSION 1
 #define UAVTALK_SYNC 0x3C
-#define UAVTALK_MAX_DATA_LEN 64
+#define UAVTALK_MAX_DATA_LEN 77
 #define UAVTALK_MAX_PACKET_LEN UAVTALK_MAX_DATA_LEN+11
 #define UAVTALK_RX_TIMEOUT_MS 15
 
@@ -17,6 +17,12 @@
 #define BARO_ACTUAL 3
 #define POSITION_DESIRED_NO 4
 #define HOME_LOCATION 5
+#define FLIGHT_STATS 6
+#define GCS_STATS 7
+/*Number of objects supported*/
+#define NUM_OBJECTS 8
+/*Number of streams supported*/
+#define NUM_STREAMS 4
 
 //datatype declarations
 typedef struct {

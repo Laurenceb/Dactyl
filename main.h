@@ -21,7 +21,15 @@ typedef struct {
     float RNE[9];
     float Be[3];
     float g_e;
-}	Home_Position_Type;
+}	__attribute__((packed)) Home_Position_Type;
+//The telemetery status datatype
+typedef struct {
+    float TxDataRate;
+    float RxDataRate;
+    uint32_t TxFailures;
+    uint32_t RxFailures;
+    uint32_t TxRetries;
+}	__attribute__((packed)) Telemetery_Stats_Type;
 
 /* Private functions ---------------------------------------------------------*/
 
