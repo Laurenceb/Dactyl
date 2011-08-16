@@ -195,3 +195,95 @@ void UAVtalk_Run_Streams(UAVtalk_Port_Type* port,Buffer_Type* buff,uint32_t upti
 	}
 	millis=uptime;				//Set our local time variable
 }
+
+/**
+  * @brief  Runs UAVtalk Telemetery status and handshaking
+  * @param  Pointer to the UAVtalk Flightstatus, pointer to UAVtalk, system time in ms
+  * @retval void
+  */
+static void updateTelemetryStats(Telemetery_Stats_Type* flightStats, Telemetery_Stats_Type* gcsStats,uint32_t timeNow)
+{
+/*	UAVTalkStats utalkStats;
+	FlightTelemetryStatsData flightStats;
+	GCSTelemetryStatsData gcsStats;
+
+	// Get stats
+	UAVTalkGetStats(&utalkStats);
+	UAVTalkResetStats();
+
+	// Get object data
+	FlightTelemetryStatsGet(&flightStats);
+	GCSTelemetryStatsGet(&gcsStats);
+*/
+	uint8_t forceUpdate;
+	uint8_t connectionTimeout;
+	// Update stats object
+	if (flightStats->Status == FLIGHTTELEMETRYSTATS_STATUS_CONNECTED) {
+		flightStats->RxDataRate = (float)utalkStats.rxBytes / ((float)STATS_UPDATE_PERIOD_MS / 1000.0);
+		flightStats->TxDataRate = (float)utalkStats.txBytes / ((float)STATS_UPDATE_PERIOD_MS / 1000.0);
+		flightStats->RxFailures += utalkStats.rxErrors;
+		flightStats->TxFailures += txErrors;
+		flightStats->TxRetries += txRetries;
+		txErrors = 0;
+		txRetries = 0;
+	} else {
+		flightStats->RxDataRate = 0;
+		flightStats->TxDataRate = 0;
+		flightStats->RxFailures = 0;
+		flightStats->TxFailures = 0;
+		flightStats->TxRetries = 0;
+		txErrors = 0;
+		txRetries = 0;
+	}
+
+	// Check for connection timeout
+	//timeNow = xTaskGetTickCount() * portTICK_RATE_MS;
+	if (utalkStats->rxObjects > 0) {
+		timeOfLastObjectUpdate = timeNow;
+	}
+	if ((timeNow - timeOfLastObjectUpdate) > CONNECTION_TIMEOUT_MS) {
+		connectionTimeout = 1;
+	} else {
+		connectionTimeout = 0;
+	}
+
+	// Update connection state
+	forceUpdate = 1;
+	if (flightStats->Status == FLIGHTTELEMETRYSTATS_STATUS_DISCONNECTED) {
+		// Wait for connection request
+		if (gcsStats->Status == GCSTELEMETRYSTATS_STATUS_HANDSHAKEREQ) {
+			flightStats->Status = FLIGHTTELEMETRYSTATS_STATUS_HANDSHAKEACK;
+		}
+	} else if (flightStats->Status == FLIGHTTELEMETRYSTATS_STATUS_HANDSHAKEACK) {
+		// Wait for connection
+		if (gcsStats->Status == GCSTELEMETRYSTATS_STATUS_CONNECTED) {
+			flightStats->Status = FLIGHTTELEMETRYSTATS_STATUS_CONNECTED;
+		} else if (gcsStats->Status == GCSTELEMETRYSTATS_STATUS_DISCONNECTED) {
+			flightStats->Status = FLIGHTTELEMETRYSTATS_STATUS_DISCONNECTED;
+		}
+	} else if (flightStats->Status == FLIGHTTELEMETRYSTATS_STATUS_CONNECTED) {
+		if (gcsStats->Status != GCSTELEMETRYSTATS_STATUS_CONNECTED || connectionTimeout) {
+			flightStats->Status = FLIGHTTELEMETRYSTATS_STATUS_DISCONNECTED;
+		} else {
+			forceUpdate = 0;
+		}
+	} else {
+		flightStats->Status = FLIGHTTELEMETRYSTATS_STATUS_DISCONNECTED;
+	}
+	/*
+	// Update the telemetry alarm
+	if (flightStats.Status == FLIGHTTELEMETRYSTATS_STATUS_CONNECTED) {
+		AlarmsClear(SYSTEMALARMS_ALARM_TELEMETRY);
+	} else {
+		AlarmsSet(SYSTEMALARMS_ALARM_TELEMETRY, SYSTEMALARMS_ALARM_ERROR);
+	}
+	*/
+	// Update object
+	FlightTelemetryStatsSet(&flightStats);
+
+	// Force telemetry update if not connected
+	if (forceUpdate) {
+		FlightTelemetryStatsUpdated();
+	}
+}
+
