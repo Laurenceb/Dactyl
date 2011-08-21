@@ -35,6 +35,10 @@ typedef struct {
 	uint8_t checksum;
 	uint8_t rx_buffer[UAVTALK_MAX_DATA_LEN];
 	uint16_t bytes_written;
+	uint32_t rxBytes;	//These are used for generating telemetery stats data
+	uint32_t txBytes;
+	uint32_t rxErrors;
+	uint16_t rxObjects;
 } UAVtalk_Port_Type;		//This is a uavtalk port instance
 
 typedef struct {

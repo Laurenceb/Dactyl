@@ -91,10 +91,12 @@ void UAVtalk_Process_Byte(uint8_t c,UAVtalk_Port_Type* msg) {//The raw USART/ISM
 			msg->object_no=memchr_32(msg->object_id,UAVtalk_conf.object_ids,UAVtalk_conf.num_objects);//-1 if nonexistant
 			if(msg->object_no>=0)
 				msg->state=8;	//Object exists
-			else if((msg->type&0x0F)==1 || (msg->type&0x0F)==2)//Object request of object with ACK, and does not exist
+			else if((msg->type&0x0F)==1 || (msg->type&0x0F)==2)//Object request of object with ACK, or non Object with ACK request
 				msg->state=8;	//We will generate a NACK as object nonexistant 
-			else
+			else {
 				msg->state=0;	//Error
+				msg->RxFailures++;//There was a failure
+			}
 			break;
 		case 8:
 			msg->instance_id=c;
@@ -124,11 +126,14 @@ void UAVtalk_Process_Byte(uint8_t c,UAVtalk_Port_Type* msg) {//The raw USART/ISM
 						memcpy((uint8_t*)(UAVtalk_conf.object_pointers[msg->object_no]),\
 						msg->rx_buffer,msg->bytes_written);
 						UAVtalk_conf.semaphores[msg->object_no]=WRITE;//mark data as written (write before read)
+						msg->RxDataRate+=msg->lenght;//Update the telemetery stats object pointer
+						msg->RxObjects++;//We received another object		
 					}
 				}
 				//if(msg->type&0x0F)//If we had anything other than a basic object sent to us
 				//	msg->alert_flag=0xFF;//a action is required as we have to ack/nack/send object
 			}
+			else msg->RxFailures++;	//There was a failure
 			msg->state=0;		//Reset state upon successful packet reception or error
 	}
 	if(msg->state && msg->state<10) {	//Run the CRC on the packet header
@@ -169,6 +174,7 @@ void UAVtalk_Generate_Packet(UAVtalk_Port_Type* msg, Buffer_Type* buff) {
 		buff->data[i]=CRC_updateCRC(0,msg->rx_buffer,i);//Add to CRC8 to end
 		buff->size=i+1;			//Holds the number of bytes in tx buffer
 		buff->tail=0;			//Make sure the tail is zero
+		msg->TxDataRate+=i;		//Update the telemetery stats using data pointer
 	}
 }
 
@@ -198,55 +204,40 @@ void UAVtalk_Run_Streams(UAVtalk_Port_Type* port,Buffer_Type* buff,uint32_t upti
 
 /**
   * @brief  Runs UAVtalk Telemetery status and handshaking
-  * @param  Pointer to the UAVtalk Flightstatus, pointer to UAVtalk, system time in ms
+  * @param  Pointers to the UAVtalk Flightstatus and GCSstatus, pointer to UAVtalk port, system time in ms
   * @retval void
   */
-static void updateTelemetryStats(Telemetery_Stats_Type* flightStats, Telemetery_Stats_Type* gcsStats,uint32_t timeNow)
-{
-/*	UAVTalkStats utalkStats;
-	FlightTelemetryStatsData flightStats;
-	GCSTelemetryStatsData gcsStats;
-
-	// Get stats
-	UAVTalkGetStats(&utalkStats);
-	UAVTalkResetStats();
-
-	// Get object data
-	FlightTelemetryStatsGet(&flightStats);
-	GCSTelemetryStatsGet(&gcsStats);
-*/
+static void updateTelemetryStats(Telemetery_Stats_Type* flightStats, Telemetery_Stats_Type* gcsStats, UAVtalk_Port_Type* port, uint32_t timeNow) {
 	uint8_t forceUpdate;
 	uint8_t connectionTimeout;
+	static uint32_t timeOfLastObjectUpdate;
 	// Update stats object
 	if (flightStats->Status == FLIGHTTELEMETRYSTATS_STATUS_CONNECTED) {
-		flightStats->RxDataRate = (float)utalkStats.rxBytes / ((float)STATS_UPDATE_PERIOD_MS / 1000.0);
-		flightStats->TxDataRate = (float)utalkStats.txBytes / ((float)STATS_UPDATE_PERIOD_MS / 1000.0);
-		flightStats->RxFailures += utalkStats.rxErrors;
-		flightStats->TxFailures += txErrors;
-		flightStats->TxRetries += txRetries;
-		txErrors = 0;
-		txRetries = 0;
+		flightStats->RxDataRate = (float)port->rxBytes / ((float)STATS_UPDATE_PERIOD_MS / 1000.0);
+		flightStats->TxDataRate = (float)port->txBytes / ((float)STATS_UPDATE_PERIOD_MS / 1000.0);
+		flightStats->RxFailures += port->rxErrors;
+		flightStats->TxFailures =0;
+		flightStats->TxRetries =0;
+		port->rxBytes=0;	//Reset the link stats
+		port->txBytes=0;
+		port->rxErrors=0;
 	} else {
 		flightStats->RxDataRate = 0;
 		flightStats->TxDataRate = 0;
 		flightStats->RxFailures = 0;
 		flightStats->TxFailures = 0;
 		flightStats->TxRetries = 0;
-		txErrors = 0;
-		txRetries = 0;
 	}
-
 	// Check for connection timeout
-	//timeNow = xTaskGetTickCount() * portTICK_RATE_MS;
-	if (utalkStats->rxObjects > 0) {
+	if (port->rxObjects > 0) {
 		timeOfLastObjectUpdate = timeNow;
+		port->rxObjects=0;	//Reset this here
 	}
 	if ((timeNow - timeOfLastObjectUpdate) > CONNECTION_TIMEOUT_MS) {
 		connectionTimeout = 1;
 	} else {
 		connectionTimeout = 0;
 	}
-
 	// Update connection state
 	forceUpdate = 1;
 	if (flightStats->Status == FLIGHTTELEMETRYSTATS_STATUS_DISCONNECTED) {
@@ -270,20 +261,6 @@ static void updateTelemetryStats(Telemetery_Stats_Type* flightStats, Telemetery_
 	} else {
 		flightStats->Status = FLIGHTTELEMETRYSTATS_STATUS_DISCONNECTED;
 	}
-	/*
-	// Update the telemetry alarm
-	if (flightStats.Status == FLIGHTTELEMETRYSTATS_STATUS_CONNECTED) {
-		AlarmsClear(SYSTEMALARMS_ALARM_TELEMETRY);
-	} else {
-		AlarmsSet(SYSTEMALARMS_ALARM_TELEMETRY, SYSTEMALARMS_ALARM_ERROR);
-	}
-	*/
-	// Update object
-	FlightTelemetryStatsSet(&flightStats);
-
-	// Force telemetry update if not connected
-	if (forceUpdate) {
-		FlightTelemetryStatsUpdated();
-	}
+	// Update flighttelemeterystats object semaphore to WRITE after calling this function
 }
 
