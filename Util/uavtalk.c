@@ -14,12 +14,13 @@ const uint32_t UAVtalk_objects[]={0x33DAD5E6,0xF9691DA4,0x43007EB0,0x99622E6A,0x
 const uint8_t UAVtalk_lenghts[]={28,12,12,12,12,77,21,21};//Array of message lenghts - payload in bytes
 volatile uint8_t UAVtalk_semaphores[NUM_OBJECTS];//Semaphores array, initialise as read (false)
 uint8_t* UAVtalk_pointers[NUM_OBJECTS];		//Initialsed as zero, or (const uint8_t*)NULL)) Pointers to the objects
-uint8_t UAVtalk_stream_objs[]={0,1,2,3};	//First 4 objects are streamed (Attitude,Position,Velocity,Baro)
-uint16_t UAVtalk_stream_timeouts[]={100,100,100,100};//Send every 100ms
+const uint8_t UAVtalk_stream_objs[]={0,1,2,3};	//First 4 objects are streamed (Attitude,Position,Velocity,Baro)
+const uint8_t UAVtalk_stream_types[]={0,0,0,0};	//First 4 objects are not acknowledged
+const uint16_t UAVtalk_stream_timeouts[]={100,250,100,1000};//Send every <x>milliseconds
 uint32_t UAVtalk_stream_timers[NUM_STREAMS];	//Timers will be set to zero as they are global
 //Note we can add more packets as needed, be careful not to saturate the link with too many streamed packets
 UAVtalk_Config_Type UAVtalk_conf={UAVTALK_VERSION,NUM_OBJECTS,UAVtalk_objects,UAVtalk_pointers,UAVtalk_lenghts,UAVtalk_semaphores,NUM_STREAMS,\
-UAVtalk_stream_objs,UAVtalk_stream_timeouts,UAVtalk_stream_timers};
+UAVtalk_stream_objs,UAVtalk_stream_types,UAVtalk_stream_timeouts,UAVtalk_stream_timers};
 
 /**
   * @brief  Sets the object pointer to point to data
@@ -182,18 +183,20 @@ void UAVtalk_Generate_Packet(UAVtalk_Port_Type* msg, Buffer_Type* buff) {
   * @brief  Runs UAVtalk packet generator
   * @param  Pointer to the UAVtalk port structure, pointer to ouput buffer, system time in ms
   * @retval void
+  * Note: there aren't seperate timers for each open port, so stream timers just mean an objects will be sent to the first processed port
   */
 void UAVtalk_Run_Streams(UAVtalk_Port_Type* port,Buffer_Type* buff,uint32_t uptime) {
 	uint16_t i=0;
 	uint8_t packet_gen=0;			//Logical to let us know a packet has been generated
 	static uint32_t millis=0;		//Local time variable
 	port->type=0x00;			//We only stream basic objects
-	for(i=0;i<UAVtalk_conf.num_stream_objects;i++) {//Loop through the Objects trying to find something to send
+	for(i=0;i<UAVtalk_conf.num_stream_objects && port->status==FLIGHTTELEMETRYSTATS_STATUS_CONNECTED;i++) {//If connected, loop through Objects
 		UAVtalk_conf.stream_timers[i]-=(uptime-millis);//Adjust timer
 		if(UAVtalk_conf.stream_timers[i]<0 && !packet_gen) {//Timer expired
 			port->object_no=UAVtalk_conf.stream_object_nos[i];//Set the appropriate object number (i.e. 0,1,2,3,4 as in objectid array)
 			//Note we do not set the instance here (TODO find out if its essential)
-			//UAVtalk_conf.semaphores[port->object_no]=WRITE;//Set the object as written to be sure it is sent (Note done externally) 
+			//UAVtalk_conf.semaphores[port->object_no]=WRITE;//Set the object as written to be sure it is sent (Note done externally)
+			port->type=UAVtalk_conf.stream_object_types[i];//Set the type
 			UAVtalk_Generate_Packet(port,buff);//Generate the expired packet
 			UAVtalk_conf.stream_timers[i]=UAVtalk_conf.stream_intervals[i];//Reset to default
 			packet_gen=1;

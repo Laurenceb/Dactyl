@@ -39,6 +39,7 @@ typedef struct {
 	uint32_t txBytes;
 	uint32_t rxErrors;
 	uint16_t rxObjects;
+	uint8_t status;		//This enables the ports to be completely independent of one another
 } UAVtalk_Port_Type;		//This is a uavtalk port instance
 
 typedef struct {
@@ -50,8 +51,9 @@ typedef struct {
 	uint8_t* semaphores;	//Used to control access to the data
 	uint8_t num_stream_objects;//Number of streamed objects
 	uint8_t* stream_object_nos;//Array of streamed object numbers
+	uint8_t* stream_object_types;//Array of types for the streamed objects (e.g. OBJ, OBJ_ACK ect)
 	uint16_t* stream_intervals;//Array of tx intervals in ms
-	int32_t* stream_timers;//Timers for the streams
+	int32_t* stream_timers;	//Timers for the streams
 } UAVtalk_Config_Type;		//Config info for the UAVtalk setup on the vehicle/device component
 
 //function prototypes
