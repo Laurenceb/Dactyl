@@ -39,7 +39,8 @@ typedef struct {
 	uint32_t txBytes;
 	uint32_t rxErrors;
 	uint16_t rxObjects;
-	uint8_t status;		//This enables the ports to be completely independent of one another
+	Telemetery_Stats_Type flightStats;
+	Telemetery_Stats_Type gcsStats;//This enables the ports to be completely independent of one another
 } UAVtalk_Port_Type;		//This is a uavtalk port instance
 
 typedef struct {

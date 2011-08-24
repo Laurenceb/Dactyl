@@ -207,29 +207,33 @@ void UAVtalk_Run_Streams(UAVtalk_Port_Type* port,Buffer_Type* buff,uint32_t upti
 
 /**
   * @brief  Runs UAVtalk Telemetery status and handshaking
-  * @param  Pointers to the UAVtalk Flightstatus and GCSstatus, pointer to UAVtalk port, system time in ms
+  * @param  Pointer to UAVtalk port, system time in ms
   * @retval void
   */
-static void updateTelemetryStats(Telemetery_Stats_Type* flightStats, Telemetery_Stats_Type* gcsStats, UAVtalk_Port_Type* port, uint32_t timeNow) {
+static void updateTelemetryStats(UAVtalk_Port_Type* port, uint32_t timeNow) {
 	uint8_t forceUpdate;
 	uint8_t connectionTimeout;
 	static uint32_t timeOfLastObjectUpdate;
+	static uint32_t timeOfLastStats;
+	uint32_t updateinterval=timeNow-timeOfLastStats;
+	timeOfLastStats=timeNow;//Allows this function to run irregularly/asyncronously
+	// Note that externally, before receiving data and processing, the UAVObjects for Stats should be pointed to the corresponding ports
 	// Update stats object
-	if (flightStats->Status == FLIGHTTELEMETRYSTATS_STATUS_CONNECTED) {
-		flightStats->RxDataRate = (float)port->rxBytes / ((float)STATS_UPDATE_PERIOD_MS / 1000.0);
-		flightStats->TxDataRate = (float)port->txBytes / ((float)STATS_UPDATE_PERIOD_MS / 1000.0);
-		flightStats->RxFailures += port->rxErrors;
-		flightStats->TxFailures =0;
-		flightStats->TxRetries =0;
+	if (port->flightStats->Status == FLIGHTTELEMETRYSTATS_STATUS_CONNECTED) {
+		port->flightStats->RxDataRate = (float)port->rxBytes / ((float)updateinterval / 1000.0);
+		port->flightStats->TxDataRate = (float)port->txBytes / ((float)updateinterval / 1000.0);
+		port->flightStats->RxFailures += port->rxErrors;
+		port->flightStats->TxFailures =0;
+		port->flightStats->TxRetries =0;
 		port->rxBytes=0;	//Reset the link stats
 		port->txBytes=0;
 		port->rxErrors=0;
 	} else {
-		flightStats->RxDataRate = 0;
-		flightStats->TxDataRate = 0;
-		flightStats->RxFailures = 0;
-		flightStats->TxFailures = 0;
-		flightStats->TxRetries = 0;
+		port->flightStats->RxDataRate = 0;
+		port->flightStats->TxDataRate = 0;
+		port->flightStats->RxFailures = 0;
+		port->flightStats->TxFailures = 0;
+		port->flightStats->TxRetries = 0;
 	}
 	// Check for connection timeout
 	if (port->rxObjects > 0) {
@@ -243,27 +247,28 @@ static void updateTelemetryStats(Telemetery_Stats_Type* flightStats, Telemetery_
 	}
 	// Update connection state
 	forceUpdate = 1;
-	if (flightStats->Status == FLIGHTTELEMETRYSTATS_STATUS_DISCONNECTED) {
+	if (port->flightStats->Status == FLIGHTTELEMETRYSTATS_STATUS_DISCONNECTED) {
 		// Wait for connection request
-		if (gcsStats->Status == GCSTELEMETRYSTATS_STATUS_HANDSHAKEREQ) {
-			flightStats->Status = FLIGHTTELEMETRYSTATS_STATUS_HANDSHAKEACK;
+		if (port->gcsStats->Status == GCSTELEMETRYSTATS_STATUS_HANDSHAKEREQ) {
+			port->flightStats->Status = FLIGHTTELEMETRYSTATS_STATUS_HANDSHAKEACK;
 		}
-	} else if (flightStats->Status == FLIGHTTELEMETRYSTATS_STATUS_HANDSHAKEACK) {
+	} else if (port->flightStats->Status == FLIGHTTELEMETRYSTATS_STATUS_HANDSHAKEACK) {
 		// Wait for connection
-		if (gcsStats->Status == GCSTELEMETRYSTATS_STATUS_CONNECTED) {
-			flightStats->Status = FLIGHTTELEMETRYSTATS_STATUS_CONNECTED;
-		} else if (gcsStats->Status == GCSTELEMETRYSTATS_STATUS_DISCONNECTED) {
-			flightStats->Status = FLIGHTTELEMETRYSTATS_STATUS_DISCONNECTED;
+		if (port->gcsStats->Status == GCSTELEMETRYSTATS_STATUS_CONNECTED) {
+			port->flightStats->Status = FLIGHTTELEMETRYSTATS_STATUS_CONNECTED;
+		} else if (port->gcsStats->Status == GCSTELEMETRYSTATS_STATUS_DISCONNECTED) {
+			port->flightStats->Status = FLIGHTTELEMETRYSTATS_STATUS_DISCONNECTED;
 		}
-	} else if (flightStats->Status == FLIGHTTELEMETRYSTATS_STATUS_CONNECTED) {
-		if (gcsStats->Status != GCSTELEMETRYSTATS_STATUS_CONNECTED || connectionTimeout) {
-			flightStats->Status = FLIGHTTELEMETRYSTATS_STATUS_DISCONNECTED;
+	} else if (port->flightStats->Status == FLIGHTTELEMETRYSTATS_STATUS_CONNECTED) {
+		if (port->gcsStats->Status != GCSTELEMETRYSTATS_STATUS_CONNECTED || connectionTimeout) {
+			port->flightStats->Status = FLIGHTTELEMETRYSTATS_STATUS_DISCONNECTED;
 		} else {
 			forceUpdate = 0;
 		}
 	} else {
-		flightStats->Status = FLIGHTTELEMETRYSTATS_STATUS_DISCONNECTED;
+		port->flightStats->Status = FLIGHTTELEMETRYSTATS_STATUS_DISCONNECTED;
 	}
-	// Update flighttelemeterystats object semaphore to WRITE after calling this function
+	// Update flighttelemeterystats object semaphore to WRITE
+	UAVtalk_conf.semaphores[FLIGHT_STATS]=WRITE;
 }
 
