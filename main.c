@@ -76,6 +76,8 @@ int main(void) {
 	UAVtalk_Register_Object(5,(uint8_t*)&Home_Position);//Home position structure, this is set at initialisation
 	for(;;) {
 		//All USART1 UAVtalk streams go here
+		UAVtalk_Register_Object(6,(uint8_t*)&uavtalk_usart_port.flightStats);//Initialise the link stats objects
+		UAVtalk_Register_Object(7,(uint8_t*)&uavtalk_usart_port.gcsStats);//These are attached to the port, set before using the port
 		usart1_send_data_dma(&Usart1tx,&Usart1rx);//enable the usart1 dma, dma for spi2 cannot be used now - blocks until tx complete
 		timeout=Millis;				//Set the timer
 		do {
@@ -118,6 +120,8 @@ int main(void) {
 		#endif
 		usart1_disable_dma();			//Disable the DMA so the DMA is ready for use by SPI2
 		/*
+		UAVtalk_Register_Object(6,(uint8_t*)&uavtalk_ism_port.flightStats);//Initialise the link stats objects
+		UAVtalk_Register_Object(7,(uint8_t*)&uavtalk_ism_port.gcsStats);//These are attached to the port, set before using the port
 		// THIS IS JUST SOME PLACEHOLDER TEST STUFF 
 		if(Nav_Flag){	//wait for some EKF data to be ready
 		printf("%4f,%4f,%4f,%4f,%4f,%4f,%4f,%4f,%4f,%4f,",Nav_Global.Pos[0],Nav_Global.Pos[1],Nav_Global.Pos[2],\

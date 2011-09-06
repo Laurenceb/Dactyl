@@ -1,12 +1,14 @@
 //Dactyl project v1.0
 #pragma once
 #include "../dma.h"
+#include "../uavobjtypes.h"
 //UAVtalk definitions
 #define UAVTALK_VERSION 1
 #define UAVTALK_SYNC 0x3C
 #define UAVTALK_MAX_DATA_LEN 77
 #define UAVTALK_MAX_PACKET_LEN UAVTALK_MAX_DATA_LEN+11
 #define UAVTALK_RX_TIMEOUT_MS 15
+#define CONNECTION_TIMEOUT_MS 5000
 
 #define READ 0
 #define WRITE 1

@@ -20,5 +20,8 @@ typedef struct {
     uint32_t RxFailures;
     uint32_t TxRetries;
 }	__attribute__((packed)) Telemetery_Stats_Type;
-/* Enumeration options for field Status */
+/* Enumeration options for gcs Status */
 typedef enum { GCSTELEMETRYSTATS_STATUS_DISCONNECTED=0, GCSTELEMETRYSTATS_STATUS_HANDSHAKEREQ=1, GCSTELEMETRYSTATS_STATUS_HANDSHAKEACK=2, GCSTELEMETRYSTATS_STATUS_CONNECTED=3 } GCSTelemetryStatsStatusOptions;
+/* Enumeration options for field Status */
+typedef enum { FLIGHTTELEMETRYSTATS_STATUS_DISCONNECTED=0, FLIGHTTELEMETRYSTATS_STATUS_HANDSHAKEREQ=1, FLIGHTTELEMETRYSTATS_STATUS_HANDSHAKEACK=2, FLIGHTTELEMETRYSTATS_STATUS_CONNECTED=3 } FlightTelemetryStatsStatusOptions;
+

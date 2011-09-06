@@ -96,7 +96,7 @@ void UAVtalk_Process_Byte(uint8_t c,UAVtalk_Port_Type* msg) {//The raw USART/ISM
 				msg->state=8;	//We will generate a NACK as object nonexistant 
 			else {
 				msg->state=0;	//Error
-				msg->RxFailures++;//There was a failure
+				msg->flightStats.RxFailures++;//There was a failure
 			}
 			break;
 		case 8:
@@ -127,14 +127,14 @@ void UAVtalk_Process_Byte(uint8_t c,UAVtalk_Port_Type* msg) {//The raw USART/ISM
 						memcpy((uint8_t*)(UAVtalk_conf.object_pointers[msg->object_no]),\
 						msg->rx_buffer,msg->bytes_written);
 						UAVtalk_conf.semaphores[msg->object_no]=WRITE;//mark data as written (write before read)
-						msg->RxDataRate+=msg->lenght;//Update the telemetery stats object pointer
-						msg->RxObjects++;//We received another object		
+						msg->flightStats.RxDataRate+=msg->lenght;//Update the telemetery stats object pointer
+						msg->rxObjects++;//We received another object		
 					}
 				}
 				//if(msg->type&0x0F)//If we had anything other than a basic object sent to us
 				//	msg->alert_flag=0xFF;//a action is required as we have to ack/nack/send object
 			}
-			else msg->RxFailures++;	//There was a failure
+			else msg->flightStats.RxFailures++;//There was a failure
 			msg->state=0;		//Reset state upon successful packet reception or error
 	}
 	if(msg->state && msg->state<10) {	//Run the CRC on the packet header
@@ -175,7 +175,7 @@ void UAVtalk_Generate_Packet(UAVtalk_Port_Type* msg, Buffer_Type* buff) {
 		buff->data[i]=CRC_updateCRC(0,msg->rx_buffer,i);//Add to CRC8 to end
 		buff->size=i+1;			//Holds the number of bytes in tx buffer
 		buff->tail=0;			//Make sure the tail is zero
-		msg->TxDataRate+=i;		//Update the telemetery stats using data pointer
+		msg->flightStats.TxDataRate+=i;	//Update the telemetery stats using data pointer
 	}
 }
 
@@ -190,7 +190,7 @@ void UAVtalk_Run_Streams(UAVtalk_Port_Type* port,Buffer_Type* buff,uint32_t upti
 	uint8_t packet_gen=0;			//Logical to let us know a packet has been generated
 	static uint32_t millis=0;		//Local time variable
 	port->type=0x00;			//We only stream basic objects
-	for(i=0;i<UAVtalk_conf.num_stream_objects && port->status==FLIGHTTELEMETRYSTATS_STATUS_CONNECTED;i++) {//If connected, loop through Objects
+	for(i=0;i<UAVtalk_conf.num_stream_objects && port->flightStats.Status==FLIGHTTELEMETRYSTATS_STATUS_CONNECTED;i++) {//Connected? send objects
 		UAVtalk_conf.stream_timers[i]-=(uptime-millis);//Adjust timer
 		if(UAVtalk_conf.stream_timers[i]<0 && !packet_gen) {//Timer expired
 			port->object_no=UAVtalk_conf.stream_object_nos[i];//Set the appropriate object number (i.e. 0,1,2,3,4 as in objectid array)
@@ -219,21 +219,21 @@ static void updateTelemetryStats(UAVtalk_Port_Type* port, uint32_t timeNow) {
 	timeOfLastStats=timeNow;//Allows this function to run irregularly/asyncronously
 	// Note that externally, before receiving data and processing, the UAVObjects for Stats should be pointed to the corresponding ports
 	// Update stats object
-	if (port->flightStats->Status == FLIGHTTELEMETRYSTATS_STATUS_CONNECTED) {
-		port->flightStats->RxDataRate = (float)port->rxBytes / ((float)updateinterval / 1000.0);
-		port->flightStats->TxDataRate = (float)port->txBytes / ((float)updateinterval / 1000.0);
-		port->flightStats->RxFailures += port->rxErrors;
-		port->flightStats->TxFailures =0;
-		port->flightStats->TxRetries =0;
+	if (port->flightStats.Status == FLIGHTTELEMETRYSTATS_STATUS_CONNECTED) {
+		port->flightStats.RxDataRate = (float)port->rxBytes / ((float)updateinterval / 1000.0);
+		port->flightStats.TxDataRate = (float)port->txBytes / ((float)updateinterval / 1000.0);
+		port->flightStats.RxFailures += port->rxErrors;
+		port->flightStats.TxFailures =0;
+		port->flightStats.TxRetries =0;
 		port->rxBytes=0;	//Reset the link stats
 		port->txBytes=0;
 		port->rxErrors=0;
 	} else {
-		port->flightStats->RxDataRate = 0;
-		port->flightStats->TxDataRate = 0;
-		port->flightStats->RxFailures = 0;
-		port->flightStats->TxFailures = 0;
-		port->flightStats->TxRetries = 0;
+		port->flightStats.RxDataRate = 0;
+		port->flightStats.TxDataRate = 0;
+		port->flightStats.RxFailures = 0;
+		port->flightStats.TxFailures = 0;
+		port->flightStats.TxRetries = 0;
 	}
 	// Check for connection timeout
 	if (port->rxObjects > 0) {
@@ -247,26 +247,26 @@ static void updateTelemetryStats(UAVtalk_Port_Type* port, uint32_t timeNow) {
 	}
 	// Update connection state
 	forceUpdate = 1;
-	if (port->flightStats->Status == FLIGHTTELEMETRYSTATS_STATUS_DISCONNECTED) {
+	if (port->flightStats.Status == FLIGHTTELEMETRYSTATS_STATUS_DISCONNECTED) {
 		// Wait for connection request
-		if (port->gcsStats->Status == GCSTELEMETRYSTATS_STATUS_HANDSHAKEREQ) {
-			port->flightStats->Status = FLIGHTTELEMETRYSTATS_STATUS_HANDSHAKEACK;
+		if (port->gcsStats.Status == GCSTELEMETRYSTATS_STATUS_HANDSHAKEREQ) {
+			port->flightStats.Status = FLIGHTTELEMETRYSTATS_STATUS_HANDSHAKEACK;
 		}
-	} else if (port->flightStats->Status == FLIGHTTELEMETRYSTATS_STATUS_HANDSHAKEACK) {
+	} else if (port->flightStats.Status == FLIGHTTELEMETRYSTATS_STATUS_HANDSHAKEACK) {
 		// Wait for connection
-		if (port->gcsStats->Status == GCSTELEMETRYSTATS_STATUS_CONNECTED) {
-			port->flightStats->Status = FLIGHTTELEMETRYSTATS_STATUS_CONNECTED;
-		} else if (port->gcsStats->Status == GCSTELEMETRYSTATS_STATUS_DISCONNECTED) {
-			port->flightStats->Status = FLIGHTTELEMETRYSTATS_STATUS_DISCONNECTED;
+		if (port->gcsStats.Status == GCSTELEMETRYSTATS_STATUS_CONNECTED) {
+			port->flightStats.Status = FLIGHTTELEMETRYSTATS_STATUS_CONNECTED;
+		} else if (port->gcsStats.Status == GCSTELEMETRYSTATS_STATUS_DISCONNECTED) {
+			port->flightStats.Status = FLIGHTTELEMETRYSTATS_STATUS_DISCONNECTED;
 		}
-	} else if (port->flightStats->Status == FLIGHTTELEMETRYSTATS_STATUS_CONNECTED) {
-		if (port->gcsStats->Status != GCSTELEMETRYSTATS_STATUS_CONNECTED || connectionTimeout) {
-			port->flightStats->Status = FLIGHTTELEMETRYSTATS_STATUS_DISCONNECTED;
+	} else if (port->flightStats.Status == FLIGHTTELEMETRYSTATS_STATUS_CONNECTED) {
+		if (port->gcsStats.Status != GCSTELEMETRYSTATS_STATUS_CONNECTED || connectionTimeout) {
+			port->flightStats.Status = FLIGHTTELEMETRYSTATS_STATUS_DISCONNECTED;
 		} else {
 			forceUpdate = 0;
 		}
 	} else {
-		port->flightStats->Status = FLIGHTTELEMETRYSTATS_STATUS_DISCONNECTED;
+		port->flightStats.Status = FLIGHTTELEMETRYSTATS_STATUS_DISCONNECTED;
 	}
 	// Update flighttelemeterystats object semaphore to WRITE
 	UAVtalk_conf.semaphores[FLIGHT_STATS]=WRITE;
