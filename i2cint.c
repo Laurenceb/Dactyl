@@ -8,10 +8,10 @@ const uint8_t Sentbytes[NUMBER_I2C_TASKS]=I2C_SENTBYTES;//this is the send data
 void I2C1_EV_IRQHandler(void)
 {
 	static uint8_t tasklistpointer;	//stores the current position in the tasklist - the list of individual i2c tasks
-	if(!Jobs) {			//No Jobs! We appear to have reached One Infinite Loop CA
+	/*if(!Jobs) {			//No Jobs! We appear to have reached One Infinite Loop CA
 		tasklistpointer=1;	//set the tasklist to one as we will send the start from the i2c triggering function
 		return void;		//quit as we have completed all the jobs for now
-	}
+	}*/ //This shouldnt happen - the i2c will be completed before the last job is ticked off as completed
 	while(!((Jobs>>((Tasks[tasklistpointer]&0xF0)>>4))&0x00000001)) {
 		tasklistpointer++;	//loop through the task list until we find a job that need completing
 		if(tasklistpointer==NUMBER_I2C_TASKS)//looked through all the tasks - loop around (wont loop forever as Jobs!=0)
@@ -48,7 +48,9 @@ void I2C1_EV_IRQHandler(void)
 			Receivedbytes[tasklistpointer]=I2C_ReceiveData(I2C1);//Clear the buffer (last byte is in it)
 			I2C_AcknowledgeConfig(I2C1, ENABLE);//Re-enable ACK
 	}
-	tasklistpointer++;		//Move onto the next task
-	if((Tasks[tasklistpointer]&0xF0)!=(Tasks[tasklistpointer-1]&0xF0))//Did we pass a jobs boundary in the tasks list?
+	uint8_t oldtask=tasklistpointer++;//Move onto the next task, save current task number
+	if(tasklistpointer==NUMBER_I2C_TASKS)//looked through all the tasks? - loop around
+		tasklistpointer=0;
+	if((Tasks[tasklistpointer]&0xF0)!=(Tasks[oldtask]&0xF0))//Did we pass a jobs boundary in the tasks list?
 		Jobs&=~1<<((Tasks[tasklistpointer]&0xF0)>>4);//Mark off the task bit as completed
 }
