@@ -17,8 +17,13 @@ void I2C1_EV_IRQHandler(void)
 		if(tasklistpointer==NUMBER_I2C_TASKS)//looked through all the tasks - loop around (wont loop forever as Jobs!=0)
 			tasklistpointer=0;
 	}
+	uint8_t oldtask=tasklistpointer++;//Move onto the next task, save current task number (this will be task number after servicing)
+	if(tasklistpointer==NUMBER_I2C_TASKS)//looked through all the tasks? - loop around
+		tasklistpointer=0;
+	if((Tasks[tasklistpointer]&0xF0)!=(Tasks[oldtask]&0xF0))//Did we pass a jobs boundary in the tasks list?
+		Jobs&=~1<<((Tasks[tasklistpointer]&0xF0)>>4);//Mark off the task bit as completed
 	switch(Tasks[tasklistpointer]&0x0F) {//setup the i2c hardware to do the task required
-		case 0:			//I2C start
+		case 0:			//I2C start - this will only be used for repeated start
 			I2C_GenerateSTART( I2C1, ENABLE );
 			break;
 		case 1:			//I2C send address byte
@@ -47,10 +52,8 @@ void I2C1_EV_IRQHandler(void)
 		case 8:			//This terminates all reads
 			Receivedbytes[tasklistpointer]=I2C_ReceiveData(I2C1);//Clear the buffer (last byte is in it)
 			I2C_AcknowledgeConfig(I2C1, ENABLE);//Re-enable ACK
+			if(Jobs)
+				I2C_GenerateSTART( I2C1, ENABLE );//Stop the I2C quitting by setting start again
+				
 	}
-	uint8_t oldtask=tasklistpointer++;//Move onto the next task, save current task number
-	if(tasklistpointer==NUMBER_I2C_TASKS)//looked through all the tasks? - loop around
-		tasklistpointer=0;
-	if((Tasks[tasklistpointer]&0xF0)!=(Tasks[oldtask]&0xF0))//Did we pass a jobs boundary in the tasks list?
-		Jobs&=~1<<((Tasks[tasklistpointer]&0xF0)>>4);//Mark off the task bit as completed
 }
