@@ -104,3 +104,56 @@ void I2C1_EV_IRQHandler(void)
 		}
 	}
 }
+
+	__IO uint32_t SR1Register,SR2Register;
+	switch(Tasks[tasklistpointer]&0x0F) {
+		case EV5:
+			SR1Register =I2C1->SR1;
+			I2C1->DR = Sentbytes[tasklistpointer];//send address
+			I2C1->CR2 &= ~(uint16_t)I2C_IT_BUF;//disable the RXNE/TXE interrupt
+			break;
+		case EV6:
+			I2C1->CR2 |= (uint16_t)I2C_IT_BUF;//enable the RXNE/TXE interrupt
+			SR1Register =I2C1->SR1;
+			checkslave();
+			SR2Register =I2C1->SR2;
+			break;
+		case EV6_1:
+			SR1Register =I2C1->SR1;
+			checkslave();
+			SR2Register =I2C1->SR2;
+			I2C1->CR1 &= CR1_ACK_Reset;
+			tasklistpointer++;//skip a task
+			break;
+		case EV6_3:
+			I2C1->CR2 |= (uint16_t)I2C_IT_BUF;//enable the RXNE/TXE interrupt
+			I2C1->CR1 &= CR1_ACK_Reset;//turn off ack
+			SR1Register =I2C1->SR1;
+			checkslave();
+			SR2Register =I2C1->SR2;
+			I2C1->CR1 |= CR1_STOP_Set;//set a stop
+		case EV7:
+			ReadBytes[tasklistpointer] = I2C1->DR;//read data register
+			break;
+		case EV7_1:
+			I2C1->CR2 &= (uint16_t)~I2C_IT_BUF;//disable the RXNE/TXE interrupt
+			ReadBytes[tasklistpointer] = I2C1->DR;//read data register
+			tasklistpointer++;
+		case EV7_2:
+			I2C1->CR1 &= CR1_ACK_Reset;//turn off ack
+			ReadBytes[tasklistpointer-1] = I2C1->DR;//read data register
+			I2C1->CR1 |= CR1_STOP_Set;//set a stop
+			ReadBytes[tasklistpointer] = I2C1->DR;//read data register
+			
+void checkslave(void) {
+	if ((SR1Register &0x0002) != 0x0002) {
+		I2C1->CR2 &= ~(uint16_t)I2C_IT_BUF;//disable the RXNE/TXE interrupt
+		I2C1_errorstatus=tasklistpointer;//log the error
+		I2C1->CR1 |= CR1_STOP_Set;//set a stop
+		uint8_t t=(Tasks[tasklistpointer]&0xF0);//jump through the tasks until we reach a new job (skips)
+		while(Tasks[tasklistpointer++]&0xF0==t) {
+			if(tasklistpointer==NUMBER_I2C_TASKS)
+				tasklistpointer=0;
+		}//The job will be checked off as completed later
+}		
+					
