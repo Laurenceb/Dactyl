@@ -105,7 +105,13 @@ void I2C1_EV_IRQHandler(void)
 	}
 }
 
+
 	__IO uint32_t SR1Register,SR2Register;
+	while(!((Jobs>>((Tasks[tasklistpointer]&0xF0)>>4))&0x00000001)) {
+		tasklistpointer++;	//loop through the task list until we find a job that need completing
+		if(tasklistpointer==NUMBER_I2C_TASKS)//looked through all the tasks - loop around (wont loop forever as Jobs!=0)
+			tasklistpointer=0;
+	}
 	switch(Tasks[tasklistpointer]&0x0F) {
 		case EV5:
 			SR1Register =I2C1->SR1;
@@ -144,11 +150,39 @@ void I2C1_EV_IRQHandler(void)
 			ReadBytes[tasklistpointer-1] = I2C1->DR;//read data register
 			I2C1->CR1 |= CR1_STOP_Set;//set a stop
 			ReadBytes[tasklistpointer] = I2C1->DR;//read data register
+			I2C1->CR2 |= (uint16_t)I2C_IT_BUF;//enable the RXNE/TXE interrupt
+		case EV7_3:
+			I2C1->CR1 |= CR1_STOP_Set;//set a stop
+			ReadBytes[tasklistpointer-1] = I2C1->DR;//read data register
+			ReadBytes[tasklistpointer] = I2C1->DR;//read data register
+		case EV7_4:
+			ReadBytes[tasklistpointer] = I2C1->DR;//read data register
+			I2C1->CR2 &= (uint16_t)~I2C_IT_BUF;//disable the RXNE/TXE interrupt
+		case EV8://EV8_1 from the datasheet is the same as this
+			I2C1->DR = SentBytes[tasklistpointer];//write data register
+		case EV8_2:
+			I2C1->CR1 |= CR1_STOP_Set;//set a stop
+		case EV8_3:
+			I2C1->CR2 &= (uint16_t)~I2C_IT_BUF;//disable the RXNE/TXE interrupt
+	}
+	uint8_t oldtask=tasklistpointer++;//Move onto the next task, save current task number (this will be task number after servicing)
+	if(tasklistpointer==NUMBER_I2C_TASKS)//looked through all the tasks? - loop around
+		tasklistpointer=0;
+	if((Tasks[tasklistpointer]&0xF0)!=(Tasks[oldtask]&0xF0))//Did we pass a jobs boundary in the tasks list?
+		Jobs&=~1<<((Tasks[tasklistpointer]&0xF0)>>4);//Mark off the task bit as completed
+	if(!Jobs) {			//No Jobs! We appear to have reached One Infinite Loop CA
+		tasklistpointer=0;	//set the task position to zero
+		return void;		//quit as we have completed all the jobs for now
+	}
+	else 				//we need to kick start the new ISR chain by starting a I2C transaction (all jobs start I2Cstart)
+		I2C1->CR1 |= CR1_START_Set;//send the start for the new job - this will kickstart the first interrupt
+	//the beginning of this ISR will loop up to the first valid job
+	
+		
 			
 void checkslave(void) {
-	if ((SR1Register &0x0002) != 0x0002) {
+	if ((SR1Register &0x0002) != 0x0002) {//ACK failure will also trigger a failure ISR
 		I2C1->CR2 &= ~(uint16_t)I2C_IT_BUF;//disable the RXNE/TXE interrupt
-		I2C1_errorstatus=tasklistpointer;//log the error
 		I2C1->CR1 |= CR1_STOP_Set;//set a stop
 		uint8_t t=(Tasks[tasklistpointer]&0xF0);//jump through the tasks until we reach a new job (skips)
 		while(Tasks[tasklistpointer++]&0xF0==t) {
@@ -156,4 +190,5 @@ void checkslave(void) {
 				tasklistpointer=0;
 		}//The job will be checked off as completed later
 }		
-					
+
+//Error servicing ISR				
