@@ -191,4 +191,53 @@ void checkslave(void) {
 		}//The job will be checked off as completed later
 }		
 
-//Error servicing ISR				
+//Error servicing ISR
+/**
+  * @brief  This function handles I2C1 Error interrupt request.
+  * @param  None
+  * @retval : None
+  * Note: The error and event handlers must be in the same priority group. Other interrupts may be in the group, but must be lower priority
+  */
+void I2C1_ER_IRQHandler(void)
+{
+    __IO uint32_t SR1Register =0;
+    /* Read the I2C1 status register */
+    SR1Register = I2C1->SR1;
+    if(SR1Register & 0x0F00) {//an error
+	I2C1error.error=((SR1Register&0x0F00)>>8);//save error
+	I2C1error.task=tasklistpointer;//the task
+    }
+    /* If AF or BERR, send STOP*/
+    if(SR1Register & 0x0500)
+        I2C1->CR1 |= CR1_STOP_Set;//set a stop
+    /* If AF, BERR or ARLO, abandon the current job and send a start to commence new */
+    if(SR1Register & 0x0700) {
+
+    }
+    /* If AF = 1 */
+    if ((SR1Register & 0x0400) == 0x0400)
+    {
+        I2C1->SR1 &= 0xFBFF;
+        SR1Register = 0;
+    }
+    /* If ARLO = 1 */
+    if ((SR1Register & 0x0200) == 0x0200)
+    {
+        I2C1->SR1 &= 0xFBFF;
+        SR1Register = 0;
+    }
+    /* If BERR = 1 */
+    if ((SR1Register & 0x0100) == 0x0100)
+    {
+        I2C1->SR1 &= 0xFEFF;
+        SR1Register = 0;
+    }
+
+    /* If OVR = 1 */
+
+    if ((SR1Register & 0x0800) == 0x0800)
+    {
+        I2C1->SR1 &= 0xF7FF;
+        SR1Register = 0;
+    }
+}			
