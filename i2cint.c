@@ -20,7 +20,7 @@ void I2C1_EV_IRQHandler(void)
 		if(tasklistpointer==NUMBER_I2C_TASKS)//looked through all the tasks - loop around (wont loop forever as Jobs!=0)
 			tasklistpointer=0;
 	}
-	switch(Tasks[tasklistpointer]&0x0F) {
+	switch((I2C_Tasks)Tasks[tasklistpointer]&0x0F) {//typecast as a task type
 		case EV5:
 			SR1Register =I2C1->SR1;
 			I2C1->DR = Sentbytes[tasklistpointer];//send address
@@ -29,12 +29,10 @@ void I2C1_EV_IRQHandler(void)
 		case EV6:
 			I2C1->CR2 |= (uint16_t)I2C_IT_BUF;//enable the RXNE/TXE interrupt
 			SR1Register =I2C1->SR1;
-			checkslave();
 			SR2Register =I2C1->SR2;
 			break;
 		case EV6_1:
 			SR1Register =I2C1->SR1;
-			checkslave();
 			SR2Register =I2C1->SR2;
 			I2C1->CR1 &= CR1_ACK_Reset;
 			tasklistpointer++;//skip a task
@@ -43,7 +41,6 @@ void I2C1_EV_IRQHandler(void)
 			I2C1->CR2 |= (uint16_t)I2C_IT_BUF;//enable the RXNE/TXE interrupt
 			I2C1->CR1 &= CR1_ACK_Reset;//turn off ack
 			SR1Register =I2C1->SR1;
-			checkslave();
 			SR2Register =I2C1->SR2;
 			I2C1->CR1 |= CR1_STOP_Set;//set a stop
 		case EV7:
@@ -64,8 +61,8 @@ void I2C1_EV_IRQHandler(void)
 			ReadBytes[tasklistpointer-1] = I2C1->DR;//read data register
 			ReadBytes[tasklistpointer] = I2C1->DR;//read data register
 		case EV7_4:
-			ReadBytes[tasklistpointer] = I2C1->DR;//read data register
 			I2C1->CR2 &= (uint16_t)~I2C_IT_BUF;//disable the RXNE/TXE interrupt
+			tasklistpointer++;
 		case EV8://EV8_1 from the datasheet is the same as this
 			I2C1->DR = SentBytes[tasklistpointer];//write data register
 		case EV8_2:
