@@ -60,14 +60,15 @@ void I2C1_EV_IRQHandler(void)
 			I2C1->CR1 |= CR1_STOP_Set;//set a stop
 			ReadBytes[tasklistpointer-1] = I2C1->DR;//read data register
 			ReadBytes[tasklistpointer] = I2C1->DR;//read data register
-		case EV7_4:
-			I2C1->CR2 &= (uint16_t)~I2C_IT_BUF;//disable the RXNE/TXE interrupt
-			tasklistpointer++;
+		//case EV7_4:
+		//	I2C1->CR2 &= (uint16_t)~I2C_IT_BUF;//disable the RXNE/TXE interrupt
+		//	tasklistpointer++;
 		case EV8://EV8_1 from the datasheet is the same as this
 			I2C1->DR = SentBytes[tasklistpointer];//write data register
 		case EV8_2:
 			I2C1->CR1 |= CR1_STOP_Set;//set a stop
 		case EV8_3:
+			I2C1->DR = SentBytes[tasklistpointer];//write data register
 			I2C1->CR2 &= (uint16_t)~I2C_IT_BUF;//disable the RXNE/TXE interrupt
 	}
 	uint8_t oldtask=tasklistpointer++;//Move onto the next task, save current task number (this will be task number after servicing)
