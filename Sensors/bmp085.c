@@ -84,7 +84,7 @@ I2C_Returntype Baro_Read_ADC(int32_t* data) {
 }
 
 /**
-  * @brief  Reads a 16 bit ADC value from the bmp085
+  * @brief  Reads a 19 bit ADC value from the bmp085
   * @param  Pointer to returned data
   * @retval I2C Success/error code
   */

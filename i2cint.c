@@ -1,6 +1,7 @@
 //Dactyl project v1.0
 //interrupt driven i2c driver - method 2 from reference manual
 #include "i2cint.h"
+#include "gpio.h"
 
 volatile I2C_Error_Type I2C1error;	//holds the current error state
 
@@ -48,6 +49,7 @@ void I2C1_EV_IRQHandler(void)
 			SR1Register =I2C1->SR1;
 			SR2Register =I2C1->SR2;
 			I2C_STOP;//set a stop
+			break;
 		case EV7:
 			ReadBytes[tasklistindex] = I2C1->DR;//read data register
 			break;
@@ -61,26 +63,43 @@ void I2C1_EV_IRQHandler(void)
 			I2C_STOP;//set a stop
 			ReadBytes[tasklistindex] = I2C1->DR;//read data register
 			TXRX_EN;//enable the RXNE/TXE interrupt
+			break;
 		case EV7_3:
 			I2C_STOP;//set a stop
 			ReadBytes[tasklistindex-1] = I2C1->DR;//read data register
 			ReadBytes[tasklistindex] = I2C1->DR;//read data register
+			break;
 		//case EV7_4:
 		//	TXRX_DE;//disable the RXNE/TXE interrupt
 		//	tasklistindex++;
 		case EV8://EV8_1 from the datasheet is the same as this
 			I2C1->DR = SentBytes[tasklistindex];//write data register
+			break;
 		case EV8_2:
 			I2C_STOP;//set a stop
+			break;
 		case EV8_3:
 			I2C1->DR = SentBytes[tasklistindex];//write data register
 			TXRX_DE;//disable the RXNE/TXE interrupt
+			break;
+		case EV8_4:
+			I2C_START;//set a (repeated) start
 	}
 	uint8_t oldtask=tasklistindex++;//Move onto the next task, save current task number (this will be task number after servicing)
 	if(tasklistindex==NUMBER_I2C_TASKS)//looked through all the tasks? - loop around
 		tasklistindex=0;
-	if((Tasks[tasklistindex]&0xF0)!=(Tasks[oldtask]&0xF0))//Did we pass a jobs boundary in the tasks list?
-		Jobs&=~1<<((Tasks[tasklistindex]&0xF0)>>4);//Mark off the task bit as completed
+	if((Tasks[tasklistindex]&0xF0)!=(Tasks[oldtask]&0xF0)) {//Did we pass a jobs boundary in the tasks list?
+		Jobs&=~1<<((Tasks[oldtask]&0xF0)>>4);//Mark off the task bit as completed
+		if(0==((Tasks[oldtask]&0xF0)>>4)) {//if we completed the first task (read the gyro)
+			NVIC_SetPendingIRQ(KALMAN_SW_ISR_NO);//set the kalman filter isr to run (in a lower pre-emption priority)
+			if(MAG_DATA_READY&Get_MEMS_DRDY()) {//If magno data ready pin set (should be set in 1/160seconds, this is error handler)
+				I2C1_Request_Job(1);//read the magno
+				I2C1_Request_Job(2);//setup the magno for new single sample
+			}
+		}
+		else if(ACCEL_READ_TASK==((Tasks[oldtask]&0xF0)>>4))//if we finished running the accel, run the accel downsampling function
+			Accel_Downconvert();//Accelerometer downconversion function called, this reads the global readbytes array
+	}
 	if(!Jobs) {			//No Jobs! We appear to have reached One Infinite Loop CA
 		tasklistindex=0;	//set the task position to zero
 		return void;		//quit as we have completed all the jobs for now

@@ -17,8 +17,16 @@ typedef enum{
 	EV7_3,
 	EV8,
 	EV8_2,
-	EV8_3
+	EV8_3,
+	EV8_4
 } I2C_Tasks;
+void I2C1_Request_Job(uint8_t job);		//prototype for the job request function
+//Filter Software ISR config
+#define KALMAN_SW_ISR_NO   EXTI4_IRQn		/*software trigger EXTI4 to run the kalman*/
+//The job number that reads the accelerometer data
+#define ACCEL_READ_TASK 7
+//Position of the accel data in the readbytes buffer
+#define ACCEL_DATA_INDEX /*TODO*/
 //Hardware config defines
 #define TXRX_EN I2C1->CR2 |= (uint16_t)I2C_IT_BUF /*enable the RXNE/TXE interrupt*/
 #define TXRX_DE I2C1->CR2 &= ~(uint16_t)I2C_IT_BUF /*disable the RXNE/TXE interrupt*/
@@ -43,10 +51,11 @@ typedef enum{
 #define LEN_ITG_S 5
 #define ITG_CLOCK {GYR_ADD,0x3E,0x01}		//configure clock to be pll off gyro x axis
 #define LEN_ITG_C 3
-//Tasks are 0)Read Gyro (assume index set, read temp) 1) Magno read (assumes single sample mode)
-// 2)Setup Magno for single conversion 3)Setup Gyro data index 5)Read the Accel
-// 4)Setup Accel index 6)Setup the BMP085 pressure conversion 7)Read BMP085 pressure
-// 8)Setup the BMP085 temperature conversion 9)Read the BMP085 temperature 10)Read pitot  
+//Tasks are 0)Read Gyro (assume index set, read temp) 1)Magno read (assumes single sample mode)
+// 2)Setup Magno for single conversion 3)Setup Gyro data index 4)Read the BMP085 (sets subaddress with repeated start)
+// 5)Setup BMP085 for pressure conv (use 7.5ms mode?) 6)Setup BMP085 for temperature conversion
+// 7)Read the Accel 8)Setup Accel index 9)Read pitot
+/*TODO actually change the scripts so it does what the commentary says*/
 #define I2C_TASKS {EV5,EV6,EV7,EV7,EV7,EV7,EV7_4,0,EV7_2,EV7, \\
 0x10|EV5,0x10|EV6,0x10|EV7,0x10|EV7,0x10|EV7_4,0x10|0,0x10|EV7_2,0x10|EV7, \\
 0x20|EV5,0x20|EV6,0x20|EV8,0x20|EV8_3,0x20|EV8_2, \\
