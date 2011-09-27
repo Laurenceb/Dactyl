@@ -26,6 +26,11 @@
 {LTC2481_R,I2C_Direction_Receiver,3,0xFF,NULL}, /*Read the Pitot*/\\
 {LTC2481_W,I2C_Direction_Transmitter,1,0xFF,Pitot_conv}, /*Setup the Pitot for pressure conversions (could swap pointer to do temperature)*/\\
 }
+//Job identifiers used to run the accel downsampler and trigger the Kalman task
+#define ACCEL_READ 3
+#define GYRO_READ  0
+#define MAGNO_SETUP 1
+#define MAGNO_READ 2
 
 //Datatypes
 typedef struct{

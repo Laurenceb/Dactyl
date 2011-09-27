@@ -107,6 +107,15 @@ void I2C1_EV_IRQHandler(void)
 		}
 	}
 	if(I2C_jobs[job].bytes+1==index) {//we have completed the current job
+		if(GYRO_READ==job) {	//if we completed the first task (read the gyro)
+			NVIC_SetPendingIRQ(KALMAN_SW_ISR_NO);//set the kalman filter isr to run (in a lower pre-emption priority)
+			if(MAG_DATA_READY&Get_MEMS_DRDY()) {//If magno data ready pin set (should be set in 1/160seconds, this is error handler)
+				I2C1_Request_Job(MAGNO_SETUP);//setup the magno for new single sample
+				I2C1_Request_Job(MAGNO_READ);//read the magno
+			}
+		}
+		else if(ACCEL_READ_TASK==job)//if we finished running the accel, run the accel downsampling function
+			Accel_Downconvert();//Accelerometer downconversion function called, this reads the global readbytes array
 		Jobs&=~(0x00000001<<job);//tick off current job as complete
 		subaddress_sent=0;	//reset this here
 		if(Jobs)		//there are still jobs left
@@ -180,6 +189,7 @@ void I2C_Config() {			// Configure I2C1 for the sensor bus
 	I2C_InitStructure.I2C_Ack = I2C_Ack_Enable;
 	I2C_InitStructure.I2C_AcknowledgedAddress= I2C_AcknowledgedAddress_7bit;
 	I2C_InitStructure.I2C_ClockSpeed = 400000;
+	//TODO setup the pointers to the read data
 	I2C_ITConfig(I2C1, I2C_IT_EVT|I2C_IT_ERR, ENABLE);//Enable EVT and ERR interrupts
 	I2C_Init( I2C1, &I2C_InitStructure );
 	I2C_Cmd( I2C1, ENABLE );
