@@ -5,6 +5,16 @@ volatile uint32_t Jobs;			//used for task control (only ever acess this from out
 volatile uint8_t job;			//stores the current job
 volatile I2C_Error_Type I2C1error;	//stores current error status
 
+//Setup the const jobs descriptors
+const uint8_t Magno_config[]=MAGNO_SETUP;
+const uint8_t Magno_single[]=Magno_config[2];
+const uint8_t Bmp_temp[]={BMP085_TEMP};
+const uint8_t Bmp_press[]={BMP085_PRESS};
+const uint8_t Accel_config[]=ACCEL_SETUP;
+const uint8_t Gyro_config[]=GYRO_SETUP,ITG_CLOCK;
+const uint8_t Pitot_conv[]={LTC2481_ADC};
+I2C_jobs[]=I2C_JOBS_INITIALISER;	//sets up the const jobs
+
 /**
   * @brief  This function handles I2C1 Event interrupt request.
   * @param : None
