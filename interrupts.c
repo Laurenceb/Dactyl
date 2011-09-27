@@ -11,14 +11,16 @@
 #include "Control/imu.h"
 #include "i2cint.h"
 
+extern volatile uint32_t Millis;//We need to be aware of the system time to schedule temperature conversions at 1hz
+
 /**
-  * @brief  Configure PA.06 in interrupt mode
+  * @brief  Configure all interrupts
   * @param  None
   * @retval None
-  * Note that this is hardcoded to the ITG-3200 pin on v1.0 dactyl board
+  * Note that this is hardcoded to the ITG-3200 and LSM303DLH pins on v1.0 dactyl board
   * This initialiser function assumes the clocks and gpio have been configured
   */
-void EXTI6_Config(void)
+void EXTI_Config(void)
 {
   EXTI_InitTypeDef   EXTI_InitStructure;
   NVIC_InitTypeDef   NVIC_InitStructure;
@@ -74,6 +76,7 @@ void EXTI6_Config(void)
   */
 void EXTI9_5_IRQHandler(void)
 {
+  static uint32_t millis;
   if(EXTI_GetITStatus(EXTI_Line6) != RESET)
   {
     /* Clear the  EXTI line 6 pending bit */
@@ -82,7 +85,12 @@ void EXTI9_5_IRQHandler(void)
     I2C1_Request_Job(0);//request a gyro read
     I2C1_Request_Job(3);//setup the gyro data index
     I2C1_Request_Job(4);//read the pressure sensor
-    //TODO monitor system time and do a temperature conversion every 1s
+    if((Millis-millis)>1000){// monitor system time and do a temperature conversion every 1s
+	I2C1_Request_Job(6);//schedule a temperature conversion
+	millis=Millis;//update the local timer
+    }
+    else
+	I2C1_Request_Job(5);//schedule a pressure conversion
   }
 }
 

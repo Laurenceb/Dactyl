@@ -45,7 +45,7 @@ void I2C1_Request_Job(uint8_t job);		//prototype for the job request function
 #define GYR_DATA 0x1A				/*this includes the temperature registers*/
 #define MAGNO_SETUP {MAG_ADD,0x00,0x18,0x20,0x00}//configure the LSM303 magno for 75hz,high resolution, continuous conversion
 #define LEN_M 5
-#define ACCEL_SETUP {ACC_ADD,0xA0,0x2F,0x00,0x02,0x80}//configure LSM303 acc for 100hz, no highpass, int1=DTRD, +-2G with blocking (0x90 for +-4G)
+#define ACCEL_SETUP {ACC_ADD,0xA0,0x37,0x00,0x02,0x80}//configure LSM303 acc for 400hz, no highpass, int1=DTRD, +-2G with blocking (0x90 for +-4G)
 #define LEN_A 6 
 #define ITG_SETUP {GYR_ADD,0x15,0x07,0x1B,0x31}//configure ITG gyro for 125hz,+-2000deg/s 42hz lowpass, int1=DTRD - no 50us pulse
 #define LEN_ITG_S 5
@@ -62,6 +62,7 @@ void I2C1_Request_Job(uint8_t job);		//prototype for the job request function
 0x30|EV5,0x30|EV6,0x30|EV8_3,0x30|EV8_2, \\
 0x50|EV5,0x50|EV6,0x50|EV7,0x50|EV7,0x50|EV7_4,0x50,0x50|EV7_2,EV7, \\
 0x40|EV5,0x40|EV6,0x40|EV8_3,0x40|EV8_2, \\
+0x50|EV5,0x50|EV6,
 }
 //number of tasks
 #define NUMBER_I2C_TASKS 39
