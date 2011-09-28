@@ -29,13 +29,19 @@
 //Job identifiers used to run the accel downsampler, trigger jobs from the EXTI, and trigger the Kalman task
 #define ACCEL_READ 3
 #define GYRO_READ  0
-#define MAGNO_SETUP 1
+#define MAGNO_SETUP_NO 1
 #define MAGNO_READ 2
 #define BMP_TEMP 4
 #define BMP_PRESS 5
 #define BMP_16BIT 6
 #define BMP_24_BIT 7
-#define PITOT_READ 14
+#define PITOT_READ 13
+#define PITOT_CONFIG_NO 14
+#define BMP_READ 8
+#define ACCEL_CONFIG_NO 9
+#define MAGNO_CONFIG_NO 10
+#define GYRO_CONFIG_NO 11
+#define GYRO_CLK_NO 12
 
 //Datatypes
 typedef struct{

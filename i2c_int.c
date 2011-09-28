@@ -1,7 +1,7 @@
 //Dactyl project v1.0
 //I2C interrupt code using the ST Perif library
 
-volatile uint32_t Jobs;			//used for task control (only ever acess this from outside the function for polling)
+volatile uint32_t Jobs,Completed_Jobs;	//used for task control (only ever access this from outside for polling Jobs/Reading Completed_Jobs)
 volatile uint8_t job;			//stores the current job
 volatile I2C_Error_Type I2C1error;	//stores current error status
 
@@ -82,7 +82,7 @@ void I2C1_EV_IRQHandler(void)
 				index++;//to show that the job is complete
 			}
 			else {
-				I2C_GenerateSTART(I2C1,ENABLE);//program the repeated Start
+				I2C_GenerateSTART(I2C1,ENABLCompleted_JobsE);//program the repeated Start
 				subaddress_sent;//this is set back to zero upon completion of the current task
 			}
 		}
@@ -107,16 +107,19 @@ void I2C1_EV_IRQHandler(void)
 		}
 	}
 	if(I2C_jobs[job].bytes+1==index) {//we have completed the current job
+		//Completion Tasks go here
 		if(GYRO_READ==job) {	//if we completed the first task (read the gyro)
 			NVIC_SetPendingIRQ(KALMAN_SW_ISR_NO);//set the kalman filter isr to run (in a lower pre-emption priority)
 			if(MAG_DATA_READY&Get_MEMS_DRDY()) {//If magno data ready pin set (should be set in 1/160seconds, this is error handler)
-				I2C1_Request_Job(MAGNO_SETUP);//setup the magno for new single sample
+				I2C1_Request_Job(MAGNO_SETUP_NO);//setup the magno for new single sample
 				I2C1_Request_Job(MAGNO_READ);//read the magno
 			}
 		}
 		else if(ACCEL_READ_TASK==job)//if we finished running the accel, run the accel downsampling function
 			Accel_Downconvert();//Accelerometer downconversion function called, this reads the global readbytes array
+		//End of completion tasks
 		Jobs&=~(0x00000001<<job);//tick off current job as complete
+		Completed_Jobs|=(0x00000001<<job);//These can be polled by other tasks to see if a job has been completed or is scheduled 
 		subaddress_sent=0;	//reset this here
 		if(Jobs)		//there are still jobs left
 			I2C_GenerateSTART(I2C1,ENABLE);//program the Start to kick start the new transfer
