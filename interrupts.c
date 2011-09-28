@@ -10,8 +10,9 @@
 #include "stm32f10x.h"
 #include "Control/imu.h"
 #include "i2cint.h"
+#include "sensors/bmp.h"
 
-extern volatile uint32_t Millis;//We need to be aware of the system time to schedule temperature conversions at 1hz
+extern volatile uint32_t Millis,Kalman_Enabled;//We need to be aware of the system time to schedule temperature conversions at 1hz, Kalman flag
 
 /**
   * @brief  Configure all interrupts
@@ -76,21 +77,31 @@ void EXTI_Config(void)
   */
 void EXTI9_5_IRQHandler(void)
 {
-  static uint32_t millis;
+  static uint32_t millis_bmp,millis_pitot;
+  static uint8_t i2c_counter;//used to iterate through a task list
   if(EXTI_GetITStatus(EXTI_Line6) != RESET)
   {
     /* Clear the  EXTI line 6 pending bit */
     EXTI_ClearITPendingBit(EXTI_Line6);
     /*Called Code goes here*/
-    I2C1_Request_Job(0);//request a gyro read
-    I2C1_Request_Job(3);//setup the gyro data index
-    I2C1_Request_Job(4);//read the pressure sensor
-    if((Millis-millis)>1000){// monitor system time and do a temperature conversion every 1s
-	I2C1_Request_Job(6);//schedule a temperature conversion
-	millis=Millis;//update the local timer
-    }
+    I2C1_Request_Job(GYRO_READ);//request a gyro read - magno will also be performed on job completion if magno is avaliable
+    if(i2c_counter)
+    	I2C1_Request_Job(BMP_16BIT);//read the temperature sensor
     else
-	I2C1_Request_Job(5);//schedule a pressure conversion
+    	I2C1_Request_Job(BMP_24BIT);//read the pressure sensor
+    if((Millis-millis_bmp)>TEMPERATURE_PERIOD){// monitor system time and do a temperature conversion every TEMPERATURE_PERIOD ms (./sensors/bmp.h)
+	I2C1_Request_Job(BMP_TEMP);//schedule a temperature conversion
+	millis_bmp=Millis;	//update the local timer
+	i2c_counter=1;		//so we know what to read
+    }
+    else {
+	I2C1_Request_Job(BMP_PRESS);//schedule a pressure conversion
+        i2c_counter=0;
+    }
+    if((Millis-millis_pitot)>PITOT_PERIOD) {
+	millis_pitot=Millis;	//update the local time reference
+	I2C1_Request_Job(PITOT_READ);//read the pitot sensor
+    }
   }
 }
 
@@ -106,8 +117,7 @@ void EXTI10_15_IRQHandler(void)
     /* Clear the  EXTI line 12 pending bit */
     EXTI_ClearITPendingBit(EXTI_Line12);
     /*Called Code goes here*/
-    I2C1_Request_Job(7);//request an accel read
-    I2C1_Request_Job(8);//request a accel subaddress setup
+    I2C1_Request_Job(ACCEL_READ);//request an accel read
   }
 }
 
@@ -125,7 +135,8 @@ void EXTI4_IRQHandler(void)
     /* Clear the NVIC bit directly - this is set by software*/
     NVIC_ClearPendingIRQ(KALMAN_SW_ISR_NO);
     /*Called Code goes here*/
-    run_imu();//run the kalman filter in this isr (low group priority so others can nest inside)
+    if(Kalman_Enabled)		//KALmaaaaaannnnnn!!!
+    	run_imu();		//run the kalman filter in this isr (low group priority so others can nest inside)
   }
 }
 
