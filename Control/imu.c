@@ -15,17 +15,10 @@
 #include "../Sensors/pitot.h"
 #include "../Util/uavtalk.h"
 
-//Globals from main
-extern Home_Position_Type Home_Position;
-extern Buffer_Type Gps_Buffer;
-extern Float_Vector Waypoint_Global;
-extern float Long_To_Meters_Home;
-extern volatile Ubx_Gps_Type Gps;
-extern volatile Nav_Type Nav_Global,Nav;	
-extern volatile uint32_t Nav_Flag,New_Waypoint_Flagged,Ground_Flag,Millis;
-extern volatile float UAVtalk_Altitude_Array[3];	
-//Just here for debug
-extern volatile float Balt;	
+
+//Globals used for the Gyro and Magno data from the I2C driver, Accel data goes via downsampler, other sensors via code in ./Sensors	
+volatile int16_t Gyro_Data_Buffer[4] __attribute__((packed));//Holds temperature data as well
+volatile int16_t Magno_Data_Buffer[3] __attribute__((packed));
 
 /**
   * @brief  This function runs the EKF, talks to aux sensors with a state machine and applys control loops to servos (main control task loop)
@@ -39,34 +32,35 @@ void run_imu(void) {
 	static Control_type control=DEFAULT_CONTROL;//The control structure
 	#pragma pack(1)				/*make sure these are packed*/
 	static Ubx_Gps_Type gps;		//This is our local copy - theres is also a global, be careful with copying
-	static Gyr_Status Gyro_Data;
+	//static Gyr_Status Gyro_Data;
 	static Float_Vector ac,Wind;		//The accel is not always avaliable - 100hz update
 	static float AirSpeed=0,Baro_Alt,Body_x_To_x=0,Body_x_To_y=0,Mean_Alt_Err=0;
 	static int32_t Pitot_Pressure;		//Pressure is static so it can be used for air density
 	static uint32_t Baro_Pressure;		//Baro pressure is static for use in air density calculations
 	//Non Static
-	Vector m;
+	//Vector m;
 	#pragma pack()
 	Float_Vector ma,gy,gps_velocity,gps_position,target_vector,waypoint;
 	float Delta_Time=DELTA_TIME,x_down,y_down,h_offset,N_t_x,N_t_y,time_to_waypoint,Horiz_t,GPS_Errors[4];
 	uint16_t SensorsUsed=0;			//We by default have no sensors
 	int32_t Baro_Temperature; 
-	//Setup the calibration arrays
-	float Acc_Cal_Dat[12]=ACC_CAL_6;
-	float Mag_Cal_Dat[12]=MAG_CAL_6;
-	float Gyr_Cal_Dat[12]=GYR_CAL_6;
+	//Setup the calibration arrays - these live in flash
+	const float Acc_Cal_Dat[12]=ACC_CAL_6;
+	const float Mag_Cal_Dat[12]=MAG_CAL_6;
+	const float Gyr_Cal_Dat[12]=GYR_CAL_6;
 	//Check for the avaliable sensors
-	uint8_t Sensors=Get_MEMS_DRDY();
+	//uint8_t Sensors=Get_MEMS_DRDY();
 	//Change the system timer
 	Millis+=DELTA_TIME*1000;		//Time is in milliseconds NOTE this will roll over after 4Mseconds system uptime
 	//Now read the sensors, convert to float from uint16_t and apply the calibration
-	if(Sensors&ACC_DATA_READY) {
-		Acc_Read(&m);
-		Calibrate_3(&ac,&m,Acc_Cal_Dat);//If the acc has no new data we inherit the previous data
+	//if(Sensors&ACC_DATA_READY) {
+		//Acc_Read(&m);
+		Calibrate_3(&ac,Accel_Data_Buffer,Acc_Cal_Dat);//If the acc has no new data we inherit the previous data
 	}
-	Gyr_Read(&m);
-	Calibrate_3(&gy,&m,Gyr_Cal_Dat);
-	if(Sensors&MAG_DATA_READY) {		//If the magno data ready pin is high
+	//Gyr_Read(&m);
+	Calibrate_3(&gy,Gyro_Data_Buffer,Gyr_Cal_Dat);
+	//if(Sensors&MAG_DATA_READY) {		//If the magno data ready pin is high
+	if(1<<MAGNO_READ)
 		Mag_Read(&m);
 		Calibrate_3(&ma,&m,Mag_Cal_Dat);
 		SensorsUsed|=MAG_SENSORS;	//Let the EKF know what we used

@@ -7,4 +7,3 @@ typedef struct {				//A float data vector & status type for mems sensors
 	float y;
 	float z;
 }	Float_Vector;
-

@@ -1,8 +1,12 @@
 #include <string.h>
 #include "accel_down.h"
-#include "../i2cint.h"
+#include "../Control/imu.h"
 
-extern volatile uint8_t ReadBytes[NUMBER_I2C_TASKS],Accel_Access_Flag;
+extern volatile uint8_t Accel_Access_Flag;//used to control access to the imu accessed data
+extern volatile int16_t Accel_Data_Vector[3];//used to pass data to the imu code
+
+int16_t Accel_Data_Buffer[3] __attribute__((packed));//buffer used by the i2c driver
+
 
 /**
   * @brief  Downsamples oversampled Accel data
@@ -12,19 +16,19 @@ extern volatile uint8_t ReadBytes[NUMBER_I2C_TASKS],Accel_Access_Flag;
   */
 void Accel_Downconvert(void) {
 	static uint8_t index;
-	static Vector acc[4];//FIR filter the data (atm this is a box filter)
+	static int16_t acc[4][3] __attribute__((packed));//FIR filter the data (atm this is a box filter)
 	uint8_t n;
-	memcpy(&acc[index],&ReadBytes[ACCEL_DATA_INDEX],6);//copy over 6 bytes
-	acc[index].x/=4;
-	acc[index].y/=4;
-	acc[index].z/=4;				//divide the data by 4 (works for left aligned data e.g. lsm303dlh)
+	memcpy(&acc[index],Accel_data_buffer,6);//copy over 6 bytes from the driver buffer
+	acc[index][0]/=4;
+	acc[index][1]/=4;
+	acc[index][2]/=4;				//divide the data by 4 (works for left aligned data e.g. lsm303dlh)
 	if(++index>=4) index=0;				//loop round the index
 	if(LOCKED!=Accel_Access_Flag){			//kalman hasnt locked the accel data, load some more
 		memset(&Accel_Data_Vector,0,6);		//zero everything
 		for(n=0;n<4;n++) {			//add in all the data in the FIR buffer
-			Accel_Data_Vector.x+=acc[n].x;
-			Accel_Data_Vector.y+=acc[n].y;
-			Accel_Data_Vector.z+=acc[n].z;
+			Accel_Data_Vector[0]+=acc[n][0];
+			Accel_Data_Vector[1]+=acc[n][1];
+			Accel_Data_Vector[2]+=acc[n][2];
 		}
 	}
 }
