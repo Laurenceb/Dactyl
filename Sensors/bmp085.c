@@ -4,8 +4,9 @@
 #include "math.h"
 
 
-Bmp_Cal_Type Our_Sensorcal;					//Global cal for our sensor
+Bmp_Cal_Type Our_Sensorcal __attribute__((packed));		//Global cal for our sensor
 int32_t Bmp_temp;
+uint16_t Bmp_Temp_Buffer;					//Holds the data from the temperature convertor
 float Sea_Level_Pressure;
 
 /**
@@ -40,6 +41,17 @@ void Bmp085_Convert(int32_t* temperature_out, int32_t* temperature, uint32_t* pr
 	*pressure = p + ((x1 + x2 + 3791) >> 4);
 }
 
+/**
+  * @brief  Converts pressure to altitude
+  * @param  Baro pressure
+  * @retval Float altitude
+  */
+float Baro_Convert_Pressure(uint32_t p) {
+	return 44330.0*(1.0-pow(((float)p/Sea_Level_Pressure),0.190295));
+}
+
+//--------------------------------OLD FUNCTIONS----------------------------------------------
+#ifdef BMP_POLLED
 /**
   * @brief  Reads config data from bmp085 onboard eeprom
   * @param  Pointer to calibration datastructure
@@ -91,11 +103,11 @@ I2C_Returntype Baro_Read_ADC(int32_t* data) {
 I2C_Returntype Baro_Read_Full_ADC(uint32_t* data) {
 	I2C_Returntype t;
 	#pragma pack(1)
-	uint8_t b[3];
+	uint8_t b[3];__attribute__((packed))
 	#pragma pack()
 	t=I2C_Read(b,3, BMP085_W, BMP085_ADC);
 	*data=((((uint32_t)b[0] <<16) | ((uint32_t)b[1] <<8) | ((uint32_t)b[2])) >> (8-OSS));//The BMP085 sensor is big endian
-	return t;
+	return t;uint16_t Bmp_Temp_Buffer;//Holds the data from the temperature convertor
 }
 
 /**
@@ -117,12 +129,4 @@ I2C_Returntype Baro_Setup_Temperature(void) {
 	uint8_t bytes[]={BMP085_W,BMP085_CTRL,BMP085_TEMP};
 	return I2C_Conf(bytes,3);
 }
-
-/**
-  * @brief  Converts pressure to altitude
-  * @param  Baro pressure
-  * @retval Float altitude
-  */
-float Baro_Convert_Pressure(uint32_t p) {
-	return 44330.0*(1.0-pow(((float)p/Sea_Level_Pressure),0.190295));
-}
+#endif
