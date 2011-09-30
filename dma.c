@@ -8,7 +8,7 @@
   * @retval None
   * Note this is coded for USART2 Rx - the GPS, and defined in main.h
   */
-void DMA_Configuration(Buffer_Type* buffer)
+void DMA_USART2_Configuration(Buffer_Type* buffer)
 { /* Feed this function a pointer to the circular buffer, and a size integer */
   DMA_InitTypeDef DMA_InitStructure;
   /* USART2 RX DMA1 Channel (triggered by USART2 Rx event) Config */
@@ -68,12 +68,12 @@ void DMA_USART1_Configuration(uint8_t enabled, Buffer_Type* tx_buffer, Buffer_Ty
 
 /**
   * @brief  Returns number of bytes in the buffer.
-  * @param  Buffer pointer, DMA Channel to use
+  * @param  Buffer pointer
   * @retval bytes in buffer
   */
-int16_t Bytes_In_Buffer(Buffer_Type* buffer, DMA_Channel_TypeDef* Channel)
+int16_t Bytes_In_Buffer(Buffer_Type* buffer)
 {
-	return ((buffer->size-DMA_GetCurrDataCounter(Channel)-buffer->tail)%buffer->size);
+	return ((buffer->size-DMA_GetCurrDataCounter(buffer.DMA_Channel)-buffer->tail)%buffer->size);
 }
 
 /**
@@ -81,10 +81,10 @@ int16_t Bytes_In_Buffer(Buffer_Type* buffer, DMA_Channel_TypeDef* Channel)
   * @param  Buffer pointer
   * @retval int16 with bytes with value -1 if nothing in buffer 
   */
-int16_t Get_From_Buffer(Buffer_Type* buffer, DMA_Channel_TypeDef* Channel)
+int16_t Get_From_Buffer(Buffer_Type* buffer)
 {
 	uint8_t d=(buffer->data)[buffer->tail];//read data at tail
-	if(Bytes_In_Buffer(buffer,Channel))
+	if(Bytes_In_Buffer(buffer))
 	{
 		buffer->tail=(buffer->tail+1)%buffer->size;
 		return (int16_t)d;	//returns the byte
@@ -110,7 +110,7 @@ uint8_t Pop_From_Buffer(Buffer_Type* buffer)
   * @param Buffer pointer
   * @retval None
   */
-void Flush_Buffer(Buffer_Type* buffer, DMA_Channel_TypeDef* Channel)
+void Flush_Buffer(Buffer_Type* buffer)
 {
-	while(Get_From_Buffer(buffer, Channel)>0);//loop until we reach end of buffer
+	while(Get_From_Buffer(buffer)>0);//loop until we reach end of buffer
 }

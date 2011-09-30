@@ -1,6 +1,17 @@
 //Dactyl project v1.0
 #include "types.h"
-#include "../i2c.h"
+#include "../i2c_int.h"
+
+typedef struct{
+	float correct[12];
+	uint8_t endianess;
+}	Mems_Cal_Type;//The cal structure includes endianess
+
+//The calibration arrays
+extern const Mems_Cal_Type Acc_Cal_Dat;
+extern const Mems_Cal_Type Mag_Cal_Dat;//Magno (LSM303DLH) needs endianess swapped
+extern const Mems_Cal_Type Gyr_Cal_Dat;//Gyro  (ITG-3200) ''        ''
+
 //Board specific cal defines go here
 
 //Note that the magno was calibrated inside a steel frames building - field in mG seems slightly too low
@@ -15,4 +26,4 @@
 //Pitot gain cal
 #define PITOT_GAIN (float)0.243
 //Calibrate function
-void Calibrate_3(Float_Vector* dataout, Vector* data, float* cal_);
+void Calibrate_3(float dataout[3], int16_t data[3], Mems_Cal_Type* cal_);

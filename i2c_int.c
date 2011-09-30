@@ -192,7 +192,15 @@ void I2C_Config() {			// Configure I2C1 for the sensor bus
 	I2C_InitStructure.I2C_Ack = I2C_Ack_Enable;
 	I2C_InitStructure.I2C_AcknowledgedAddress= I2C_AcknowledgedAddress_7bit;
 	I2C_InitStructure.I2C_ClockSpeed = 400000;
-	//TODO setup the pointers to the read data
+	//Setup the pointers to the read data
+	I2C1_Setup_Job(GYRO_READ, Gyro_Data_Buffer);//Gyro data buffer
+	I2C1_Setup_Job(ACCEL_READ, Accel_Data_Buffer);//Accel data buffer
+	I2C1_Setup_Job(MAGNO_READ, Magno_Data_Buffer);//Accel data buffer
+	I2C1_Setup_Job(BMP_16BIT, &Bmp_Temp_Buffer);//BMP temperature buffer
+	I2C1_Setup_Job(BMP_24BIT, &Bmp_Press_Buffer);//BMP pressure buffer
+	I2C1_Setup_Job(BMP_READ, &Our_Sensorcal);//BMP calibration data
+	I2C1_Setup_Job(PITOT_READ, &Pitot_Pressure);//Pitot (LTC2481 adc) read
+	//Enable the hardware
 	I2C_ITConfig(I2C1, I2C_IT_EVT|I2C_IT_ERR, ENABLE);//Enable EVT and ERR interrupts
 	I2C_Init( I2C1, &I2C_InitStructure );
 	I2C_Cmd( I2C1, ENABLE );

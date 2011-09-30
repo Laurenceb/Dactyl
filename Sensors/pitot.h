@@ -1,5 +1,7 @@
 //Dactyl project v1.0
 #include "../i2c.h"
+//Globals
+extern volatile int32_t Pitot_Pressure;
 //LTC2481 adc defines
 #define	LTC2481_W 0x2A
 #define LTC2481_R 0x2B

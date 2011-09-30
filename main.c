@@ -40,16 +40,17 @@
 //Control loop headers
 #include "Control/insgps.h"
 
-//globals go here - this is the only place in the project where globals accessed globally are declared
+//Globals go here - this is the only place in the project where globals accessed globally are declared
 Buffer_Type Gps_Buffer, Usart1tx, Usart1rx;//GPS data buffer, USART1 tx and rx buffers
 Float_Vector Waypoint_Global;	//Waypoint in NED
 float Long_To_Meters_Home;	//Conversion factor for longditude to meters
-volatile Ubx_Gps_Type Gps;	//Global Gps, there is also a static gps in the ekf/imu filter code
+volatile Ubx_Gps_Type Gps __attribute__((packed));//Global Gps, there is also a static gps in the ekf/imu filter code
 volatile Nav_Type Nav_Global;	//EKF state
 //Flags/Mutex go here
 volatile uint32_t Nav_Flag;	//Used to control and lock global nav state access
 volatile uint32_t New_Waypoint_Flagged;
 volatile uint32_t Ground_Flag;
+volatile uint32_t Kalman_Enabled;
 //FatFs filesystem globals go here
 FRESULT f_err_code;
 static FATFS FATFS_Obj;
@@ -143,11 +144,7 @@ void Initialisation() {
 	int64_t home[4]={0,0,0};
 	double LLA[3]={0,0,0};
 	double ECEF[3]={0,0,0};
-	//Setup the calibration arrays - Note: might be worth moving this somewhere else as its used in the imu code as well
-	float Acc_Cal_Dat[12]=ACC_CAL_6;
-	float Mag_Cal_Dat[12]=MAG_CAL_6;
-	Vector mag;
-	Float_Vector mag_corr,acc_corr;
+	float mag_corr[3],acc_corr[3];
 	uint8_t err=0;
 	uint32_t raw_pressure;
 	int32_t device_temperature;
@@ -156,8 +153,8 @@ void Initialisation() {
 	// Setup the GPIOs
 	All_IO_Configuration();
 	// Confidue the DMA (for the USART2 - GPS)
-	Gps_Buffer.size=BUFFER_SIZE;Gps_Buffer.tail=0;//Set the buffer size to the defined one here
-	DMA_Configuration(&Gps_Buffer);
+	Gps_Buffer.size=BUFFER_SIZE;Gps_Buffer.tail=0;Gps_Buffer.DMA_Channel=USART2RX_DMA1//Set the buffer size to the defined one here
+	DMA_USART2_Configuration(&Gps_Buffer);
 	// Enable the DMA for USART2
 	DMA_Cmd(USART2RX_DMA1, ENABLE);
 	// Set up the USARTs for outputting sensor information
@@ -166,63 +163,59 @@ void Initialisation() {
 	Usart_Send_Str((char*)"Dactyl project, for v1.0 hardware, compiled " __DATE__ " " __TIME__ "\r\n");
 	// Setup the I2C1
 	I2C_Config();
-	// Setup the Magno
-	if(!(err=Mag_Init())){
-		// Say something
-		Usart_Send_Str((char*)"Setup magno\r\n");
-		Mag_Read(&mag);
-		printf(" %d,%d,%d\r\n",mag.x,mag.y,mag.z);
+	//Schedule all I2C1 sensors to be configured
+	SCHEDULE_CONFIG
+	//Enable interrupts - note the EKF still hasnt been enabled
+	EXTI6_Config();					//Configure the interrupt from gyro that runs the EKF
+	for(;err;err++) {
+		if(!Jobs)				//All scheduled jobs completed
+			break;
+		Delay(0x0FFFF);				//A delay in the loop
 	}
-	else
-		printf("Magno error: %d\r\n",err);
-	// Setup the Accel
-	if(!(err=Acc_Init())){
-		// Say something
-		Usart_Send_Str((char*)"Setup accel\r\n");
-		Acc_Read(&mag);
-		printf(" %d,%d,%d\r\n",mag.x,mag.y,mag.z);
+	if(!Jobs)
+		Usart_Send_Str((char*)"Setup all sensors\r\n");
+	else {
+		printf("I2C error:%d at job number:%d\r\n",I2C1error.error,I2C1error.job);
+		if(Jobs_Completed&(1<<PITOT_CONFIG_NO)){
+			Jobs_Completed&=~(1<<PITOT_CONFIG_NO);
+			Usart_Send_Str((char*)"Setup pitot\r\n");
+		}		
+		if(Jobs_Completed&(1<<MAGNO_CONFIG_NO)){
+			Jobs_Completed&=~(1<<MAGNO_CONFIG_NO);
+			Usart_Send_Str((char*)"Setup magno\r\n");
+		}
+		if(Jobs_Completed&(1<<BMP_READ)){
+			Jobs_Completed&=~(1<<BMP_READ);
+			Usart_Send_Str((char*)"Setup baro\r\n");
+		}
+		if(Jobs_Completed&(1<<ACCEL_CONFIG_NO)){
+			Jobs_Completed&=~(1<<ACCEL_CONFIG_NO);
+			Usart_Send_Str((char*)"Setup accel\r\n");
+		}
+		if(Jobs_Completed&(1<<GYRO_CONFIG_NO)){
+			Jobs_Completed&=~(1<<GYRO_CONFIG_NO);
+			Usart_Send_Str((char*)"Setup gyro\r\n");
+		}
+		if(Jobs_Completed&(1<<GYRO_CLK_NO)){
+			Jobs_Completed&=~(1<<GYRO_CLK_NO);
+			Usart_Send_Str((char*)"Setup gyro clk\r\n");
+		}
 	}
-	else
-		printf("Accel error: %d\r\n",err);
-	// Setup the Gyro
-	if(!(err=Gyr_Init())){
-		// Say something
-		Usart_Send_Str((char*)"Setup gyro\r\n");
-		Gyr_Read(&mag);
-		printf(" %d,%d,%d\r\n",mag.x,mag.y,mag.z);
-	}
-	else
-		printf("Accel error: %d\r\n",err);
-	// Setup the Baro
-	if(!(err=Bmp_Setconfig())){
-		// Say something
-		Usart_Send_Str((char*)"Setup Baro\r\n");//Now do a quick test of the Baro sensor
-		//Record the bmp085 temperature
-		Baro_Setup_Temperature();
-		Delay(0x4FFFF);
-		Bmp_Gettemp();				//Global Temperature is now setup
-		Baro_Setup_Pressure();			//Setup Press conversion
-		Delay(0x4FFFF);
-		Baro_Read_Full_ADC(&raw_pressure);	//Grab from baro adc
-		Bmp_Simp_Conv(&device_temperature,&raw_pressure);//convert to pressure - calibrated temperature output
-		printf("Baro pressure is %ld Pascals, temperature is %ld C\r\n",raw_pressure,device_temperature/10);//Debug
-	}
-	else
-		printf("Baro error: %d\r\n",err);
-	//Setup and test the pitot tube sensor
+	Delay(0x4FFFF);//Wait for a short period to allow the interrupt driven I2C1 reads to fire off and retrieve us some data
+	printf(" %d,%d,%d\r\n",Flipbytes(Magno_Data_Buffer[0]),Flipbytes(Magno_Data_Buffer[1]),Flipbytes(Magno_Data_Buffer[2]));
+	printf(" %d,%d,%d\r\n",Accel_Data_Buffer[0]),Accel_Data_Buffer[1]),Accel_Data_Buffer[2]));//Accel has correct endianess
+	printf(" %d,%d,%d\r\n",Flipbytes(Gyro_Data_Buffer[0]),Flipbytes(Gyro_Data_Buffer[1]),Flipbytes(Gyro_Data_Buffer[2]));
+	Millis+=TEMPERATURE_PERIOD;			//Hack the system uptime in order to cause a bmp05 temperature
+	Delay(0x4FFFF);//Wait for a short period to allow the interrupt driven I2C1 to read bmp pressure
+	Bmp_Simp_Conv(&device_temperature,&raw_pressure);//convert to pressure and calibrated temperature output using i2c driver data
+	printf("Baro pressure is %ld Pascals, temperature is %ld C\r\n",raw_pressure,device_temperature/10);//Debug
+	//Test the pitot tube sensor
 	Delay(0x30FFFF);				//At least 100ms delay for the pitot to enter sleep mode
-	if(!(err=Pitot_Set_Press_Conv())){
-		//Say something
-		Usart_Send_Str((char*)"Setup Pitot\r\n");//Now do a quick test of the pitot		
-		Delay(0x30FFFF);			//At least 100ms delay
-		Pitot_Read_Conv((uint32_t*)&raw_pressure);
-		printf("Pitot ADC reads %ld\r\n",Pitot_Conv((uint32_t)raw_pressure));//Debug
-	}
-	else
-		printf("Pitot error: %d\r\n",err);
+	printf("Pitot ADC reads %ld\r\n",Pitot_Conv((uint32_t)Pitot_Pressure));//Debug
+	//Configure the GPS and test it, block until it gets a lock
 	if(!Config_Gps()) Usart_Send_Str((char*)"Setup GPS ok - awaiting fix\r\n");//If not the function printfs its error
 	while(Gps.status!=UBLOX_3D) {		//Wait for a 3D fix
-		while(Bytes_In_Buffer(&Gps_Buffer,USART2RX_DMA1))//Dump all the data
+		while(Bytes_In_Buffer(&Gps_Buffer))//Dump all the data
 			Gps_Process_Byte((uint8_t)(Pop_From_Buffer(&Gps_Buffer)),&Gps);
 		if(Gps.packetflag==REQUIRED_DATA){		
 			putchar(0x30+Gps.nosats);putchar(0x2C);//Number of sats seperated by commas
@@ -231,37 +224,26 @@ void Initialisation() {
 	}
 	Gps.packetflag=0x00;			//Reset
 	while(Gps.packetflag!=REQUIRED_DATA) {	//Wait for all fix data
-		while(Bytes_In_Buffer(&Gps_Buffer,USART2RX_DMA1))//Dump all the data
+		while(Bytes_In_Buffer(&Gps_Buffer))//Dump all the data
 			Gps_Process_Byte((uint8_t)(Pop_From_Buffer(&Gps_Buffer)),&Gps);
 	}
 	Usart_Send_Str((char*)"\r\nGot GPS fix:");//Print out the fix for debug purposes
 	printf("%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%1x\r\n",\
 	Gps.latitude,Gps.longitude,Gps.mslaltitude,\
 	Gps.vnorth,Gps.veast,Gps.vdown,Gps.horizontal_error,Gps.vertical_error,Gps.speedacc,Gps.nosats);
-	//Record the bmp085 temperature
-	Baro_Setup_Temperature();
-	Delay(0x4FFFF);
-	Bmp_Gettemp();				//Temperature is now setup - note that the convert function is needed to calibrate it
-	Baro_Setup_Pressure();			//Setup Press conversion
-	Delay(0x4FFFF);
 	//Now average the GPS for 10 seconds and set this as the home position
 	printf("Averaging to find home position, please wait 10s\r\n");
 	for(err=0;err<50;err++) {		//GPS is configured for 5Hz output, so average 50 samples
 		Gps.packetflag=0x00;		//Reset
 		while(Gps.packetflag!=REQUIRED_DATA) {		//Wait for all fix data
-			while(Bytes_In_Buffer(&Gps_Buffer,USART2RX_DMA1))//Dump all the data
+			while(Bytes_In_Buffer(&Gps_Buffer))//Dump all the data
 				Gps_Process_Byte((uint8_t)(Pop_From_Buffer(&Gps_Buffer)),&Gps);
 		}
 		home[0]+=(float)Gps.latitude;
 		home[1]+=(float)Gps.longitude;
 		home[2]-=(float)Gps.mslaltitude;//NED frame - alititude is negative
-		if(err&0x01) {			//On odd iterations we convert the temperature
-			Bmp_Gettemp();
-			Baro_Setup_Pressure();
-		}
-		else {
-			Baro_Read_Full_ADC(&raw_pressure);//grab from baro adc
-			Baro_Setup_Temperature();
+		if(Jobs_Completed&(1<<BMP_24BIT))//BMP085 has been read (it should have been)
+			Jobs_Completed&~(1<<BMP_24BIT);//check off the job
 			Bmp_Simp_Conv(&device_temperature,&raw_pressure);//convert to pressure
 			mean_pressure+=raw_pressure;
 		}
@@ -299,10 +281,8 @@ void Initialisation() {
 	//Set the earths gravity
 	INSSetGravity(Home_Position.g_e);
 	//Use home position to initialise the ekf - assume that we intialise stationary with no gyro bias, and grab accel and magno data
-	Mag_Read(&mag);
-	Calibrate_3(&mag_corr,&mag,Mag_Cal_Dat);
-	Acc_Read(&mag);
-	Calibrate_3(&acc_corr,&mag,Acc_Cal_Dat);
+	Calibrate_3(&mag_corr,Magno_Data_Buffer,Mag_Cal_Dat);
+	Calibrate_3(&acc_corr,Accel_Data_Buffer,Acc_Cal_Dat);
 	//quaternion init code - from Openpilot
 	RotFrom2Vectors((float*)&acc_corr, ge, (float*)&mag_corr, Field, Rbe);
 	R2Quaternion(Rbe, q);
@@ -318,7 +298,6 @@ void Initialisation() {
 	if((f_err_code = f_mount(0, &FATFS_Obj)))Usart_Send_Str((char*)"FatFs mount error\r\n");//this should only error if internal error
 	Init_Timers();				//Start PWM output timers running (need to enable GPIO seperately)
 	Enable_Servos();			//Setup the GPIO pins to drive the servos
-	EXTI6_Config();				//Configure the interrupt from gyro that runs the EKF
-	Gyr_Read(&mag);				//Kick start the ISR by reading the gyro to set data ready to low
+	Kalman_Enabled=1;			//Enable the Kalman
 	Watchdog_Config(MAIN_LOOP_TIMEOUT);	//Start the watchdog running
 }

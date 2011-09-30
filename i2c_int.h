@@ -1,5 +1,8 @@
 //Dactyl project v1.0
 
+//Globals
+extern volatile uint32_t Jobs,Completed_Jobs;	//used for task control (only ever access this from outside for polling Jobs/Reading Completed_Jobs)
+extern volatile I2C_Error_Type I2C1error;	//used to store error state
 //Macros
 //Number of jobs
 #define I2C_NUMBER_JOBS 15
@@ -42,6 +45,9 @@
 #define MAGNO_CONFIG_NO 10
 #define GYRO_CONFIG_NO 11
 #define GYRO_CLK_NO 12
+//Config all the sensors
+#define CONFIG_SENSORS (uint32_t)((1<<MAGNO_CONFIG_NO)|(1<<GYRO_CONFIG_NO)|(1<<GYRO_CLK_NO)|(1<<ACCEL_CONFIG_NO)|(1<<PITOT_CONFIG_NO)|(1<<BMP_READ))
+#define SCHEDULE_CONFIG Jobs|=CONFIG_SENSORS/*This just adds directly jobs - will require an attempted sensor read (accel) to kick the i2c interrupts off*/
 
 //Datatypes
 typedef struct{
@@ -61,3 +67,4 @@ typedef struct{
 void I2C1_Request_Job(uint8_t job);//Requests a job
 void I2C1_Setup_Job(uint8_t job, uint8_t* data);//Sets up the data pointer for a job
 void I2C_Config(void);//configures the hardware
+#define Flipbytes(x) x=(x>>8)|(x<<8) 

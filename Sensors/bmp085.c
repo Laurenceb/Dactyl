@@ -7,6 +7,7 @@
 Bmp_Cal_Type Our_Sensorcal __attribute__((packed));		//Global cal for our sensor
 int32_t Bmp_temp;
 uint16_t Bmp_Temp_Buffer;					//Holds the data from the temperature convertor
+uint32_t Bmp_Press_Buffer;					//Bmp085 pressure data buffer 
 float Sea_Level_Pressure;
 
 /**

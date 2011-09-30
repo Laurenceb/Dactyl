@@ -6,6 +6,9 @@
 #include "../Control/cal.h"
 #include "../Util/atmospherics.h"
 
+//Globals
+volatile int32_t Pitot_Pressure;
+
 /**
   * @brief  Reads the raw adc data and returns 32 bit signed integer value (17 usable bits)
   * @param  Uncorrected value
@@ -18,7 +21,7 @@ int32_t Pitot_Conv(uint32_t d) {
 }
 
 /**
-  * @brief  Reads the corrected adc data and returns float with airspeed TODO(This reallspeedy needs temperature compensation)
+  * @brief  Reads the corrected adc data and returns float with airspeed TODO(This really needs temperature compensation)
   * @param  Uncorrected value (int32_t), altitude in meters (float), barometric pressure (float)
   * @retval Corrected value ms^-1 (float)
   */

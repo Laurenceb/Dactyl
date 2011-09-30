@@ -19,6 +19,7 @@ typedef struct{			//Structure for holding calibration data from onboard EEPROM
 extern Bmp_Cal_Type Our_Sensorcal __attribute__((packed));//Global cal for our sensor
 extern int32_t Bmp_temp;	//This is in integer units of 0.1C
 extern uint16_t Bmp_Temp_Buffer;//Holds the data from the temperature convertor
+extern uint32_t Bmp_Press_Buffer;//Operates as bmp085 pressure buffer 
 extern float Sea_Level_Pressure;
 
 				//Maximum oversampling
@@ -41,7 +42,7 @@ extern float Sea_Level_Pressure;
 
 #define Bmp_Setconfig() Bmp085_ReadConfig(&Our_Sensorcal)
 #define Bmp_Gettemp() Baro_Read_ADC(&Bmp_temp)
-#define Bmp_Simp_Conv(tmp_out,press) Bmp085_Convert(tmp_out,&Bmp_temp,press,&Our_Sensorcal);
+#define Bmp_Simp_Conv(tmp_out,press_out) Bmp085_Convert(tmp_out,&Bmp_temp,press_out,&Our_Sensorcal);
 
 //function prototypes
 void Bmp085_Convert(int32_t* temperature_out, int32_t* temperature, uint32_t* pressure, Bmp_Cal_Type* cal);
