@@ -1,24 +1,39 @@
 //Dactyl project v1.0
 #include "math.h"
+#include "string.h"
 #include "insgps.h"
 #include "imu.h"
 #include "types.h"
 #include "loops.h"
 #include "servos.h"
 #include "../main.h"
-#include "../i2c.h"
+#include "../i2c_int.h"
 #include "../dma.h"
 #include "../gpio.h"
 #include "../Sensors/ubx.h"
 #include "../Sensors/bmp085.h"
 #include "../Sensors/pitot.h"
 #include "../Sensors/cal.h"
+#include "../Sensors/accel_down.h"
 #include "../Util/uavtalk.h"
 
+//Main Globals here
+extern Home_Position_Type Home_Position;
+extern Buffer_Type Gps_Buffer;
+extern float Waypoint_Global[3];
+extern float Long_To_Meters_Home;
+extern volatile Ubx_Gps_Type Gps;
+extern volatile Nav_Type Nav_Global,Nav;	
+extern volatile uint32_t Nav_Flag,New_Waypoint_Flagged,Ground_Flag,Millis;
+extern volatile float UAVtalk_Altitude_Array[3];	
+//Just here for debug
+extern volatile float Balt;
 
 //Globals used for the Gyro and Magno data from the I2C driver, Accel data goes via downsampler, other sensors via code in ./Sensors	
 volatile int16_t Gyro_Data_Buffer[4] __attribute__((packed));//Holds temperature data as well
 volatile int16_t Magno_Data_Buffer[3] __attribute__((packed));
+volatile int16_t Accel_Data_Vector[3];		//Used to pass data from downsampler
+volatile uint8_t Accel_Access_Flag;		//Used to control access
 
 /**
   * @brief  This function runs the EKF, talks to aux sensors with a state machine and applys control loops to servos (main control task loop)
@@ -30,7 +45,7 @@ void run_imu(void) {
 	static uint32_t Iterations=0;		//Number of ekf iterations
 	static Control_type control=DEFAULT_CONTROL;//The control structure
 	static Ubx_Gps_Type gps __attribute__((packed));//This is our local copy - theres is also a global, be careful with copying
-	static Float ac[3],Wind[3];		//The accel is not always avaliable - 100hz update
+	static float ac[3],Wind[3];		//The accel is not always avaliable - 100hz update
 	static float AirSpeed=0,Baro_Alt,Body_x_To_x=0,Body_x_To_y=0,Mean_Alt_Err=0;
 	static uint32_t Baro_Pressure;		//Baro pressure is static for use in air density calculations
 	//Non Static
@@ -42,11 +57,11 @@ void run_imu(void) {
 	Millis+=DELTA_TIME*1000;		//Time is in milliseconds NOTE this will roll over after 4Mseconds system uptime
 	//Now read the gyro buffer, convert to float from uint16_t and apply the calibration
 	Accel_Access_Flag=LOCKED;		//Lock the data
-	/*LOCKED*/Calibrate_3(&ac,Accel_Data_Buffer,Acc_Cal_Dat);//Grab the data from the accel downsampler/DSP filter
+	/*LOCKED*/Calibrate_3(ac,Accel_Data_Buffer,&Acc_Cal_Dat);//Grab the data from the accel downsampler/DSP filter
 	Accel_Access_Flag=UNLOCKED;		//Unlock the data
-	Calibrate_3(&gy,&Gyro_Data_Buffer[2],Gyr_Cal_Dat);//Read gyro data buffer - skip the temperature
+	Calibrate_3(gy,&Gyro_Data_Buffer[2],&Gyr_Cal_Dat);//Read gyro data buffer - skip the temperature
 	//Run the EKF - we feed it float pointers but it expects float arrays - alignment has to be correct
-	INSStatePrediction((float*)&gy,(float*)&ac,Delta_Time);	//Run the EKF and incorporate the avaliable sensors
+	INSStatePrediction(gy,ac,Delta_Time);	//Run the EKF and incorporate the avaliable sensors
 	INSCovariancePrediction(Delta_Time);
 	//Process the GPS data
 	while(Bytes_In_Buffer(&Gps_Buffer))//Dump all the data from DMA
@@ -73,13 +88,13 @@ void run_imu(void) {
 		gps.packetflag=0x00;		//Reset the flag
 	}
 	//Now the state dependant I2C stuff
-	if(Jobs_Completed&(1<<MAGNO_READ))	//This I2C job will run whilst the prediction runs
-		Jobs_Completed&=~(1<<MAGNO_READ);//Wipe the job completed bit
-		Calibrate_3(&ma,Magno_Data_Buffer,Mag_Cal_Dat);
+	if(Completed_Jobs&(1<<MAGNO_READ)) {	//This I2C job will run whilst the prediction runs
+		Completed_Jobs&=~(1<<MAGNO_READ);//Wipe the job completed bit
+		Calibrate_3(ma,Magno_Data_Buffer,&Mag_Cal_Dat);
 		SensorsUsed|=MAG_SENSORS;	//Let the EKF know what we used
 	}
-	if(Jobs_Completed&(1<<BMP_24BIT))
-		Jobs_Completed&=~(1<<BMP_24BIT);//Wipe the job completed bit
+	if(Completed_Jobs&(1<<BMP_24BIT)) {
+		Completed_Jobs&=~(1<<BMP_24BIT);//Wipe the job completed bit
 		Baro_Pressure=Bmp_Press_Buffer;	//Copy over from the read buffer
 		Bmp_Simp_Conv(&Baro_Temperature,&Baro_Pressure);//Convert to a pressure in Pa
 		Baro_Alt=Baro_Convert_Pressure(Baro_Pressure);//Convert to an altitude - relative to GPS geoid
@@ -89,12 +104,12 @@ void run_imu(void) {
 		UAVtalk_Altitude_Array[2]=Baro_Pressure;//variables, it can be set directly from here without passing data back
 		UAVtalk_conf.semaphores[BARO_ACTUAL]=WRITE;//Set the semaphore to indicate this has been written
 	}
-	if(Jobs_Completed&(1<<BMP_16BIT)) {
-		Jobs_Completed&=~(1<<BMP_16BIT);//Wipe the job completed bit
+	if(Completed_Jobs&(1<<BMP_16BIT)) {
+		Completed_Jobs&=~(1<<BMP_16BIT);//Wipe the job completed bit
 		Bmp_Copy_Temp();		//Copy the 16 bit temperature out of its buffer into the temperature global
 	}
-	if(Jobs_Completed&(1<<PITOT_READ)) {
-		Jobs_Completed&=~(1<<PITOT_READ);//Wipe the job completed bit
+	if(Completed_Jobs&(1<<PITOT_READ)) {
+		Completed_Jobs&=~(1<<PITOT_READ);//Wipe the job completed bit
 		Pitot_Pressure=Pitot_Conv((uint32_t)Pitot_Pressure);//Align and sign the adc value - 1lsb=~0.24Pa
 		AirSpeed=Pitot_convert_Airspeed(Pitot_Pressure,(float)gps.mslaltitude*0.001,(float)Baro_Pressure);//windspeed
 		Wind[0]*=WIND_TAU;Wind[1]*=WIND_TAU;//Low pass filter
@@ -105,7 +120,7 @@ void run_imu(void) {
 	INSCorrection((float*)&ma,(float*)&gps_position,(float*)&gps_velocity,Baro_Alt+Home_Position.Altitude,SensorsUsed);
 	if(!Nav_Flag) {Nav_Global=Nav; Nav_Flag=(uint32_t)0x01;}//Copy over Nav state if its been unlocked
 	//EKF is finished, time to run the guidance
-	if(New_Waypoint_Flagged) {waypoint=Waypoint_Global; New_Waypoint_Flagged=0;}//Check for any new waypoints that may have been set
+	if(New_Waypoint_Flagged) {memcpy(waypoint,Waypoint_Global,sizeof(waypoint)); New_Waypoint_Flagged=0;}//Check for any new waypoints set
 	target_vector[0]=waypoint[0]-Nav.Pos[0];//A float vector to the waypoint in NED space
 	target_vector[1]=waypoint[1]-Nav.Pos[1];
 	target_vector[2]=waypoint[2]-Nav.Pos[2];//Now work out the eta at the waypoint (just the x,y/North,East position)
@@ -130,13 +145,13 @@ void run_imu(void) {
 		//Roll setpoint set by heading error
 		Run_PID(&(control.roll_setpoint),&(control.airframe.roll_setpoint),h_offset,0);
 		//Throttle set according to altitude error
-		Run_PID(&(control.throttle),&(control.airframe.throttle),target_vector.z,Nav.Vel[2]);
+		Run_PID(&(control.throttle),&(control.airframe.throttle),target_vector[2],Nav.Vel[2]);
 		//Elevator, remember x_down is reversed sign
-		Run_PID(&(control.elevator),&(control.airframe.elevator),control.pitch_setpoint.out+x_down,gy.y-Nav.gyro_bias[1]);
+		Run_PID(&(control.elevator),&(control.airframe.elevator),control.pitch_setpoint.out+x_down,gy[1]-Nav.gyro_bias[1]);
 		//Ailerons, TODO - work out if signs sane
-		Run_PID(&(control.ailerons),&(control.airframe.ailerons),control.roll_setpoint.out-y_down,gy.x-Nav.gyro_bias[0]);
+		Run_PID(&(control.ailerons),&(control.airframe.ailerons),control.roll_setpoint.out-y_down,gy[0]-Nav.gyro_bias[0]);
 		//Rudder, D term takes out turbulence, and I term for roll-bank (no P?)
-		Run_PID(&(control.rudder),&(control.airframe.rudder),ac.y,gy.z-Nav.gyro_bias[2]);
+		Run_PID(&(control.rudder),&(control.airframe.rudder),ac[1],gy[2]-Nav.gyro_bias[2]);
 		//Apply the feedforward, linking rudder to roll offset
 		control.rudder.out+=control.airframe.rudder_feedforward*control.roll_setpoint.out;
 		Apply_Servos(&control);//Servo driver function called here using pwm

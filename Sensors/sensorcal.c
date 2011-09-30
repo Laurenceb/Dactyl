@@ -2,7 +2,7 @@
 
 #include "cal.h"
 #include "types.h"
-#include "../i2c.h"
+#include "../i2c_int.h"
 
 //Setup the Const calibration arrays - these live in flash
 const Mems_Cal_Type Acc_Cal_Dat={ACC_CAL_6,0};
@@ -14,8 +14,8 @@ const Mems_Cal_Type Gyr_Cal_Dat={GYR_CAL_6,1};//Gyro  (ITG-3200) ''        ''
   * @param  Pointers to the raw data to be corrected, and the 3x4 calibration matrix expressed as a 1D array
   * @retval None
   */
-void Calibrate_3(float dataout[3], int16_t data[3], Mems_Cal_Type* cal_); {
-	if(cal_->enabled) {//We need to swap endianess
+void Calibrate_3(float dataout[3], int16_t data[3], Mems_Cal_Type* cal_) {
+	if(cal_->endianess) {//We need to swap endianess
 		Flipbytes(data[0]);
 		Flipbytes(data[1]);
 		Flipbytes(data[2]);

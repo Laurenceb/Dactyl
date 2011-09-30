@@ -18,7 +18,7 @@ void Accel_Downconvert(void) {
 	static uint8_t index;
 	static int16_t acc[4][3] __attribute__((packed));//FIR filter the data (atm this is a box filter)
 	uint8_t n;
-	memcpy(&acc[index],Accel_data_buffer,6);//copy over 6 bytes from the driver buffer
+	memcpy(&acc[index],Accel_Data_Buffer,6);//copy over 6 bytes from the driver buffer
 	acc[index][0]/=4;
 	acc[index][1]/=4;
 	acc[index][2]/=4;				//divide the data by 4 (works for left aligned data e.g. lsm303dlh)

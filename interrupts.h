@@ -14,7 +14,7 @@
 #include "stm32f10x.h"
 
 //Added functions
-void EXTI6_Config(void);
+void EXTI_Config(void);
 void EXTI9_5_IRQHandler(void);
 
 //These have to exist

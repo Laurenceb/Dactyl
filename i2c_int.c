@@ -1,5 +1,11 @@
 //Dactyl project v1.0
 //I2C interrupt code using the ST Perif library
+#include "i2c_int.h"
+#include "gpio.h"
+#include "Sensors/bmp085.h"
+#include "Sensors/pitot.h"
+#include "Sensors/accel_down.h"
+#include "Control/imu.h"
 
 volatile uint32_t Jobs,Completed_Jobs;	//used for task control (only ever access this from outside for polling Jobs/Reading Completed_Jobs)
 volatile uint8_t job;			//stores the current job
@@ -7,20 +13,21 @@ volatile I2C_Error_Type I2C1error;	//stores current error status
 
 //Setup the const jobs descriptors
 const uint8_t Magno_config[]=MAGNO_SETUP;
-const uint8_t Magno_single[]=Magno_config[2];
-const uint8_t Bmp_temp[]={BMP085_TEMP};
-const uint8_t Bmp_press[]={BMP085_PRESS};
+const uint8_t Magno_single[]=MAGNO_SINGLE;
+const uint8_t Bmp_temperature[]={BMP085_TEMP};
+const uint8_t Bmp_pressure[]={BMP085_PRES};
 const uint8_t Accel_config[]=ACCEL_SETUP;
-const uint8_t Gyro_config[]=GYRO_SETUP,ITG_CLOCK;
+const uint8_t Gyro_config[]=GYRO_SETUP;
+const uint8_t Gyro_clk_config[]=ITG_CLOCK;
 const uint8_t Pitot_conv[]={LTC2481_ADC};
-I2C_jobs[]=I2C_JOBS_INITIALISER;	//sets up the const jobs
+I2C_Job_Type I2C_jobs[]=I2C_JOBS_INITIALISER;//sets up the const jobs
 
 /**
   * @brief  This function handles I2C1 Event interrupt request.
   * @param : None
   * @retval : None
   */
-void I2C1_EV_IRQHandler(void)
+void I2C1_EV_IRQHandler(void) {
 	static uint8_t subaddress_sent;	//current job number, bytes that have been rx/tx, flag to indicate if subaddess sent
 	static int8_t index;		//index is signed -1==send the subaddress
 	if(!((Jobs>>job)&0x00000001))	//if the current job bit is not set
@@ -47,7 +54,7 @@ void I2C1_EV_IRQHandler(void)
 		else {//EV6 and EV6_1
 			uint8_t a=I2C1->SR1;//Read SR1,2 to clear ADDR
 			a=I2C1->SR2;
-			if(2==bytes && I2C_Direction_Receiver==I2C_jobs[job].direction && subaddress_sent) { //we are receiving 2 byte - EV6_1
+			if(2==I2C_jobs[job].bytes && I2C_Direction_Receiver==I2C_jobs[job].direction && subaddress_sent) { //rx 2 bytes - EV6_1
 				I2C_AcknowledgeConfig(I2C1, DISABLE);//turn off ACK
 				I2C_ITConfig(I2C1, I2C_IT_BUF, DISABLE);//disable TXE to allow the buffer to fill
 			}
@@ -57,19 +64,14 @@ void I2C1_EV_IRQHandler(void)
 	}
 	else if(I2C_GetITStatus(I2C1,I2C_IT_BTF)) {//Byte transfer finished - EV7_2, EV7_3 or EV8_2
 		if(I2C_Direction_Receiver==I2C_jobs[job].direction && subaddress_sent) {//EV7_2, EV7_3
-		uint8_t t=(Tasks[tasklistindex]&0xF0);//jump through the tasks until we reach a new job (skips)
-		while(Tasks[tasklistindex++]&0xF0==t) {
-			if(tasklistindex==NUMBER_I2C_TASKS)
-				tasklistindex=0;
-		}I2C_Error_Type
-		Jobs&=~(1<<(t>>4));	//tick off the job that was abandoned			if(I2C_jobs[job].bytes>2) {//EV7_2
+			if(I2C_jobs[job].bytes>2) {//EV7_2
 				I2C_AcknowledgeConfig(I2C1, DISABLE);//turn off ACK
 				I2C_jobs[job].data_pointer[index++]=I2C_ReceiveData(I2C1);//read data N-2
 				I2C_GenerateSTOP(I2C1,ENABLE);//program the Stop
 				I2C_jobs[job].data_pointer[index++]=I2C_ReceiveData(I2C1);//read data N-1
 				I2C_ITConfig(I2C1, I2C_IT_BUF, ENABLE);//enable TXE to allow the final EV7
 			}
-			else {			//EV7_3
+			else {		//EV7_3
 				I2C_GenerateSTOP(I2C1,ENABLE);//program the Stop
 				I2C_jobs[job].data_pointer[index++]=I2C_ReceiveData(I2C1);//read data N-1
 				I2C_jobs[job].data_pointer[index++]=I2C_ReceiveData(I2C1);//read data N
@@ -82,8 +84,8 @@ void I2C1_EV_IRQHandler(void)
 				index++;//to show that the job is complete
 			}
 			else {
-				I2C_GenerateSTART(I2C1,ENABLCompleted_JobsE);//program the repeated Start
-				subaddress_sent;//this is set back to zero upon completion of the current task
+				I2C_GenerateSTART(I2C1,ENABLE);//program the repeated Start
+				subaddress_sent=1;//this is set back to zero upon completion of the current task
 			}
 		}
 	}
@@ -115,7 +117,7 @@ void I2C1_EV_IRQHandler(void)
 				I2C1_Request_Job(MAGNO_READ);//read the magno
 			}
 		}
-		else if(ACCEL_READ_TASK==job)//if we finished running the accel, run the accel downsampling function
+		else if(ACCEL_READ==job)//if we finished running the accel, run the accel downsampling function
 			Accel_Downconvert();//Accelerometer downconversion function called, this reads the global readbytes array
 		//End of completion tasks
 		Jobs&=~(0x00000001<<job);//tick off current job as complete
@@ -133,8 +135,7 @@ void I2C1_EV_IRQHandler(void)
   * Note: The error and event handlers must be in the same priority group. Other interrupts may be in the group, but must be lower priority
   * ER must have the highest priority in the group (but not necessarily on the device - Method2 from ref manual)
   */
-void I2C1_ER_IRQHandler(void)
-{
+void I2C1_ER_IRQHandler(void) {
 	__IO uint32_t SR1Register, SR2Register;
 	/* Read the I2C1 status register */
 	SR1Register = I2C1->SR1;
@@ -149,7 +150,7 @@ void I2C1_ER_IRQHandler(void)
 	if(SR1Register & 0x0700) {
 		SR2Register = I2C1->SR2;//read second status register to clear ADDR if it is set (note that BTF will not be set after a NACK)
 		I2C_ITConfig(I2C1, I2C_IT_BUF, DISABLE);//disable the RXNE/TXE interrupt - prevent the ISR tailchaining onto the ER (hopefully)
-		Jobs&=~(0x00000001<<jobs);//cancel the current job - abandoned, 
+		Jobs&=~(0x00000001<<job);//cancel the current job - abandoned, 
 		if(Jobs)		//then start a new job if there are still jobs left
 			I2C_GenerateSTART(I2C1,ENABLE);//sets a start (ref manual p743 - appears ok as long as stop and start are seperate writes) 
 	}

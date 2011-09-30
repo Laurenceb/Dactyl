@@ -31,7 +31,7 @@
 
 #ifndef INSGPS_H_
 #define INSGPS_H_
-
+#pragma once
 #include "stdint.h"
 
 /**

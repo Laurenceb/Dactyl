@@ -1,6 +1,5 @@
 //Dactyl project v1.0
 #include "bmp085.h"
-#include "../i2c.h"
 #include "math.h"
 
 

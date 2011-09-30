@@ -2,8 +2,7 @@
 #include "math.h"
 #include "stm32f10x.h"
 #include "pitot.h"
-#include "../i2c.h"
-#include "../Control/cal.h"
+#include "cal.h"
 #include "../Util/atmospherics.h"
 
 //Globals

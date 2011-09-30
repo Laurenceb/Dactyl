@@ -8,7 +8,7 @@
 #include "main.h"
 //Periferal headers
 #include "usart.h"
-#include "i2c.h"
+#include "i2c_int.h"
 //#include "dma.h" - included from uavtalk
 #include "pwm.h"
 #include "gpio.h"
@@ -24,10 +24,11 @@
 #include "Sensors/pitot.h"
 #include "Sensors/WorldMagModel.h"
 #include "Sensors/WMMInternal.h"	//Used to get constants
+#include "Sensors/cal.h"
+#include "Sensors/accel_down.h"
 //Control headers
 #include "Control/imu.h"
 #include "Control/types.h"
-#include "Control/cal.h"
 #include "Control/servos.h"
 //Utilities headers
 #include "Util/delay.h"
@@ -42,7 +43,7 @@
 
 //Globals go here - this is the only place in the project where globals accessed globally are declared
 Buffer_Type Gps_Buffer, Usart1tx, Usart1rx;//GPS data buffer, USART1 tx and rx buffers
-Float_Vector Waypoint_Global;	//Waypoint in NED
+float Waypoint_Global[3];	//Waypoint in NED
 float Long_To_Meters_Home;	//Conversion factor for longditude to meters
 volatile Ubx_Gps_Type Gps __attribute__((packed));//Global Gps, there is also a static gps in the ekf/imu filter code
 volatile Nav_Type Nav_Global;	//EKF state
@@ -82,7 +83,7 @@ int main(void) {
 		usart1_send_data_dma(&Usart1tx,&Usart1rx);//enable the usart1 dma, dma for spi2 cannot be used now - blocks until tx complete
 		timeout=Millis;				//Set the timer
 		do {
-			while(Bytes_In_Buffer(&Usart1rx, USART1RX_DMA1)) {//if there is any data on the mavlink port, there may be a packet
+			while(Bytes_In_Buffer(&Usart1rx)) {//if there is any data on the mavlink port, there may be a packet
 				UAVtalk_Process_Byte(Pop_From_Buffer(&Usart1rx),&uavtalk_usart_port);//grab a byte from the usart dma buffer
 			}
 		}while(Millis-timeout<UAVTALK_RX_TIMEOUT_MS);//We need to give up at some point as there may be no/corrupted data
@@ -153,7 +154,7 @@ void Initialisation() {
 	// Setup the GPIOs
 	All_IO_Configuration();
 	// Confidue the DMA (for the USART2 - GPS)
-	Gps_Buffer.size=BUFFER_SIZE;Gps_Buffer.tail=0;Gps_Buffer.DMA_Channel=USART2RX_DMA1//Set the buffer size to the defined one here
+	Gps_Buffer.size=BUFFER_SIZE;Gps_Buffer.tail=0;Gps_Buffer.DMA_Channel=USART2RX_DMA1;//Set the buffer size to the defined one here
 	DMA_USART2_Configuration(&Gps_Buffer);
 	// Enable the DMA for USART2
 	DMA_Cmd(USART2RX_DMA1, ENABLE);
@@ -164,9 +165,9 @@ void Initialisation() {
 	// Setup the I2C1
 	I2C_Config();
 	//Schedule all I2C1 sensors to be configured
-	SCHEDULE_CONFIG
+	SCHEDULE_CONFIG;
 	//Enable interrupts - note the EKF still hasnt been enabled
-	EXTI6_Config();					//Configure the interrupt from gyro that runs the EKF
+	EXTI_Config();					//Configure the all the interrupts - the EKF wont run yet
 	for(;err;err++) {
 		if(!Jobs)				//All scheduled jobs completed
 			break;
@@ -176,34 +177,34 @@ void Initialisation() {
 		Usart_Send_Str((char*)"Setup all sensors\r\n");
 	else {
 		printf("I2C error:%d at job number:%d\r\n",I2C1error.error,I2C1error.job);
-		if(Jobs_Completed&(1<<PITOT_CONFIG_NO)){
-			Jobs_Completed&=~(1<<PITOT_CONFIG_NO);
+		if(Completed_Jobs&(1<<PITOT_CONFIG_NO)){
+			Completed_Jobs&=~(1<<PITOT_CONFIG_NO);
 			Usart_Send_Str((char*)"Setup pitot\r\n");
 		}		
-		if(Jobs_Completed&(1<<MAGNO_CONFIG_NO)){
-			Jobs_Completed&=~(1<<MAGNO_CONFIG_NO);
+		if(Completed_Jobs&(1<<MAGNO_CONFIG_NO)){
+			Completed_Jobs&=~(1<<MAGNO_CONFIG_NO);
 			Usart_Send_Str((char*)"Setup magno\r\n");
 		}
-		if(Jobs_Completed&(1<<BMP_READ)){
-			Jobs_Completed&=~(1<<BMP_READ);
+		if(Completed_Jobs&(1<<BMP_READ)){
+			Completed_Jobs&=~(1<<BMP_READ);
 			Usart_Send_Str((char*)"Setup baro\r\n");
 		}
-		if(Jobs_Completed&(1<<ACCEL_CONFIG_NO)){
-			Jobs_Completed&=~(1<<ACCEL_CONFIG_NO);
+		if(Completed_Jobs&(1<<ACCEL_CONFIG_NO)){
+			Completed_Jobs&=~(1<<ACCEL_CONFIG_NO);
 			Usart_Send_Str((char*)"Setup accel\r\n");
 		}
-		if(Jobs_Completed&(1<<GYRO_CONFIG_NO)){
-			Jobs_Completed&=~(1<<GYRO_CONFIG_NO);
+		if(Completed_Jobs&(1<<GYRO_CONFIG_NO)){
+			Completed_Jobs&=~(1<<GYRO_CONFIG_NO);
 			Usart_Send_Str((char*)"Setup gyro\r\n");
 		}
-		if(Jobs_Completed&(1<<GYRO_CLK_NO)){
-			Jobs_Completed&=~(1<<GYRO_CLK_NO);
+		if(Completed_Jobs&(1<<GYRO_CLK_NO)){
+			Completed_Jobs&=~(1<<GYRO_CLK_NO);
 			Usart_Send_Str((char*)"Setup gyro clk\r\n");
 		}
 	}
 	Delay(0x4FFFF);//Wait for a short period to allow the interrupt driven I2C1 reads to fire off and retrieve us some data
 	printf(" %d,%d,%d\r\n",Flipbytes(Magno_Data_Buffer[0]),Flipbytes(Magno_Data_Buffer[1]),Flipbytes(Magno_Data_Buffer[2]));
-	printf(" %d,%d,%d\r\n",Accel_Data_Buffer[0]),Accel_Data_Buffer[1]),Accel_Data_Buffer[2]));//Accel has correct endianess
+	printf(" %d,%d,%d\r\n",Accel_Data_Buffer[0],Accel_Data_Buffer[1],Accel_Data_Buffer[2]);//Accel has correct endianess
 	printf(" %d,%d,%d\r\n",Flipbytes(Gyro_Data_Buffer[0]),Flipbytes(Gyro_Data_Buffer[1]),Flipbytes(Gyro_Data_Buffer[2]));
 	Millis+=TEMPERATURE_PERIOD;			//Hack the system uptime in order to cause a bmp05 temperature
 	Delay(0x4FFFF);//Wait for a short period to allow the interrupt driven I2C1 to read bmp pressure
@@ -242,8 +243,8 @@ void Initialisation() {
 		home[0]+=(float)Gps.latitude;
 		home[1]+=(float)Gps.longitude;
 		home[2]-=(float)Gps.mslaltitude;//NED frame - alititude is negative
-		if(Jobs_Completed&(1<<BMP_24BIT))//BMP085 has been read (it should have been)
-			Jobs_Completed&~(1<<BMP_24BIT);//check off the job
+		if(Completed_Jobs&(1<<BMP_24BIT)){//BMP085 has been read (it should have been)
+			Completed_Jobs&~(1<<BMP_24BIT);//check off the job
 			Bmp_Simp_Conv(&device_temperature,&raw_pressure);//convert to pressure
 			mean_pressure+=raw_pressure;
 		}
@@ -281,8 +282,8 @@ void Initialisation() {
 	//Set the earths gravity
 	INSSetGravity(Home_Position.g_e);
 	//Use home position to initialise the ekf - assume that we intialise stationary with no gyro bias, and grab accel and magno data
-	Calibrate_3(&mag_corr,Magno_Data_Buffer,Mag_Cal_Dat);
-	Calibrate_3(&acc_corr,Accel_Data_Buffer,Acc_Cal_Dat);
+	Calibrate_3(&mag_corr,Magno_Data_Buffer,&Mag_Cal_Dat);
+	Calibrate_3(&acc_corr,Accel_Data_Buffer,&Acc_Cal_Dat);
 	//quaternion init code - from Openpilot
 	RotFrom2Vectors((float*)&acc_corr, ge, (float*)&mag_corr, Field, Rbe);
 	R2Quaternion(Rbe, q);

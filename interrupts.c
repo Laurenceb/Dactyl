@@ -9,8 +9,8 @@
 #include "interrupts.h"
 #include "stm32f10x.h"
 #include "Control/imu.h"
-#include "i2cint.h"
-#include "sensors/bmp.h"
+#include "i2c_int.h"
+#include "Sensors/bmp085.h"
 
 extern volatile uint32_t Millis,Kalman_Enabled;//We need to be aware of the system time to schedule temperature conversions at 1hz, Kalman flag
 
@@ -63,7 +63,7 @@ void EXTI_Config(void)
   NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
   NVIC_Init(&NVIC_InitStructure);//Note that Interrupt lines are grouped as they go into the NVIC controller
   //Now we configure the Accel data ready ISR
-  NVIC_InitStructure.NVIC_IRQChannel = EXTI10_15_IRQn;//The accel triggered interrupt	
+  NVIC_InitStructure.NVIC_IRQChannel = EXTI15_10_IRQn;//The accel triggered interrupt	
   NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x00;//Higher pre-emption priority
   NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x07;//Lowest group priority
   NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
@@ -122,7 +122,7 @@ void EXTI9_5_IRQHandler(void)
   * @param  None
   * @retval None
   */
-void EXTI10_15_IRQHandler(void)
+void EXTI15_10_IRQHandler(void)
 {
   if(EXTI_GetITStatus(EXTI_Line12) != RESET)
   {

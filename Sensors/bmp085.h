@@ -1,6 +1,6 @@
 //Dactyl project v1.0
 #include "stm32f10x.h"
-#include "../i2c.h"
+#include "../i2c_int.h"
 
 typedef struct{			//Structure for holding calibration data from onboard EEPROM
 	int16_t ac1;
@@ -28,6 +28,7 @@ extern float Sea_Level_Pressure;
 #define BMP085_ADC 0xF6
 #define BMP085_CTRL 0xF4
 #define BMP085_TEMP 0x2E
+#define BMP085_DATA 0xAA
 #if OSS==3
 	#define BMP085_PRES 0xF4
 #elif OSS==2
@@ -46,11 +47,13 @@ extern float Sea_Level_Pressure;
 
 //function prototypes
 void Bmp085_Convert(int32_t* temperature_out, int32_t* temperature, uint32_t* pressure, Bmp_Cal_Type* cal);
+#ifdef BMP_POLLED
 I2C_Returntype Bmp085_ReadConfig(Bmp_Cal_Type* cal);
 I2C_Returntype bmp085ReadShort(uint8_t address,uint16_t* data);
 I2C_Returntype Baro_Read_ADC(int32_t* data);
 I2C_Returntype Baro_Read_Full_ADC(uint32_t* data);
 I2C_Returntype Baro_Setup_Pressure(void);
 I2C_Returntype Baro_Setup_Temperature(void);
+#endif
 float Baro_Convert_Pressure(uint32_t p);
-#define Bmp_Copy_Temp() Bmp_temp=Bmp_Temp_buffer;/*copy over buffer*/
+#define Bmp_Copy_Temp() Bmp_temp=Bmp_Temp_Buffer;/*copy over buffer*/
