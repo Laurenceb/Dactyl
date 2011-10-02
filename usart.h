@@ -5,7 +5,15 @@
 #include "stm32f10x.h"
 #include <stdio.h>
 #include "Sensors/ubx.h"
-#include "../dma.h"
+#include "dma.h"
+#include "main.h"
+
+//ISR buffer datatype
+typedef struct{
+	uint16_t head;
+	uint16_t tail;
+	uint8_t data[BUFFER_SIZE];
+} ISR_Buffer_Type;
 
 //Defines - USART 1 and 2 used
 
@@ -34,6 +42,9 @@ void Gps_Send_Str(char* str);
 void Gps_Send_Utf8(char* str);
 void usart1_send_data_dma(Buffer_Type* tx_buffer, Buffer_Type* rx_buffer);
 void usart1_disable_dma(void);
+void Add_To_ISR_Buffer(ISR_Buffer_Type* buff, uint8_t c);
+uint8_t Get_From_ISR_Buffer(ISR_Buffer_Type* buff);
+uint16_t Bytes_In_ISR_Buffer(ISR_Buffer_Type* buff);
 
 /* Private function prototypes -----------------------------------------------*/
 #ifdef USE_LIBC_PRINTF	/*define in main.h to set the printf function that is used */

@@ -1,5 +1,6 @@
 //Dactyl project v1.0
 #pragma once
+#include <stdio.h>
 #include "stm32f10x.h"
 //Datatypes
 typedef struct{
@@ -19,8 +20,6 @@ typedef struct{
 extern volatile uint32_t Jobs,Completed_Jobs;	//used for task control (only ever access this from outside for polling Jobs/Reading Completed_Jobs)
 extern volatile I2C_Error_Type I2C1error;	//used to store error state
 //Macros
-//Null pointer
-#define NULL (uint8_t*)0
 //MEMS specific defines
 #define MAGNO_ADDR 0x3C
 #define MAGNO_DATA 0xFF				/*sub address where data begins*/

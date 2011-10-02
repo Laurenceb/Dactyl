@@ -4,6 +4,9 @@
 #include "usart.h"
 #include "dma.h"
 
+//Globals
+volatile ISR_Buffer_Type Usart1_rx_buff;
+
 //Public functions
 
 /**
@@ -172,6 +175,43 @@ void usart1_disable_dma(void) {
 	USART_DMACmd(USART1_USART, USART_DMAReq_Tx|USART_DMAReq_Tx , DISABLE);
 }
 
+/**
+  * @brief  USART1 Rx interrupt handler
+  * @param  None
+  * @retval None
+  */
+void USART1_IRQHandler(void) { 
+	Add_To_ISR_Buffer(&Usart1_rx_buff, USART_ReceiveData(USART1)); 
+}
+
+/**
+  * @brief  Adds a byte to an ISR buffer type 
+  * @param  Pointer to the buffer structure, byte to add
+  * @retval None
+  */
+void Add_To_ISR_Buffer(ISR_Buffer_Type* buff, uint8_t c) {
+	buff->data[buff->head++]=c;	//Add to the buffer
+	buff->head%=BUFFER_SIZE;	//Put head in correct range
+}
+
+/**
+  * @brief  Get a byte from an ISR buffer type 
+  * @param  Pointer to the buffer structure
+  * @retval Byte out of buffer
+  */
+uint8_t Get_From_ISR_Buffer(ISR_Buffer_Type* buff) {
+	uint8_t a=buff->data[buff->tail++];
+	buff->tail%=BUFFER_SIZE;
+}
+
+/**
+  * @brief  Number of bytes in an ISR buffer type 
+  * @param  Pointer to the buffer structure
+  * @retval Bytes in the buffer
+  */
+uint16_t Bytes_In_ISR_Buffer(ISR_Buffer_Type* buff) {
+	return ((uint16_t)buff->head-(uint16_t)buff->tail)%BUFFER_SIZE;
+}
 
 //Private functions
 void __usart_send_char(char data) {
@@ -183,4 +223,3 @@ void __gps_send_char(char data) {
     USART_SendData(USART2_USART, data);
     while(USART_GetFlagStatus(USART2_USART, USART_FLAG_TXE) == RESET) {}
 }
-
