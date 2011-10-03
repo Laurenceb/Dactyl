@@ -15,6 +15,9 @@ typedef struct{
 	uint8_t data[BUFFER_SIZE];
 } ISR_Buffer_Type;
 
+//Globals
+extern volatile ISR_Buffer_Type Usart1_rx_buff;
+
 //Defines - USART 1 and 2 used
 
 //This is the DEBUG header
