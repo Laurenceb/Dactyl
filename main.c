@@ -67,7 +67,6 @@ Telemetery_Stats_Type Flight_Telem;
 //more objects can go here if required (best to try and use existing variables) 
 
 int main(void) {
-	uint32_t timeout=0;
 	rprintfInit(__usart_send_char);//inititalise reduced printf functionality
 	Initialisation();//initialise all hardware
 	UAVtalk_Register_Object(0,UAVtalk_Attitude_Array);//Initialise UAVtalk objects here
@@ -80,13 +79,9 @@ int main(void) {
 		//All USART1 UAVtalk streams go here
 		UAVtalk_Register_Object(6,(uint8_t*)&uavtalk_usart_port.flightStats);//Initialise the link stats objects
 		UAVtalk_Register_Object(7,(uint8_t*)&uavtalk_usart_port.gcsStats);//These are attached to the port, set before using the port
-		usart1_send_data_dma(&Usart1tx,&Usart1rx);//enable the usart1 dma, dma for spi2 cannot be used now - blocks until tx complete
-		timeout=Millis;				//Set the timer
-		do {
-			while(Bytes_In_Buffer(&Usart1rx)) {//if there is any data on the mavlink port, there may be a packet
-				UAVtalk_Process_Byte(Pop_From_Buffer(&Usart1rx),&uavtalk_usart_port);//grab a byte from the usart dma buffer
-			}
-		}while(Millis-timeout<UAVTALK_RX_TIMEOUT_MS);//We need to give up at some point as there may be no/corrupted data
+		usart1_send_data_dma(&Usart1tx);//enable the usart1 dma, dma for spi2 cannot be used now - blocks until tx complete
+		while(Bytes_In_ISR_Buffer(&Usart1_rx_buff)) //if there is any data on the mavlink port, there may be a packet
+			UAVtalk_Process_Byte(Get_From_ISR_Buffer(&Usart1_rx_buff),&uavtalk_usart_port);//grab a byte from the usart isr buffer
 		//Now we process and received data (the dma has to be turned off afterwards so spi can be used)
 		if(uavtalk_usart_port.type&0x0F) {	//A response is required
 			if((uavtalk_usart_port.type&0x0F)==1)//object request
@@ -120,7 +115,7 @@ int main(void) {
 			New_Waypoint_Flagged=1;		//Set the flag to let guidance know new waypoint is ready
 		}
 		#endif
-		usart1_disable_dma();			//Disable the DMA so the DMA is ready for use by SPI2
+		usart1_disable_dma();			//Disable the TX DMA so the DMA is ready for use by SPI2
 		/*
 		UAVtalk_Register_Object(6,(uint8_t*)&uavtalk_ism_port.flightStats);//Initialise the link stats objects
 		UAVtalk_Register_Object(7,(uint8_t*)&uavtalk_ism_port.gcsStats);//These are attached to the port, set before using the port

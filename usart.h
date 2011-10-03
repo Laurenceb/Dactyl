@@ -43,7 +43,7 @@ void USART2_reconf(uint32_t new_baud);
 void Usart_Send_Str(char* str);
 void Gps_Send_Str(char* str);
 void Gps_Send_Utf8(char* str);
-void usart1_send_data_dma(Buffer_Type* tx_buffer, Buffer_Type* rx_buffer);
+void usart1_send_data_dma(Buffer_Type* tx_buffer);
 void usart1_disable_dma(void);
 void Add_To_ISR_Buffer(ISR_Buffer_Type* buff, uint8_t c);
 uint8_t Get_From_ISR_Buffer(ISR_Buffer_Type* buff);

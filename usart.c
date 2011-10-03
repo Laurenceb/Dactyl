@@ -159,9 +159,9 @@ void assert_failed(uint8_t* file, uint32_t line)
   * @param  rx_buffer: pointer to rx storage buffer type - dma rx is left running
   * @retval None
   */
-void usart1_send_data_dma(Buffer_Type* tx_buffer, Buffer_Type* rx_buffer) {
-	DMA_USART1_Configuration(0xFF, tx_buffer,rx_buffer);	//Enable the DMA on USART1
-	USART_DMACmd(USART1_USART, USART_DMAReq_Tx|USART_DMAReq_Tx , ENABLE);//Enable the dma for tx and rx
+void usart1_send_data_dma(Buffer_Type* tx_buffer) {
+	DMA_USART1_Configuration(0xFF, tx_buffer);	//Enable the DMA on USART1
+	USART_DMACmd(USART1_USART, USART_DMAReq_Tx , ENABLE);//Enable the dma for tx
 	while (DMA_GetFlagStatus(USART1TX_DMA_COMPLETE) == RESET) { ; }//Wait for the transmission to complete
 }
 
@@ -171,8 +171,8 @@ void usart1_send_data_dma(Buffer_Type* tx_buffer, Buffer_Type* rx_buffer) {
   * @retval None
   */
 void usart1_disable_dma(void) {
-	DMA_USART1_Configuration(0x00,NULL,NULL);	//Disable the DMA on USART1
-	USART_DMACmd(USART1_USART, USART_DMAReq_Tx|USART_DMAReq_Tx , DISABLE);
+	DMA_USART1_Configuration(0x00,NULL);	//Disable the DMA on USART1
+	USART_DMACmd(USART1_USART, USART_DMAReq_Tx , DISABLE);
 }
 
 /**

@@ -33,25 +33,19 @@ void DMA_USART2_Configuration(Buffer_Type* buffer)
   * @retval None
   * Note this is coded for USART1 Tx,Rx on stm32f10x. The FatFS code handles DMA init/deinit itself and shares these channels
   */
-void DMA_USART1_Configuration(uint8_t enabled, Buffer_Type* tx_buffer, Buffer_Type* rx_buffer) {
+void DMA_USART1_Configuration(uint8_t enabled, Buffer_Type* tx_buffer) {
   if(enabled) {
   	  DMA_InitTypeDef DMA_InitStructure;
 	  /* USART1 RX/TX DMA1 Channel (triggered by USART1 Rx/Tx event) Config */
-	  DMA_DeInit(USART1RX_DMA1);
 	  DMA_DeInit(USART1TX_DMA1); 
 	  DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
 	  DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
 	  DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte;
 	  DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_Byte;
-	  DMA_InitStructure.DMA_Mode = DMA_Mode_Circular;
 	  DMA_InitStructure.DMA_Priority = DMA_Priority_High;
 	  DMA_InitStructure.DMA_M2M = DMA_M2M_Disable;  
-	  DMA_InitStructure.DMA_PeripheralBaseAddr = USART1_BASE+USART_Mode_Rx;
-	  DMA_InitStructure.DMA_MemoryBaseAddr = (uint32_t)&(rx_buffer->data);
-	  DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralSRC;
-	  DMA_InitStructure.DMA_BufferSize = (uint32_t)rx_buffer->size;
-	  DMA_Init(USART1RX_DMA1, &DMA_InitStructure);//init the dma servicing usart1 in non circular mode, transmits all tx buffer
-	  DMA_InitStructure.DMA_PeripheralBaseAddr = USART1_BASE+USART_Mode_Tx;//and receives any data into rx buffer
+	  //init the dma servicing usart1 in non circular mode, transmits all tx buffer
+	  DMA_InitStructure.DMA_PeripheralBaseAddr = USART1_BASE+USART_Mode_Tx;
 	  DMA_InitStructure.DMA_MemoryBaseAddr = (uint32_t)&(tx_buffer->data);//Bytes_In_Buffer can be used to find any received data
 	  DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralDST;
 	  DMA_InitStructure.DMA_Mode = DMA_Mode_Normal;//Tx needs to be normal mode
@@ -59,8 +53,6 @@ void DMA_USART1_Configuration(uint8_t enabled, Buffer_Type* tx_buffer, Buffer_Ty
 	  DMA_Init(USART1TX_DMA1, &DMA_InitStructure);
   }
   else {  /*disable the DMA*/
-	  /* Disable DMA RX Channel */
-	  DMA_Cmd(USART1RX_DMA1, DISABLE);
 	  /* Disable DMA TX Channel */
 	  DMA_Cmd(USART1TX_DMA1, DISABLE);
   }	
