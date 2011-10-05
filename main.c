@@ -69,16 +69,16 @@ Telemetery_Stats_Type Flight_Telem;
 int main(void) {
 	rprintfInit(__usart_send_char);//inititalise reduced printf functionality
 	Initialisation();//initialise all hardware
-	UAVtalk_Register_Object(0,UAVtalk_Attitude_Array);//Initialise UAVtalk objects here
-	UAVtalk_Register_Object(1,(uint8_t*)&Nav_Global);//The actual position points to the first three elements of the global kalman state
-	UAVtalk_Register_Object(2,(uint8_t*)&Nav_Global.Pos[0]);//The actual velocity points to the fourth element of the global kalman state
-	UAVtalk_Register_Object(3,(uint8_t*)UAVtalk_Altitude_Array);//The baro_actual points to the global baro data array
-	UAVtalk_Register_Object(4,(uint8_t*)&Waypoint_Global);//The desired position points to the waypoint
-	UAVtalk_Register_Object(5,(uint8_t*)&Home_Position);//Home position structure, this is set at initialisation
+	UAVtalk_Register_Object(ATTITUDE,UAVtalk_Attitude_Array);//Initialise UAVtalk objects here
+	UAVtalk_Register_Object(POSITION_ACTUAL,(uint8_t*)&Nav_Global);//Actual pos points to the first three elements of the global kalman state
+	UAVtalk_Register_Object(VELOCITY_ACTUAL,(uint8_t*)&Nav_Global.Vel[0]);//Velocity points to the fourth element of the global kalman state
+	UAVtalk_Register_Object(BARO_ACTUAL,(uint8_t*)UAVtalk_Altitude_Array);//The baro_actual points to the global baro data array
+	UAVtalk_Register_Object(POSITION_DESIRED,(uint8_t*)&Waypoint_Global);//The desired position points to the waypoint
+	UAVtalk_Register_Object(HOME_LOCATION,(uint8_t*)&Home_Position);//Home position structure, this is set at initialisation
 	for(;;) {
 		//All USART1 UAVtalk streams go here
-		UAVtalk_Register_Object(6,(uint8_t*)&uavtalk_usart_port.flightStats);//Initialise the link stats objects
-		UAVtalk_Register_Object(7,(uint8_t*)&uavtalk_usart_port.gcsStats);//These are attached to the port, set before using the port
+		UAVtalk_Register_Object(FLIGHT_STATS,(uint8_t*)&uavtalk_usart_port.flightStats);//Initialise the link stats objects
+		UAVtalk_Register_Object(GCS_STATS,(uint8_t*)&uavtalk_usart_port.gcsStats);//These attach to the port, set before using the port
 		usart1_send_data_dma(&Usart1tx);//enable the usart1 dma, dma for spi2 cannot be used now - blocks until tx complete
 		while(Bytes_In_ISR_Buffer(&Usart1_rx_buff)) //if there is any data on the mavlink port, there may be a packet
 			UAVtalk_Process_Byte(Get_From_ISR_Buffer(&Usart1_rx_buff),&uavtalk_usart_port);//grab a byte from the usart isr buffer
