@@ -76,8 +76,8 @@
  #define GPIO_Pin_SPI_SD_MOSI     GPIO_Pin_15
  #define RCC_APBPeriphClockCmd_SPI_SD  RCC_APB1PeriphClockCmd
  #define RCC_APBPeriph_SPI_SD     RCC_APB1Periph_SPI2
- /* - for SPI1 and full-speed APB1: 72MHz/(2*4)=9mhz */
- #define SPI_BaudRatePrescaler_SPI_SD  SPI_BaudRatePrescaler_4
+ /* - for SPI2 and full-speed APB1: 72MHz/(4*2)=9mhz */
+ #define SPI_BaudRatePrescaler_SPI_SD  SPI_BaudRatePrescaler_2
 
 #elif defined(USE_STM32_P103)
  // Olimex STM32-P103 not tested!
