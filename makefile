@@ -53,7 +53,7 @@ ifdef DEBUG
  DEBUG_MACRO = -DDEBUG
 else	#Changed from O2 - optimisation split between control loop and rest of project, using a seperate makefile
  TARGET_OPTS = $(OPTIMISE) -finline -finline-functions-called-once\
-  -funroll-loops -fno-common -fpromote-loop-indices
+  -funroll-loops -fno-common -fpromote-loop-indices -fno-rtti -fno-exceptions
 endif
 
 CC = arm-none-eabi-gcc

@@ -38,6 +38,8 @@
 #include "Util/coords.h"
 #include "Util/uavtalk.h"
 #include "Util/gravity.h"
+#include "Util/RF22/RF22Router.h"
+#include "Util/RF22/RF22Mesh.h"
 //Control loop headers
 #include "Control/insgps.h"
 
@@ -73,7 +75,7 @@ int main(void) {
 	UAVtalk_Register_Object(POSITION_ACTUAL,(uint8_t*)&Nav_Global);//Actual pos points to the first three elements of the global kalman state
 	UAVtalk_Register_Object(VELOCITY_ACTUAL,(uint8_t*)&Nav_Global.Vel[0]);//Velocity points to the fourth element of the global kalman state
 	UAVtalk_Register_Object(BARO_ACTUAL,(uint8_t*)UAVtalk_Altitude_Array);//The baro_actual points to the global baro data array
-	UAVtalk_Register_Object(POSITION_DESIRED,(uint8_t*)&Waypoint_Global);//The desired position points to the waypoint
+	UAVtalk_Register_Object(POSITION_DESIRED_NO,(uint8_t*)&Waypoint_Global);//The desired position points to the waypoint
 	UAVtalk_Register_Object(HOME_LOCATION,(uint8_t*)&Home_Position);//Home position structure, this is set at initialisation
 	for(;;) {
 		//All USART1 UAVtalk streams go here
@@ -208,6 +210,8 @@ void Initialisation() {
 	//Test the pitot tube sensor
 	Delay(0x30FFFF);				//At least 100ms delay for the pitot to enter sleep mode
 	printf("Pitot ADC reads %ld\r\n",Pitot_Conv((uint32_t)Pitot_Pressure));//Debug
+	//Configure and test the Si4432 ISM band radio using RF22 C++ libs from arduino (mesh network mode)
+	rf22.init();
 	//Configure the GPS and test it, block until it gets a lock
 	if(!Config_Gps()) Usart_Send_Str((char*)"Setup GPS ok - awaiting fix\r\n");//If not the function printfs its error
 	while(Gps.status!=UBLOX_3D) {		//Wait for a 3D fix
