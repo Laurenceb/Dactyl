@@ -155,6 +155,7 @@ void EXTI4_IRQHandler(void)
     /*Called Code goes here*/
     if(Kalman_Enabled)		//KALmaaaaaannnnnn!!!
     	run_imu();		//run the kalman filter in this isr (low group priority so others can nest inside)
+    disk_timerproc();		//Run the FatFS timing control - Note: this is run at 8ms (or whatever kalman rate is), not 10ms as in spec
   }
 }
 
