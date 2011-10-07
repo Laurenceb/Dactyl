@@ -12,7 +12,7 @@
 // $Id: RF22Router.cpp,v 1.6 2011/02/15 01:18:03 mikem Exp $
 
 #include <RF22Router.h>
-#include <SPI.h>
+//#include <SPI.h>
 
 RF22Router::RoutedMessage RF22Router::_tmpMessage;
 
@@ -291,8 +291,8 @@ boolean RF22Router::recvfromAck(uint8_t* buf, uint8_t* len, uint8_t* source, uin
 ////////////////////////////////////////////////////////////////////
 boolean RF22Router::recvfromAckTimeout(uint8_t* buf, uint8_t* len, uint16_t timeout, uint8_t* source, uint8_t* dest, uint8_t* id, uint8_t* flags)
 {  
-    unsigned long endtime = millis() + timeout;
-    while (millis() < endtime)
+    unsigned long endtime = Millis + timeout;
+    while (Millis < endtime)
     {
 	if (recvfromAck(buf, len, source, dest, id, flags))
 	    return true;

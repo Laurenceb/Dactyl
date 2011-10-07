@@ -1,4 +1,5 @@
 //Dactyl project v1.0
-
-//TODO add a calibrated sysclk compensated delay
-void Delay(unsigned long delay);
+#include <stm32f10x.h>
+#include <system_stm32f10x.h>
+//A calibrated to sysclk delay
+void Delay(uint32_t delay);

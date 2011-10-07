@@ -3,8 +3,8 @@
 // Copyright (C) 2011 Mike McCauley
 // $Id: RF22.cpp,v 1.12 2011/02/15 01:18:03 mikem Exp $
 
-#include <RF22.h>
-#include <SPI.h>
+#include "RF22.h"
+//#include <SPI.h>
 
 // Interrupt vectors for the 2 Arduino interrupt pins
 // Each interrupt can be handled by a different instance of RF22, allowing you to have
@@ -14,8 +14,8 @@ RF22* RF22::_RF22ForInterrupt[2] = {0, 0};
 // These are indexed by the values of ModemConfigChoice
 // Canned modem configurations generated with 
 // 'http://www.hoperf.com/upfile/RF22B 23B 31B 42B 43B Register Settings_RevB1-v5.xls'
-// Stored in flash (program) memory to save SRAM
-PROGMEM static const RF22::ModemConfig MODEM_CONFIG_TABLE[] =
+// Stored in flash memory to save SRAM
+const RF22::ModemConfig MODEM_CONFIG_TABLE[] =
 {
     { 0x2b, 0x03, 0xf4, 0x20, 0x41, 0x89, 0x00, 0x36, 0x40, 0x0a, 0x1d, 0x80, 0x60, 0x10, 0x62, 0x2c, 0x00, 0x08 }, // Unmodulated carrier
     { 0x2b, 0x03, 0xf4, 0x20, 0x41, 0x89, 0x00, 0x36, 0x40, 0x0a, 0x1d, 0x80, 0x60, 0x10, 0x62, 0x2c, 0x33, 0x08 }, // FSK, PN9 random modulation, 2, 5
@@ -65,7 +65,7 @@ RF22::RF22(uint8_t slaveSelectPin, uint8_t interrupt)
 }
 
 boolean RF22::init()
-{
+{	/*TODO impliment
     // Wait for RF22 POR (up to 16msec)
     delay(16);
 
@@ -103,7 +103,7 @@ boolean RF22::init()
     }
     else
 	return false;
- 
+ */
     clearTxBuf();
     clearRxBuf();
   
@@ -150,7 +150,7 @@ boolean RF22::init()
     spiWrite(RF22_REG_06_INTERRUPT_ENABLE2, RF22_ENPREAVAL);
 
     // Set some defaults. An innocuous ISM frequency
-    setFrequency(434.0);
+    setFrequency(OPERATING_FREQUENCY);
 //    setFrequency(900.0);
     // Some slow, reliable default speed and modulation
     setModemConfig(FSK_Rb2_4Fd36);
@@ -271,42 +271,42 @@ void RF22::reset()
 {
     spiWrite(RF22_REG_07_OPERATING_MODE1, RF22_SWRES);
     // Wait for it to settle
-    delay(1); // SWReset time is nominally 100usec
+    Delay((uint32_t)200); // SWReset time is nominally 100usec
 }
 
 uint8_t RF22::spiRead(uint8_t reg)
-{
+{/*
     digitalWrite(_slaveSelectPin, LOW);
     SPI.transfer(reg & ~RF22_SPI_WRITE_MASK); // Send the address with the write mask off
     uint8_t val = SPI.transfer(0); // The written value is ignored, reg value is read
     digitalWrite(_slaveSelectPin, HIGH);
-    return val;
+    return val;*/
 }
 
 void RF22::spiWrite(uint8_t reg, uint8_t val)
-{
+{/*
     digitalWrite(_slaveSelectPin, LOW);
     SPI.transfer(reg | RF22_SPI_WRITE_MASK); // Send the address with the write mask on
     SPI.transfer(val); // New value follows
-    digitalWrite(_slaveSelectPin, HIGH);
+    digitalWrite(_slaveSelectPin, HIGH);*/
 }
 
 void RF22::spiBurstRead(uint8_t reg, uint8_t* dest, uint8_t len)
-{
+{/*
     digitalWrite(_slaveSelectPin, LOW);
     SPI.transfer(reg & ~RF22_SPI_WRITE_MASK); // Send the start address with the write mask off
     while (len--)
 	*dest++ = SPI.transfer(0);
-    digitalWrite(_slaveSelectPin, HIGH);
+    digitalWrite(_slaveSelectPin, HIGH);*/
 }
 
 void RF22::spiBurstWrite(uint8_t reg, uint8_t* src, uint8_t len)
-{
+{/*
     digitalWrite(_slaveSelectPin, LOW);
     SPI.transfer(reg | RF22_SPI_WRITE_MASK); // Send the start address with the write mask on
     while (len--)
 	SPI.transfer(*src++);
-    digitalWrite(_slaveSelectPin, HIGH);
+    digitalWrite(_slaveSelectPin, HIGH);*/
 }
 
 uint8_t RF22::statusRead()
@@ -465,10 +465,7 @@ boolean RF22::setModemConfig(ModemConfigChoice index)
 {
     if (index > (sizeof(MODEM_CONFIG_TABLE) / sizeof(ModemConfig)))
         return false;
-
-    RF22::ModemConfig cfg;
-    memcpy_P(&cfg, &MODEM_CONFIG_TABLE[index], sizeof(RF22::ModemConfig));
-    setModemRegisters(&cfg);
+    setModemRegisters((ModemConfig*)&MODEM_CONFIG_TABLE[index]);
 
     return true;
 }
@@ -508,8 +505,8 @@ void RF22::waitAvailable()
 // Return true if there is a message available
 bool RF22::waitAvailableTimeout(uint16_t timeout)
 {
-    unsigned long endtime = millis() + timeout;
-    while (millis() < endtime)
+    unsigned long endtime = Millis + timeout;
+    while (Millis < endtime)
 	if (available())
 	    return true;
     return false;

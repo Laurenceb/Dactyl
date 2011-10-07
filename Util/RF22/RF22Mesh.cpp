@@ -12,7 +12,7 @@
 // $Id: RF22Mesh.cpp,v 1.4 2011/02/15 04:51:59 mikem Exp $
 
 #include <RF22Mesh.h>
-#include <SPI.h>
+//#include <SPI.h>
 
 uint8_t RF22Mesh::_tmpMessage[RF22_ROUTER_MAX_MESSAGE_LEN];
 
@@ -62,8 +62,8 @@ boolean RF22Mesh::doArp(uint8_t address)
     // It will contain the complete route to the destination
     uint8_t messageLen = sizeof(_tmpMessage);
     // FIXME: timeout should be configurable
-    unsigned long endtime = millis() + 4000;
-    while (millis() < endtime)
+    unsigned long endtime = Millis + 4000;
+    while (Millis < endtime)
     {
 	if (RF22Router::recvfromAck(_tmpMessage, &messageLen))
 	{
@@ -220,8 +220,8 @@ boolean RF22Mesh::recvfromAck(uint8_t* buf, uint8_t* len, uint8_t* source, uint8
 ////////////////////////////////////////////////////////////////////
 boolean RF22Mesh::recvfromAckTimeout(uint8_t* buf, uint8_t* len, uint16_t timeout, uint8_t* from, uint8_t* to, uint8_t* id, uint8_t* flags)
 {  
-    unsigned long endtime = millis() + timeout;
-    while (millis() < endtime)
+    unsigned long endtime = Millis + timeout;
+    while (Millis < endtime)
     {
 	if (recvfromAck(buf, len, from, to, id, flags))
 	    return true;

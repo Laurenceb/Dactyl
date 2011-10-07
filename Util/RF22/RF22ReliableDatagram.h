@@ -7,6 +7,7 @@
 #ifndef RF22ReliableDatagram_h
 #define RF22ReliableDatagram_h
 
+#include <stdlib.h>
 #include "RF22Datagram.h"
 
 // The acknowledgement bit in the FLAGS

@@ -217,9 +217,16 @@
 #ifndef RF22_h
 #define RF22_h
 
-// Declare f(int,char,float) using extern "C":
- extern "C" boolean RF22::init(void);
-//#include <wiring.h>
+#include <stm32f10x.h>
+#include <stdbool.h>
+#include <string.h>
+#include <math.h>
+#include "config.h"
+extern "C" {
+    #include "../delay.h"
+}
+#define boolean bool
+extern volatile uint32_t Millis;	//System uptime
 // These defs cause trouble on some versions of Arduino
 #undef round
 #undef double

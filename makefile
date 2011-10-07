@@ -38,7 +38,7 @@ TARGET_ARCH = -mcpu=cortex-m3 -mthumb
 INCLUDE_DIRS = -I . -I lib/STM32F10x_StdPeriph_Driver/inc\
  -I lib/STM32F10x_StdPeriph_Driver -I lib/CMSIS_CM3\
  -I lib/STM32_USB-FS-Device_Driver/inc -I Sensors -I Util\
- -I Control -I Util/Fatfs
+ -I Control -I Util/Fatfs -I Util/RF22
 
 LIBRARY_DIRS = -L lib/STM32F10x_StdPeriph_Driver/\
  -L lib/STM32_USB-FS-Device_Driver
@@ -57,7 +57,9 @@ else	#Changed from O2 - optimisation split between control loop and rest of proj
 endif
 
 CC = arm-none-eabi-gcc
+CXX = arm-none-eabi-g++
 CFLAGS = -std=gnu99 $(COMPILE_OPTS)
+CXXFLAGS = $(COMPILE_OPTS)
 
 AS = $(CC) -x assembler-with-cpp -c $(TARGET_ARCH)
 ASFLAGS = $(COMPILE_OPTS)
@@ -85,6 +87,7 @@ MAIN_OBJS = $(sort \
  $(patsubst %.s,%.o,$(wildcard *.s)) \
  $(patsubst %.c,%.o,$(wildcard Util/*.c)) \
  $(patsubst %.c,%.o,$(wildcard Util/Fatfs/*.c)) \
+ $(patsubst %.cpp,%.o,$(wildcard Util/RF22/*.cpp)) \
  $(patsubst %.c,%.o,$(wildcard Sensors/*.c)) \
  $(patsubst %.c,%.o,$(wildcard lib/CMSIS_CM3/*.c)) \
  $(STARTUP_OBJ))

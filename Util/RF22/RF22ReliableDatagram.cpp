@@ -12,7 +12,7 @@
 // $Id: RF22ReliableDatagram.cpp,v 1.8 2011/02/15 01:18:03 mikem Exp $
 
 #include <RF22ReliableDatagram.h>
-#include <SPI.h>
+//#include <SPI.h>
 
 ////////////////////////////////////////////////////////////////////
 // Constructors
@@ -58,13 +58,13 @@ boolean RF22ReliableDatagram::sendtoWait(uint8_t* buf, uint8_t len, uint8_t addr
 
 	if (retries > 1)
 	    _retransmissions++;
-	unsigned long thisSendTime = millis(); // Timeout does not include original transmit time
+	unsigned long thisSendTime = Millis; // Timeout does not include original transmit time
 
 	// Compute a new timeout, random between _timeout and _timeout*2
 	// This is to prevent collissions on every retransmit
 	// if 2 nodes try to transmit at the same time
-	uint16_t timeout = _timeout + (_timeout * random(0, 256) / 256);
-	while (millis() < (thisSendTime + timeout))
+	uint16_t timeout = _timeout + (_timeout * rand()%2);
+	while (Millis < (thisSendTime + timeout))
 	{
 	    if (available())
 	    {
@@ -136,8 +136,8 @@ boolean RF22ReliableDatagram::recvfromAck(uint8_t* buf, uint8_t* len, uint8_t* f
 
 boolean RF22ReliableDatagram::recvfromAckTimeout(uint8_t* buf, uint8_t* len, uint16_t timeout, uint8_t* from, uint8_t* to, uint8_t* id, uint8_t* flags)
 {  
-    unsigned long endtime = millis() + timeout;
-    while (millis() < endtime)
+    unsigned long endtime = Millis + timeout;
+    while (Millis < endtime)
 	if (recvfromAck(buf, len, from, to, id, flags))
 	    return true;
     return false;

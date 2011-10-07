@@ -38,8 +38,7 @@
 #include "Util/coords.h"
 #include "Util/uavtalk.h"
 #include "Util/gravity.h"
-#include "Util/RF22/RF22Router.h"
-#include "Util/RF22/RF22Mesh.h"
+#include "Util/RF22/ctocpp.h"
 //Control loop headers
 #include "Control/insgps.h"
 
@@ -211,7 +210,12 @@ void Initialisation() {
 	Delay(0x30FFFF);				//At least 100ms delay for the pitot to enter sleep mode
 	printf("Pitot ADC reads %ld\r\n",Pitot_Conv((uint32_t)Pitot_Pressure));//Debug
 	//Configure and test the Si4432 ISM band radio using RF22 C++ libs from arduino (mesh network mode)
-	rf22.init();
+	if(!RF22_Init())
+		printf("Si4432 init error\r\n");//this goes via the wrapper function
+	if(RF22_Sendtowait(0x00,0x00,SERVER))	//Ping the networks server at 0x01
+		printf("Sucessfully connected to the network\r\n");
+	else
+		printf("Network connection error\r\n"); 
 	//Configure the GPS and test it, block until it gets a lock
 	if(!Config_Gps()) Usart_Send_Str((char*)"Setup GPS ok - awaiting fix\r\n");//If not the function printfs its error
 	while(Gps.status!=UBLOX_3D) {		//Wait for a 3D fix

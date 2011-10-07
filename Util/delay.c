@@ -1,11 +1,12 @@
 //Dactyl project v1.0
-
+#include "delay.h"
 /**
   * @brief  A simple delay loop
   * @param  Number of loops
   * @retval None
-  * Note this is not compensated for the sysclk speed
+  * Note this is compensated for the sysclk speed
   */
-void Delay(volatile unsigned long delay) {
+void Delay(volatile uint32_t delay) {
+	delay*=SystemFrequency/(1000000*4);
 	for(; delay;){--delay;}
 }
