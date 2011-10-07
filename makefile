@@ -66,7 +66,7 @@ ASFLAGS = $(COMPILE_OPTS)
 
 LD = $(CC)
 LDFLAGS = -Wl,--gc-sections,-Map=$(MAIN_MAP),-cref -T lanchon-stm32.ld -L lib\
- $(INCLUDE_DIRS) $(LIBRARY_DIRS) $(LIBM)
+ $(INCLUDE_DIRS) $(LIBRARY_DIRS) $(LIBM) #-lstdc++
 
 AR = arm-none-eabi-ar
 ARFLAGS = cr

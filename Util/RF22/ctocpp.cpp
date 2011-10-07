@@ -13,3 +13,7 @@ extern "C" uint8_t RF22_Sendtowait(uint8_t* buf, uint8_t len, uint8_t address){
 extern "C" bool RF22_recvfromAckTimeout(uint8_t* buf, uint8_t* len, uint16_t timeout, uint8_t* from, uint8_t* to, uint8_t* id, uint8_t* flags) {
  return rf22.recvfromAckTimeout(buf, len, timeout, from, to, id);
 }
+
+extern "C" void RF22_Reassign(uint8_t New_address){
+  rf22.setThisAddress(New_address);
+}
