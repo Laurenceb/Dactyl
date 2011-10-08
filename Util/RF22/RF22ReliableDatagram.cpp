@@ -63,7 +63,7 @@ boolean RF22ReliableDatagram::sendtoWait(uint8_t* buf, uint8_t len, uint8_t addr
 	// Compute a new timeout, random between _timeout and _timeout*2
 	// This is to prevent collissions on every retransmit
 	// if 2 nodes try to transmit at the same time
-	uint16_t timeout = _timeout + (_timeout * rand()%2);
+	uint16_t timeout = _timeout + (_timeout * (rand()%256)/256);
 	while (Millis < (thisSendTime + timeout))
 	{
 	    if (available())

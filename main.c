@@ -212,10 +212,25 @@ void Initialisation() {
 	//Configure and test the Si4432 ISM band radio using RF22 C++ libs from arduino (mesh network mode)
 	if(!RF22_Init())
 		printf("Si4432 init error\r\n");//this goes via the wrapper function
-	if(RF22_Sendtowait(0x00,0x00,SERVER))	//Ping the networks server at 0x01
-		printf("Sucessfully connected to the network\r\n");
-	else
-		printf("Network connection error\r\n"); 
+	else {
+		printf("Connecting to Network..\r\n");
+		if(RF22_Sendtowait(0x00,0x00,SERVER)) {	//Ping the networks server at 0x01
+			printf("Sucessfully connected to the network\r\n");
+			uint8_t buf,len=1,from;
+			if(RF22_recvfromAckTimeout(buf, &len, 3000, &from)) {//Wait for a reply from the server - 3s timeout (assigned address)
+				if(len>1 || from!=SERVER || !buf)//Shouldnt happen - we receive one byte!=0 from server
+					printf("Protocol error\r\n");
+				else {
+					RF22_Reassign(buf);//Set the designated address
+					printf("We are 0x%2x\r\n",buf);
+				}
+			}
+			else
+				printf("Network response error\r\n");
+		}
+		else
+			printf("Network connection error\r\n");
+	}
 	//Configure the GPS and test it, block until it gets a lock
 	if(!Config_Gps()) Usart_Send_Str((char*)"Setup GPS ok - awaiting fix\r\n");//If not the function printfs its error
 	while(Gps.status!=UBLOX_3D) {		//Wait for a 3D fix
