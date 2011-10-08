@@ -17,3 +17,7 @@ extern "C" bool RF22_recvfromAckTimeout(uint8_t* buf, uint8_t* len, uint16_t tim
 extern "C" void RF22_Reassign(uint8_t New_address){
   rf22.setThisAddress(New_address);
 }
+
+extern "C" void RF22_Service_ISR(void){
+  rf22.handleInterrupt();
+}

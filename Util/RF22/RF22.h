@@ -879,6 +879,11 @@ public:
     /// \return The RSSI
     uint8_t        lastRssi();
 
+    /// This is a low level function to handle the interrupts for one instance of RF22.
+    /// Called automatically by isr0() and isr1()
+    /// Should not need to be called. - this has been moved out of protected section
+    void           handleInterrupt();
+
 protected:
     /// Sets the message preamble length in RF22_REG_34_PREAMBLE_LENGTH
     /// \param[in] nibbles Preamble length in nibbles of 4 bits each.  
@@ -889,11 +894,6 @@ protected:
     /// \param[in] syncWords Array of sync words
     /// \param[in] len Number of sync words to set
     void           setSyncWords(uint8_t* syncWords, uint8_t len);
-
-    /// This is a low level function to handle the interrupts for one instance of RF22.
-    /// Called automatically by isr0() and isr1()
-    /// Should not need to be called.
-    void           handleInterrupt();
 
     /// Clears the receiver buffer.
     /// Internal use only

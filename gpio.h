@@ -69,6 +69,6 @@ void All_IO_Configuration(void); 		//sets up all needed GPIO pins not configured
 #define Set_RS485_Dir(dir)	GPIO_WriteBit(GPIOA,RS485_DIR_PIN,(BitAction)dir)//sets comms direction on rs485
 #define Set_FET(state)		GPIO_WriteBit(GPIOA,FET_GATE_PIN,(BitAction)state)//sets the power mosfet gate
 #define Set_Mosfet(state)	GPIO_WriteBit(GPIOA,PWM_SAMPLE_PIN,(BitAction)state)//sets the pwm sample mosfet gate
-#define Get_Si4432_DRDY()	GPIO_ReadInputDataBit(GPIOA,SI4423_DRDY_PIN)	 //returns si4432 DRDY (uint8_t)
+#define Get_Si4432_DRDY()	GPIO_ReadInputDataBit(GPIOA,SI4432_DTRD_PIN)	 //returns si4432 DTRD (uint8_t)
 #define Get_GPS_TM()		GPIO_ReadInputDataBit(GPIOB,GPS_TM_PIN)		 //returns GPS timemark pin (uint8_t)
 uint8_t Get_MEMS_DRDY();			//returns MEMS signals - as flag bits
