@@ -193,13 +193,16 @@ void UAVtalk_Run_Streams(UAVtalk_Port_Type* port,Buffer_Type* buff,uint32_t upti
 	for(i=0;i<UAVtalk_conf.num_stream_objects && port->flightStats.Status==FLIGHTTELEMETRYSTATS_STATUS_CONNECTED;i++) {//Connected? send objects
 		UAVtalk_conf.stream_timers[i]-=(uptime-millis);//Adjust timer
 		if(UAVtalk_conf.stream_timers[i]<0 && !packet_gen) {//Timer expired
-			port->object_no=UAVtalk_conf.stream_object_nos[i];//Set the appropriate object number (i.e. 0,1,2,3,4 as in objectid array)
-			//Note we do not set the instance here (TODO find out if its essential)
-			//UAVtalk_conf.semaphores[port->object_no]=WRITE;//Set the object as written to be sure it is sent (Note done externally)
-			port->type=UAVtalk_conf.stream_object_types[i];//Set the type
-			UAVtalk_Generate_Packet(port,buff);//Generate the expired packet
-			UAVtalk_conf.stream_timers[i]=UAVtalk_conf.stream_intervals[i];//Reset to default
-			packet_gen=1;
+			if(UAVtalk_conf.lenghts[UAVtalk_conf.stream_object_nos[i]]){//Stop if the buffer is full
+				port->object_no=UAVtalk_conf.stream_object_nos[i];//Set the object number (i.e. 0,1,2,3,4 as in objectid array)
+				//Note we do not set the instance here (TODO find out if its essential)
+				//UAVtalk_conf.semaphores[port->object_no]=WRITE;//Set the object as written (Note done externally)
+				port->type=UAVtalk_conf.stream_object_types[i];//Set the type
+				UAVtalk_Generate_Packet(port,buff);//Generate the expired packet
+				UAVtalk_conf.stream_timers[i]=UAVtalk_conf.stream_intervals[i];//Reset to default
+			}
+			else
+				packet_gen=1;
 		}
 	}
 	millis=uptime;				//Set our local time variable
