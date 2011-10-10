@@ -158,24 +158,24 @@ void UAVtalk_Generate_Packet(UAVtalk_Port_Type* msg, Buffer_Type* buff) {
 	if((msg->type&0x0F)>2) i=0;		//If we have type ACK or NACK we send no payload
 	if(i>=0) {				//If we are able to run
 		//UAVtalk_conf.semaphores[msg->object_no]=0;//Lock the data by setting it to zero
-		buff->data[0]=UAVTALK_SYNC;	//Sync byte comes first
-		buff->data[1]=(UAVtalk_conf.version<<4)|(msg->type&0x0F);//Type of message as setup beforehand- also protocol version
-		buff->data[2]=(uint8_t)(i&0x00FF);//The number of payload bytes
-		buff->data[3]=(uint8_t)((i>>8)&0x00FF);//Little endian
-		buff->data[4]=(uint8_t)(UAVtalk_conf.object_ids[msg->object_no]&0x000000FF);//Little endian object id
-		buff->data[5]=(uint8_t)((UAVtalk_conf.object_ids[msg->object_no]>>8)&0x000000FF);
-		buff->data[6]=(uint8_t)((UAVtalk_conf.object_ids[msg->object_no]>>16)&0x000000FF);
-		buff->data[7]=(uint8_t)((UAVtalk_conf.object_ids[msg->object_no]>>24)&0x000000FF);
-		buff->data[8]=(uint8_t)(msg->instance_id&0x00FF);
-		buff->data[9]=(uint8_t)(msg->instance_id>>8);//Instance - little endian
+		buff->data[buff->tail++]=UAVTALK_SYNC;//Sync byte comes first - buff.tail is used to hold number of bytes in buffer
+		buff->data[buff->tail++]=(UAVtalk_conf.version<<4)|(msg->type&0x0F);//Type of message as setup prev- also proto version
+		buff->data[buff->tail++]=(uint8_t)(i&0x00FF);//The number of payload bytes
+		buff->data[buff->tail++]=(uint8_t)((i>>8)&0x00FF);//Little endian
+		buff->data[buff->tail++]=(uint8_t)(UAVtalk_conf.object_ids[msg->object_no]&0x000000FF);//Little endian object id
+		buff->data[buff->tail++]=(uint8_t)((UAVtalk_conf.object_ids[msg->object_no]>>8)&0x000000FF);
+		buff->data[buff->tail++]=(uint8_t)((UAVtalk_conf.object_ids[msg->object_no]>>16)&0x000000FF);
+		buff->data[buff->tail++]=(uint8_t)((UAVtalk_conf.object_ids[msg->object_no]>>24)&0x000000FF);
+		buff->data[buff->tail++]=(uint8_t)(msg->instance_id&0x00FF);
+		buff->data[buff->tail++]=(uint8_t)(msg->instance_id>>8);//Instance - little endian
 		//Copy the data into the rest of the tx buffer - if there is a payload
-		if(i) memcpy(&(buff->data[10]),(uint8_t*)UAVtalk_conf.object_pointers[msg->object_no],i);
+		if(i) memcpy(&(buff->data[buff->tail]),(uint8_t*)UAVtalk_conf.object_pointers[msg->object_no],i);
 		UAVtalk_conf.semaphores[msg->object_no]=READ;//Mark the data as read from (write before read semaphore in operation)
-		i+=10;				//Packet overhead is 11 bytes - CRC8 does not run over the CRC8
-		buff->data[i]=CRC_updateCRC(0,msg->rx_buffer,i);//Add to CRC8 to end
-		buff->size=i+1;			//Holds the number of bytes in tx buffer
-		buff->tail=0;			//Make sure the tail is zero
-		msg->flightStats.TxDataRate+=i;	//Update the telemetery stats using data pointer
+		//Packet overhead is 11 bytes - CRC8 does not run over the CRC8
+		buff->tail+=i;
+		i+=10;
+		buff->data[buff->tail++]=CRC_updateCRC(0,buff->data[buff->tail-i],i);//Add to CRC8 to end
+		msg->flightStats.TxDataRate+=(i+1);//Update the telemetery stats using data pointer
 	}
 }
 
@@ -190,11 +190,12 @@ void UAVtalk_Run_Streams(UAVtalk_Port_Type* port,Buffer_Type* buff,uint32_t upti
 	uint8_t packet_gen=0;			//Logical to let us know a packet has been generated
 	static uint32_t millis=0;		//Local time variable
 	port->type=0x00;			//We only stream basic objects
-	for(i=0;i<UAVtalk_conf.num_stream_objects && port->flightStats.Status==FLIGHTTELEMETRYSTATS_STATUS_CONNECTED;i++) {//Connected? send objects
+	for(i=0;i<UAVtalk_conf.num_stream_objects && port->flightStats.Status;i++) {//Connected or Handshake ACK? send objects
 		UAVtalk_conf.stream_timers[i]-=(uptime-millis);//Adjust timer
 		if(UAVtalk_conf.stream_timers[i]<0 && !packet_gen) {//Timer expired
-			if(UAVtalk_conf.lenghts[UAVtalk_conf.stream_object_nos[i]]){//Stop if the buffer is full
-				port->object_no=UAVtalk_conf.stream_object_nos[i];//Set the object number (i.e. 0,1,2,3,4 as in objectid array)
+			//Stop if the buffer is full - try and fill it as full as poss, note tail holds the top of data
+			if((UAVtalk_conf.lenghts[UAVtalk_conf.stream_object_nos[i]]+11+buff->tail)<buff->size){
+				port->object_no=UAVtalk_conf.stream_object_nos[i];//Set the obj no (i.e. 0,1,2,3,4 as in objectid array)
 				//Note we do not set the instance here (TODO find out if its essential)
 				//UAVtalk_conf.semaphores[port->object_no]=WRITE;//Set the object as written (Note done externally)
 				port->type=UAVtalk_conf.stream_object_types[i];//Set the type
@@ -213,7 +214,7 @@ void UAVtalk_Run_Streams(UAVtalk_Port_Type* port,Buffer_Type* buff,uint32_t upti
   * @param  Pointer to UAVtalk port, system time in ms
   * @retval void
   */
-static void updateTelemetryStats(UAVtalk_Port_Type* port, uint32_t timeNow) {
+void updateTelemetryStats(UAVtalk_Port_Type* port, uint32_t timeNow) {
 	uint8_t forceUpdate;
 	uint8_t connectionTimeout;
 	static uint32_t timeOfLastObjectUpdate;

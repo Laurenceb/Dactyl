@@ -86,6 +86,7 @@ int main(void) {
 		uavtalk_usart_port.type=0;//Reset this before proceeding
 		while(Bytes_In_ISR_Buffer(&Usart1_rx_buff)) //if there is any data on the mavlink port, there may be a packet
 			UAVtalk_Process_Byte(Get_From_ISR_Buffer(&Usart1_rx_buff),&uavtalk_usart_port);//grab a byte from the usart isr buffer
+		updateTelemetryStats(uavtalk_usart_port, Millis);//Process the telemetery
 		//Now we process and received data (the dma has to be turned off afterwards so spi can be used)
 		if(uavtalk_usart_port.type&0x0F) {	//A response is required
 			if((uavtalk_usart_port.type&0x0F)==1)//object request
@@ -94,8 +95,8 @@ int main(void) {
 				uavtalk_usart_port.type|=0x01;//Set the least significant bit (ACK type=3)
 			UAVtalk_Generate_Packet(&uavtalk_usart_port, &Usart1tx);//setup the packet first - load dma buffer
 		}
-		else	//We find a streamed object to place in the buffer instead
-			UAVtalk_Run_Streams(&uavtalk_usart_port, &Usart1tx, Millis);//Run the stream function with the current time
+		//We find a streamed object to place in the buffer to fill it
+		UAVtalk_Run_Streams(&uavtalk_usart_port, &Usart1tx, Millis);//Run the stream function with the current time
 		if(Nav_Flag) {//the isr has run for guidance
 			Watchdog_Reset(); 		//Watchdog reset goes here - requires the guidance to be running also
 			memcpy(UAVtalk_Attitude_Array,&Nav_Global.q[0],16);//copy over the quaternion
@@ -125,12 +126,15 @@ int main(void) {
 		UAVtalk_Register_Object(GCS_STATS,(uint8_t*)&uavtalk_si4432_port.gcsStats);//These attach to the port, set before using the port
 		uavtalk_si4432_port.type=0;//Reset this before proceeding
 		if(Get_Si4432_DRDY()) {//IRQ flag line from the Si4432 modem
+			RF22_Service_ISR();
 			//Get reply from server - first to allow response in loop
 			RF22_recvfromAckTimeout(&(Si4432_buff.data),&(Si4432_buff.tail),0,SERVER);
 			for(n=0;n<Si4432_buff.tail;n++) //if there is any data on the mavlink port, there may be a packet
 				UAVtalk_Process_Byte(Si4432_buff.data[n],&uavtalk_si4432_port);//grab a byte from the usart isr buffer
 		}
-		//Now we process and received data (the dma has to be turned off afterwards so spi can be used)
+		Si4432_buff.tail=0;//tail is zero as we have read all the data
+		updateTelemetryStats(uavtalk_si4432_port, Millis);//Process the telemetery
+		//Now we process any received data (the dma has to be turned off afterwards so spi can be used)
 		if(uavtalk_si4432_port.type&0x0F) {	//A response is required
 			if((uavtalk_si4432_port.type&0x0F)==1)//object request
 				uavtalk_si4432_port.type&=~0x01;//clear the type least sig bit so we send an object back (OBJ type=0)
@@ -138,8 +142,8 @@ int main(void) {
 				uavtalk_si4432_port.type|=0x01;//Set the least significant bit (ACK type=3)
 			UAVtalk_Generate_Packet(&uavtalk_si4432_port, &Si4432_buff);//setup the packet first - load dma buffer
 		}
-		else	//We find a streamed object to place in the buffer instead
-			UAVtalk_Run_Streams(&uavtalk_si4432_port, &Si4432_buff, Millis);//Run the stream function with the current time
+		//We find a streamed object to place in the buffer - will run until buffer full
+		UAVtalk_Run_Streams(&uavtalk_si4432_port, &Si4432_buff, Millis);//Run the stream function with the current time
 		if(uavtalk_si4432_port.object_no==POSITION_DESIRED_NO && UAVtalk_conf.semaphores[1]==WRITE) {//Note the guidance could do this
 			New_Waypoint_Flagged=1;		//set the flag so the guidance knows data is ready
 			UAVtalk_conf.semaphores[POSITION_DESIRED_NO]=READ;//mark the object as read 	
