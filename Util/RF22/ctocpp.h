@@ -11,6 +11,7 @@
 extern RF22Mesh rf22;
  extern "C" {
 #endif
+  #define RF22_MESH_MAX_MESSAGE_LEN_ 58/*64-5-1 = RF22_MESH_MAX_MESSAGE_LEN*/
   bool RF22_Init(void); 
   uint8_t RF22_Sendtowait(uint8_t* buf, uint8_t len, uint8_t address);
   bool RF22_recvfromAckTimeout(uint8_t* buf, uint8_t* len, uint16_t timeout, uint8_t* from);

@@ -240,7 +240,8 @@ extern volatile uint32_t Millis;	//System uptime
 // Rx FIF during reception
 // Can be pre-defined to a smaller size (to save SRAM) prior to including this header
 #ifndef RF22_MAX_MESSAGE_LEN
-#define RF22_MAX_MESSAGE_LEN 255
+//#define RF22_MAX_MESSAGE_LEN 255
+#define RF22_MAX_MESSAGE_LEN 64 /*Reduced to allow packets to fit entirely in the FIFO buffers*/
 #endif
 
 // Max number of octets the RF22 Rx and Tx FIFOs can hold

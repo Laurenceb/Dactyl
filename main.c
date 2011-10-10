@@ -43,7 +43,7 @@
 #include "Control/insgps.h"
 
 //Globals go here - this is the only place in the project where globals accessed globally are declared
-Buffer_Type Gps_Buffer, Usart1tx, Usart1rx, Si4432_buff;//GPS data buffer, USART1 tx and rx buffers, Mesh networking buffers 
+Buffer_Type Gps_Buffer, Usart1tx, Si4432_buff;//GPS data buffer, USART1 tx buffer, Mesh networking buffer 
 float Waypoint_Global[3];	//Waypoint in NED
 float Long_To_Meters_Home;	//Conversion factor for longditude to meters
 volatile Ubx_Gps_Type Gps __attribute__((packed));//Global Gps, there is also a static gps in the ekf/imu filter code
@@ -72,6 +72,7 @@ int main(void) {
 	uint8_t n;
 	rprintfInit(__usart_send_char);//inititalise reduced printf functionality
 	Initialisation();//initialise all hardware
+	Si4432_buff.size=RF22_MESH_MAX_MESSAGE_LEN_;//Set the Si4432 buffer size - note buffer is 256 bytes, so we have wasted space :-/
 	UAVtalk_Register_Object(ATTITUDE,UAVtalk_Attitude_Array);//Initialise UAVtalk objects here
 	UAVtalk_Register_Object(POSITION_ACTUAL,(uint8_t*)&Nav_Global);//Actual pos points to the first three elements of the global kalman state
 	UAVtalk_Register_Object(VELOCITY_ACTUAL,(uint8_t*)&Nav_Global.Vel[0]);//Velocity points to the fourth element of the global kalman state
@@ -86,7 +87,7 @@ int main(void) {
 		uavtalk_usart_port.type=0;//Reset this before proceeding
 		while(Bytes_In_ISR_Buffer(&Usart1_rx_buff)) //if there is any data on the mavlink port, there may be a packet
 			UAVtalk_Process_Byte(Get_From_ISR_Buffer(&Usart1_rx_buff),&uavtalk_usart_port);//grab a byte from the usart isr buffer
-		updateTelemetryStats(uavtalk_usart_port, Millis);//Process the telemetery
+		updateTelemetryStats(&uavtalk_usart_port, Millis);//Process the telemetery
 		//Now we process and received data (the dma has to be turned off afterwards so spi can be used)
 		if(uavtalk_usart_port.type&0x0F) {	//A response is required
 			if((uavtalk_usart_port.type&0x0F)==1)//object request
@@ -133,7 +134,7 @@ int main(void) {
 				UAVtalk_Process_Byte(Si4432_buff.data[n],&uavtalk_si4432_port);//grab a byte from the usart isr buffer
 		}
 		Si4432_buff.tail=0;//tail is zero as we have read all the data
-		updateTelemetryStats(uavtalk_si4432_port, Millis);//Process the telemetery
+		updateTelemetryStats(&uavtalk_si4432_port, Millis);//Process the telemetery
 		//Now we process any received data (the dma has to be turned off afterwards so spi can be used)
 		if(uavtalk_si4432_port.type&0x0F) {	//A response is required
 			if((uavtalk_si4432_port.type&0x0F)==1)//object request

@@ -49,7 +49,7 @@ void DMA_USART1_Configuration(uint8_t enabled, Buffer_Type* tx_buffer) {
 	  DMA_InitStructure.DMA_MemoryBaseAddr = (uint32_t)&(tx_buffer->data);//Bytes_In_Buffer can be used to find any received data
 	  DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralDST;
 	  DMA_InitStructure.DMA_Mode = DMA_Mode_Normal;//Tx needs to be normal mode
-	  DMA_InitStructure.DMA_BufferSize = (uint32_t)tx_buffer->size;
+	  DMA_InitStructure.DMA_BufferSize = (uint32_t)tx_buffer->tail;//Use the tail (This is a bit fudgey as only allows linear buffer?)
 	  DMA_Init(USART1TX_DMA1, &DMA_InitStructure);
   }
   else {  /*disable the DMA*/
