@@ -94,7 +94,7 @@
 ///        MISO pin D12----------SDO   (SPI data out)
 ///                           /--GPIO0 (GPIO0 out to control transmitter antenna TX_ANT
 ///                           \--TX_ANT (TX antenna control in)
-///                           /--GPIO1 (GPIO1 out to control receiver antenna RX_ANT
+///                           /--GPIO2 (GPIO2 out to control receiver antenna RX_ANT
 ///                           \--RX_ANT (RX antenna control in)
 /// \endcode
 /// For an Arduino Mega:
@@ -110,7 +110,7 @@
 ///        MISO pin D50----------SDO   (SPI data out)
 ///                           /--GPIO0 (GPIO0 out to control transmitter antenna TX_ANT
 ///                           \--TX_ANT (TX antenna control in)
-///                           /--GPIO1 (GPIO1 out to control receiver antenna RX_ANT
+///                           /--GPIO2 (GPIO2 out to control receiver antenna RX_ANT
 ///                           \--RX_ANT (RX antenna control in)
 /// \endcode
 /// and you can then use the default constructor RF22(). 

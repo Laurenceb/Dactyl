@@ -142,9 +142,9 @@ boolean RF22::init()
 
     // Ensure the antenna can be switched automatically according to transmit and receive
     // This assumes GPIO0(out) is connected to TX_ANT(in) to enable tx antenna during transmit
-    // This assumes GPIO1(out) is connected to RX_ANT(in) to enable rx antenna during receive
+    // This assumes GPIO2(out) is connected to RX_ANT(in) to enable rx antenna during receive
     spiWrite (RF22_REG_0B_GPIO_CONFIGURATION0, 0x12) ; // TX state
-    spiWrite (RF22_REG_0C_GPIO_CONFIGURATION1, 0x15) ; // RX state
+    spiWrite (RF22_REG_0D_GPIO_CONFIGURATION2, 0x15) ; // RX state
 
     // Enable interrupts	SPI_I2S_SendData(SPI_RF22, out);
 
