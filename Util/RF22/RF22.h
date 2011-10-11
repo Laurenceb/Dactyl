@@ -224,9 +224,11 @@
 #include "config.h"
 extern "C" {
     #include "../delay.h"
+    #include "../../gpio.h"
 }
 #define boolean bool
 extern volatile uint32_t Millis;	//System uptime
+#define SPI_RF22 SPI2			/*Si4432 is on spi2*/
 // These defs cause trouble on some versions of Arduino
 #undef round
 #undef double

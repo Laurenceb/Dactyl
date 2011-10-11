@@ -6,6 +6,7 @@
 #include "RF22.h"
 //#include <SPI.h>
 
+
 // Interrupt vectors for the 2 Arduino interrupt pins
 // Each interrupt can be handled by a different instance of RF22, allowing you to have
 // 2 RF22s per Arduino
@@ -65,20 +66,20 @@ RF22::RF22(uint8_t slaveSelectPin, uint8_t interrupt)
 }
 
 boolean RF22::init()
-{	/*TODO impliment
+{	
     // Wait for RF22 POR (up to 16msec)
-    delay(16);
+//    delay(16);Note: this assumes we have taken some time to get here from POR
 
     // Initialise the slave select pin
-    pinMode(_slaveSelectPin, OUTPUT);
-    digitalWrite(_slaveSelectPin, HIGH);
+//    pinMode(_slaveSelectPin, OUTPUT);
+//    digitalWrite(_slaveSelectPin, HIGH);
   
     // start the SPI library:
     // Note the RF22 wants mode 0, MSB first and default to 1 Mbps
-    SPI.begin();
-    SPI.setDataMode(SPI_MODE0);
-    SPI.setBitOrder(MSBFIRST);
-    SPI.setClockDivider(SPI_CLOCK_DIV16);  // (16 Mhz / 16) = 1 MHz
+//    SPI.begin();
+//    SPI.setDataMode(SPI_MODE0);
+//    SPI.setBitOrder(MSBFIRST);
+//    SPI.setClockDivider(SPI_CLOCK_DIV16);  // (16 Mhz / 16) = 1 MHz
 
     // Software reset the device
     reset();
@@ -89,7 +90,7 @@ boolean RF22::init()
     if (   _deviceType != RF22_DEVICE_TYPE_RX_TRX
         && _deviceType != RF22_DEVICE_TYPE_TX)
 	return false;
-
+/*
 	// Set up interrupt handler
     if (_interrupt == 0)
     {
@@ -103,7 +104,7 @@ boolean RF22::init()
     }
     else
 	return false;
- */
+*/
     clearTxBuf();
     clearRxBuf();
   
@@ -145,7 +146,13 @@ boolean RF22::init()
     spiWrite (RF22_REG_0B_GPIO_CONFIGURATION0, 0x12) ; // TX state
     spiWrite (RF22_REG_0C_GPIO_CONFIGURATION1, 0x15) ; // RX state
 
-    // Enable interrupts
+    // Enable interrupts	SPI_I2S_SendData(SPI_RF22, out);
+
+	/* Wait to receive a byte */
+	while (SPI_I2S_GetFlagStatus(SPI_RF22, SPI_I2S_FLAG_RXNE) == RESET) { ; }
+
+	/* Return the byte read from the SPI bus */
+	return SPI_I2S_ReceiveData(SPI_RF22);
     spiWrite(RF22_REG_05_INTERRUPT_ENABLE1, RF22_ENTXFFAEM | RF22_ENRXFFAFULL | RF22_ENPKSENT | RF22_ENPKVALID | RF22_ENCRCERROR | RF22_ENFFERR);
     spiWrite(RF22_REG_06_INTERRUPT_ENABLE2, RF22_ENPREAVAL);
 
@@ -275,38 +282,72 @@ void RF22::reset()
 }
 
 uint8_t RF22::spiRead(uint8_t reg)
-{/*
-    digitalWrite(_slaveSelectPin, LOW);
-    SPI.transfer(reg & ~RF22_SPI_WRITE_MASK); // Send the address with the write mask off
-    uint8_t val = SPI.transfer(0); // The written value is ignored, reg value is read
-    digitalWrite(_slaveSelectPin, HIGH);
-    return val;*/
+{
+    Set_Si4432_Nsel(Bit_RESET);
+    SPI_I2S_SendData(SPI_RF22, reg & ~RF22_SPI_WRITE_MASK);// Send the address with the write mask off
+    /* Wait to receive a byte */
+    while (SPI_I2S_GetFlagStatus(SPI_RF22, SPI_I2S_FLAG_RXNE) == RESET) { ; }
+    /* Return the byte read from the SPI bus */
+    SPI_I2S_ReceiveData(SPI_RF22);
+    SPI_I2S_SendData(SPI_RF22, 0x00);// Send 0x00
+    /* Wait to receive a byte */
+    while (SPI_I2S_GetFlagStatus(SPI_RF22, SPI_I2S_FLAG_RXNE) == RESET) { ; }
+    /* Return the byte read from the SPI bus */
+    uint8_t val = SPI_I2S_ReceiveData(SPI_RF22);// The written value is ignored, reg value is read 
+    Set_Si4432_Nsel(Bit_SET);
+    return val;
 }
 
 void RF22::spiWrite(uint8_t reg, uint8_t val)
-{/*
-    digitalWrite(_slaveSelectPin, LOW);
-    SPI.transfer(reg | RF22_SPI_WRITE_MASK); // Send the address with the write mask on
-    SPI.transfer(val); // New value follows
-    digitalWrite(_slaveSelectPin, HIGH);*/
+{
+    Set_Si4432_Nsel(Bit_RESET);
+    SPI_I2S_SendData(SPI_RF22, reg | RF22_SPI_WRITE_MASK);// Send the address with the write mask on
+    /* Wait to receive a byte */
+    while (SPI_I2S_GetFlagStatus(SPI_RF22, SPI_I2S_FLAG_RXNE) == RESET) { ; }
+    /* Return the byte read from the SPI bus */
+    SPI_I2S_ReceiveData(SPI_RF22);//dummy read
+    SPI_I2S_SendData(SPI_RF22, val);// Send val
+    /* Wait to receive a byte */
+    while (SPI_I2S_GetFlagStatus(SPI_RF22, SPI_I2S_FLAG_RXNE) == RESET) { ; }
+    /* Return the byte read from the SPI bus */
+    SPI_I2S_ReceiveData(SPI_RF22);// dummy read
+    Set_Si4432_Nsel(Bit_SET);
 }
 
 void RF22::spiBurstRead(uint8_t reg, uint8_t* dest, uint8_t len)
-{/*
-    digitalWrite(_slaveSelectPin, LOW);
-    SPI.transfer(reg & ~RF22_SPI_WRITE_MASK); // Send the start address with the write mask off
-    while (len--)
-	*dest++ = SPI.transfer(0);
-    digitalWrite(_slaveSelectPin, HIGH);*/
+{
+    Set_Si4432_Nsel(Bit_RESET);
+    SPI_I2S_SendData(SPI_RF22, reg & ~RF22_SPI_WRITE_MASK);// Send the address with the write mask off
+    /* Wait to receive a byte */
+    while (SPI_I2S_GetFlagStatus(SPI_RF22, SPI_I2S_FLAG_RXNE) == RESET) { ; }
+    /* Return the byte read from the SPI bus */
+    SPI_I2S_ReceiveData(SPI_RF22);
+    while (len--) {
+    	SPI_I2S_SendData(SPI_RF22, 0x00);// dummy write
+    	/* Wait to receive a byte */
+    	while (SPI_I2S_GetFlagStatus(SPI_RF22, SPI_I2S_FLAG_RXNE) == RESET) { ; }
+    	/* Return the byte read from the SPI bus */
+    	*dest++ = SPI_I2S_ReceiveData(SPI_RF22);
+    }
+    Set_Si4432_Nsel(Bit_SET);
 }
 
 void RF22::spiBurstWrite(uint8_t reg, uint8_t* src, uint8_t len)
-{/*
-    digitalWrite(_slaveSelectPin, LOW);
-    SPI.transfer(reg | RF22_SPI_WRITE_MASK); // Send the start address with the write mask on
-    while (len--)
-	SPI.transfer(*src++);
-    digitalWrite(_slaveSelectPin, HIGH);*/
+{
+    Set_Si4432_Nsel(Bit_RESET);
+    SPI_I2S_SendData(SPI_RF22, reg | RF22_SPI_WRITE_MASK);// Send the address with the write mask on
+    /* Wait to receive a byte */
+    while (SPI_I2S_GetFlagStatus(SPI_RF22, SPI_I2S_FLAG_RXNE) == RESET) { ; }
+    /* Return the byte read from the SPI bus */
+    SPI_I2S_ReceiveData(SPI_RF22);//dummy read
+    while (len--) {
+    	SPI_I2S_SendData(SPI_RF22, *src++);// Send the data
+    	/* Wait to receive a byte */
+    	while (SPI_I2S_GetFlagStatus(SPI_RF22, SPI_I2S_FLAG_RXNE) == RESET) { ; }
+    	/* Return the byte read from the SPI bus */
+    	SPI_I2S_ReceiveData(SPI_RF22);//dummy read
+    }
+    Set_Si4432_Nsel(Bit_SET);
 }
 
 uint8_t RF22::statusRead()

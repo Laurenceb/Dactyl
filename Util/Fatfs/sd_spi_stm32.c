@@ -39,7 +39,7 @@
 
 // demo uses a command line option to define this (see Makefile):
 // #define STM32_SD_USE_DMA
-
+#define MULTI_SPI		/*Allows spi setup to take place here, even if there is no card*/
 
 #ifdef STM32_SD_USE_DMA
 // #warning "Information only: using DMA"
@@ -765,14 +765,18 @@ DSTATUS disk_initialize (
 	}
 	CardType = ty;
 	release_spi();
-
+#ifndef MULTI_SPI			/*allows init of the spi bus at FAST speed to be done here*/
 	if (ty) {			/* Initialization succeeded */
 		Stat &= ~STA_NOINIT;		/* Clear STA_NOINIT */
 		interface_speed(INTERFACE_FAST);
 	} else {			/* Initialization failed */
 		power_off();
 	}
-
+#else
+	if (ty) 			/* Initialization succeeded */
+		Stat &= ~STA_NOINIT;	/* Clear STA_NOINIT */
+	interface_speed(INTERFACE_FAST);
+#endif
 	return Stat;
 }
 

@@ -56,6 +56,7 @@ volatile uint32_t Kalman_Enabled;
 //FatFs filesystem globals go here
 FRESULT f_err_code;
 static FATFS FATFS_Obj;
+FIL FATFS_logfile;
 volatile float Balt;
 //UAVtalk globals
 UAVtalk_Port_Type uavtalk_usart_port;
@@ -349,6 +350,12 @@ void Initialisation() {
 	RTC_init;				//initialise the RTC, turning on the BKP domain
 	Set_RTC_From_GPS(Gps.week,Gps.time);	//First set the RTC correctly, so it can be used by filesystem
 	if((f_err_code = f_mount(0, &FATFS_Obj)))Usart_Send_Str((char*)"FatFs mount error\r\n");//this should only error if internal error
+	else {					//FATFS initialised ok, try init the card, this also sets up the SPI in fast mode (9MHz) if card 
+		if(err=f_open(&FATFS_logfile,"logfile.txt",FA_CREATE_ALWAYS | FA_WRITE)){//present
+			Usart_Send_Str((char*)"FatFs drive error\r\n");
+			if(err==1)Usart_Send_Str((char*)"No uSD card inserted?\r\n");
+		}
+	}
 	Init_Timers();				//Start PWM output timers running (need to enable GPIO seperately)
 	Enable_Servos();			//Setup the GPIO pins to drive the servos
 	Kalman_Enabled=1;			//Enable the Kalman
