@@ -12,6 +12,11 @@
 
 #define READ 0
 #define WRITE 1
+#define OBJ 0
+#define OBJ_REQ 1
+#define OBJ_W_ACK 2
+#define ACK 3
+#define NACK 4
 //macros for the object numbers
 #define ATTITUDE 0
 #define POSITION_ACTUAL 1
