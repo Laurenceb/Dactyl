@@ -24,7 +24,8 @@ extern float Waypoint_Global[3];
 extern float Long_To_Meters_Home;
 extern volatile Ubx_Gps_Type Gps;
 extern volatile Nav_Type Nav_Global,Nav;	
-extern volatile uint32_t Nav_Flag,New_Waypoint_Flagged,Ground_Flag,Millis;
+extern volatile uint8_t Nav_Flag,New_Waypoint_Flagged,Ground_Flag;
+extern volatile uint8_t Millis;
 extern volatile float UAVtalk_Altitude_Array[3];	
 //Just here for debug
 extern volatile float Balt;

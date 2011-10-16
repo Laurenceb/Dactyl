@@ -49,10 +49,11 @@ float Long_To_Meters_Home;	//Conversion factor for longditude to meters
 volatile Ubx_Gps_Type Gps __attribute__((packed));//Global Gps, there is also a static gps in the ekf/imu filter code
 volatile Nav_Type Nav_Global;	//EKF state
 //Flags/Mutex go here
-volatile uint32_t Nav_Flag;	//Used to control and lock global nav state access
-volatile uint32_t New_Waypoint_Flagged;
-volatile uint32_t Ground_Flag;
-volatile uint32_t Kalman_Enabled;
+volatile uint8_t Nav_Flag;	//Used to control and lock global nav state access
+volatile uint8_t New_Waypoint_Flagged;
+volatile uint8_t Ground_Flag;
+volatile uint8_t Kalman_Enabled;
+volatile uint8_t Spi_Locked;	//Used to control SPI2 sharing
 //FatFs filesystem globals go here
 FRESULT f_err_code;
 static FATFS FATFS_Obj;
@@ -113,15 +114,6 @@ int main(void) {
 			New_Waypoint_Flagged=1;		//set the flag so the guidance knows data is ready
 			UAVtalk_conf.semaphores[POSITION_DESIRED_NO]=READ;//mark the object as read 	
 		}
-		//Process waypoints here - waypoints are in local NED meter co-ordinates relative to home position
-		//TODO multiple waypoints needs to be integrated into the GCS, macro flag enables the multiple waypoint functionality
-		#ifdef MULTIPLE_WAYPOINTS
-		if(pow(waypoint_used.x-Nav_Global.Pos[0],2)+pow(waypoint_used.y-Nav_Global.Pos[1],2)<pow(waypoint_horiz,2)&&\
-		pow(waypoint_used.z-Nav_Global.Pos[2],2)<waypoint_vert) {
-			Waypoint_Global=Waypoints[waypoint_index++];//Load the next waypoint
-			New_Waypoint_Flagged=1;		//Set the flag to let guidance know new waypoint is ready
-		}
-		#endif
 		usart1_disable_dma();			//Disable the TX DMA so the DMA is ready for use by SPI2
 		//Now take care of the Si4432 radio modem
 		UAVtalk_Register_Object(FLIGHT_STATS,(uint8_t*)&uavtalk_si4432_port.flightStats);//Initialise the link stats objects
@@ -151,7 +143,18 @@ int main(void) {
 			UAVtalk_conf.semaphores[POSITION_DESIRED_NO]=READ;//mark the object as read 	
 		}
 		RF22_Sendtowait(&(Si4432_buff.data),&(Si4432_buff.tail),SERVER);//First send a packet of packed UAVObjects to the Server
+		//Process waypoints here - waypoints are in local NED meter co-ordinates relative to home position
+		//TODO multiple waypoints needs to be integrated into the GCS, macro flag enables the multiple waypoint functionality
+		#ifdef MULTIPLE_WAYPOINTS
+		if(pow(waypoint_used.x-Nav_Global.Pos[0],2)+pow(waypoint_used.y-Nav_Global.Pos[1],2)<pow(waypoint_horiz,2)&&\
+		pow(waypoint_used.z-Nav_Global.Pos[2],2)<waypoint_vert) {
+
+			Waypoint_Global=Waypoints[waypoint_index++];//Load the next waypoint
+			New_Waypoint_Flagged=1;		//Set the flag to let guidance know new waypoint is ready
+		}
+		#endif
 		//Logfiles and SD card related functionality can go here
+		//Spi_Locked=1; //Lock the spi2 bus
 		/*
 		UAVtalk_Register_Object(6,(uint8_t*)&uavtalk_ism_port.flightStats);//Initialise the link stats objects
 		UAVtalk_Register_Object(7,(uint8_t*)&uavtalk_ism_port.gcsStats);//These are attached to the port, set before using the port
@@ -167,6 +170,7 @@ int main(void) {
 			printf("%5f\r\n",Balt);
 			Balt=-1.0;
 		}*/
+		//Spi_Locked=0; //Unlock the spi2 bus
 	}
 }
 

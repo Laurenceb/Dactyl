@@ -11,8 +11,11 @@
 #include "Control/imu.h"
 #include "i2c_int.h"
 #include "Sensors/bmp085.h"
+#include "gpio.h"
+#include "Util/RF22/ctocpp.h"
 
-extern volatile uint32_t Millis,Kalman_Enabled;//We need to be aware of the system time to schedule temperature conversions at 1hz, Kalman flag
+extern volatile uint32_t Millis;	//We need to be aware of the system time to schedule temperature conversions at 1hz
+extern volatile uint8_t Kalman_Enabled,Spi_Locked;// Kalman flag
 
 /**
   * @brief  Configure all interrupts
@@ -156,6 +159,8 @@ void EXTI4_IRQHandler(void)
     if(Kalman_Enabled)		//KALmaaaaaannnnnn!!!
     	run_imu();		//run the kalman filter in this isr (low group priority so others can nest inside)
     disk_timerproc();		//Run the FatFS timing control - Note: this is run at 8ms (or whatever kalman rate is), not 10ms as in spec
+    if(!Spi_Locked&&Get_Si4432_DRDY()) //SPI2 unlocked, and IRQ flag line from the Si4432 modem
+	RF22_Service_ISR();	//Service the interrupt here - means we have up to 8ms latency
   }
 }
 
