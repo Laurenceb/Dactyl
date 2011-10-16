@@ -181,11 +181,11 @@ void UAVtalk_Generate_Packet(UAVtalk_Port_Type* msg, Buffer_Type* buff) {
 
 /**
   * @brief  Runs UAVtalk packet generator
-  * @param  Pointer to the UAVtalk port structure, pointer to ouput buffer, system time in ms
+  * @param  Pointer to the UAVtalk port structure, pointer to ouput buffer, system time in ms, size to try and keep below (0=ignore this feature)
   * @retval void
   * Note: there aren't seperate timers for each open port, so stream timers just mean an objects will be sent to the first processed port
   */
-void UAVtalk_Run_Streams(UAVtalk_Port_Type* port,Buffer_Type* buff,uint32_t uptime) {
+void UAVtalk_Run_Streams(UAVtalk_Port_Type* port,Buffer_Type* buff,uint32_t uptime,uint8_t tryfor) {
 	uint16_t i=0;
 	uint8_t packet_gen=0;			//Logical to let us know a packet has been generated
 	static uint32_t millis=0;		//Local time variable
@@ -201,6 +201,9 @@ void UAVtalk_Run_Streams(UAVtalk_Port_Type* port,Buffer_Type* buff,uint32_t upti
 				port->type=UAVtalk_conf.stream_object_types[i];//Set the type
 				UAVtalk_Generate_Packet(port,buff);//Generate the expired packet
 				UAVtalk_conf.stream_timers[i]=UAVtalk_conf.stream_intervals[i];//Reset to default
+				//Check to see if the next packet will go past tryfor limit, and if so give up
+				if((UAVtalk_conf.lenghts[UAVtalk_conf.stream_object_nos[i]]+11+buff->tail)>tryfor && tryfor)
+					packet_gen=1;
 			}
 			else
 				packet_gen=1;

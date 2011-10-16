@@ -99,7 +99,7 @@ int main(void) {
 			UAVtalk_Generate_Packet(&uavtalk_usart_port, &Usart1tx);//setup the packet first - load dma buffer
 		}
 		//We find a streamed object to place in the buffer to fill it
-		UAVtalk_Run_Streams(&uavtalk_usart_port, &Usart1tx, Millis);//Run the stream function with the current time
+		UAVtalk_Run_Streams(&uavtalk_usart_port, &Usart1tx, Millis, 0);//Run the stream function with the current time
 		if(Nav_Flag) {//the isr has run for guidance
 			Watchdog_Reset(); 		//Watchdog reset goes here - requires the guidance to be running also
 			memcpy(UAVtalk_Attitude_Array,&Nav_Global.q[0],16);//copy over the quaternion
@@ -119,13 +119,12 @@ int main(void) {
 		UAVtalk_Register_Object(FLIGHT_STATS,(uint8_t*)&uavtalk_si4432_port.flightStats);//Initialise the link stats objects
 		UAVtalk_Register_Object(GCS_STATS,(uint8_t*)&uavtalk_si4432_port.gcsStats);//These attach to the port, set before using the port
 		uavtalk_si4432_port.type=0;//Reset this before proceeding
-		if(Get_Si4432_DRDY()) {//IRQ flag line from the Si4432 modem
+		if(Get_Si4432_DRDY())//IRQ flag line from the Si4432 modem - this is handled in the software ISR, but poll here to speed up
 			RF22_Service_ISR();
-			//Get reply from server - first to allow response in loop
-			RF22_recvfromAckTimeout(&(Si4432_buff.data),&(Si4432_buff.tail),0,SERVER);
-			for(n=0;n<Si4432_buff.tail;n++) //if there is any data on the mavlink port, there may be a packet
-				UAVtalk_Process_Byte(Si4432_buff.data[n],&uavtalk_si4432_port);//grab a byte from the usart isr buffer
-		}
+		//Get reply from server - first to allow response in loop
+		RF22_recvfromAckTimeout(&(Si4432_buff.data),&(Si4432_buff.tail),0,SERVER);
+		for(n=0;n<Si4432_buff.tail;n++) //if there is any data on the mavlink port, there may be a packet
+			UAVtalk_Process_Byte(Si4432_buff.data[n],&uavtalk_si4432_port);//grab a byte from the usart isr buffer
 		Si4432_buff.tail=0;//tail is zero as we have read all the data
 		updateTelemetryStats(&uavtalk_si4432_port, Millis);//Process the telemetery
 		//Now we process any received data (the dma has to be turned off afterwards so spi can be used)
@@ -137,12 +136,17 @@ int main(void) {
 			UAVtalk_Generate_Packet(&uavtalk_si4432_port, &Si4432_buff);//setup the packet first - load dma buffer
 		}
 		//We find a streamed object to place in the buffer - will run until buffer full
-		UAVtalk_Run_Streams(&uavtalk_si4432_port, &Si4432_buff, Millis);//Run the stream function with the current time
+		UAVtalk_Run_Streams(&uavtalk_si4432_port, &Si4432_buff, Millis, 64);//Run the stream function with the current time
 		if(uavtalk_si4432_port.object_no==POSITION_DESIRED_NO && UAVtalk_conf.semaphores[1]==WRITE) {//Note the guidance could do this
 			New_Waypoint_Flagged=1;		//set the flag so the guidance knows data is ready
 			UAVtalk_conf.semaphores[POSITION_DESIRED_NO]=READ;//mark the object as read 	
 		}
-		RF22_Sendtowait(&(Si4432_buff.data),&(Si4432_buff.tail),SERVER);//First send a packet of packed UAVObjects to the Server
+		n=Si4432_buff.tail&0x3F;		//mask
+		RF22_Sendtowait(&(Si4432_buff.data),&n,SERVER);//First send a packet of packed UAVObjects to the Server
+		if(Si4432_buff.tail>=64) {
+			n=Si4432_buff.tail-63;
+			RF22_Sendtowait(&(Si4432_buff.data[64]),&n,SERVER);//Send to server
+		}
 		//Process waypoints here - waypoints are in local NED meter co-ordinates relative to home position
 		//TODO multiple waypoints needs to be integrated into the GCS, macro flag enables the multiple waypoint functionality
 		#ifdef MULTIPLE_WAYPOINTS
