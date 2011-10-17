@@ -74,7 +74,7 @@ int main(void) {
 	uint8_t n;
 	rprintfInit(__usart_send_char);//inititalise reduced printf functionality
 	Initialisation();//initialise all hardware
-	Si4432_buff.size=RF22_MESH_MAX_MESSAGE_LEN_;//Set the Si4432 buffer size - note buffer is 256 bytes, so we have wasted space :-/
+	Si4432_buff.size=RF22_MESH_MAX_MESSAGE_LEN_*2;//Set the Si4432 buffer size - note buffer is 256 bytes, so we have wasted space :-/
 	UAVtalk_Register_Object(ATTITUDE,UAVtalk_Attitude_Array);//Initialise UAVtalk objects here
 	UAVtalk_Register_Object(POSITION_ACTUAL,(uint8_t*)&Nav_Global);//Actual pos points to the first three elements of the global kalman state
 	UAVtalk_Register_Object(VELOCITY_ACTUAL,(uint8_t*)&Nav_Global.Vel[0]);//Velocity points to the fourth element of the global kalman state
@@ -141,12 +141,14 @@ int main(void) {
 			New_Waypoint_Flagged=1;		//set the flag so the guidance knows data is ready
 			UAVtalk_conf.semaphores[POSITION_DESIRED_NO]=READ;//mark the object as read 	
 		}
-		n=Si4432_buff.tail&0x3F;		//mask
-		RF22_Sendtowait(&(Si4432_buff.data),&n,SERVER);//First send a packet of packed UAVObjects to the Server
-		if(Si4432_buff.tail>=64) {
-			n=Si4432_buff.tail-63;
-			RF22_Sendtowait(&(Si4432_buff.data[64]),&n,SERVER);//Send to server
+		if(Si4432_buff.tail>=RF22_MESH_MAX_MESSAGE_LEN_) {//Message is spread over two packets
+			n=RF22_MESH_MAX_MESSAGE_LEN_;	//First send a packet of packed UAVObjects to the Server
+			RF22_Sendtowait(Si4432_buff.data,&n,SERVER);//Send to server
+			n=Si4432_buff.tail-RF22_MESH_MAX_MESSAGE_LEN_;
+			RF22_Sendtowait(&(Si4432_buff.data[RF22_MESH_MAX_MESSAGE_LEN_]),&n,SERVER);
 		}
+		else
+			RF22_Sendtowait(Si4432_buff.data,&Si4432_buff.tail,SERVER);//Send single packet
 		//Process waypoints here - waypoints are in local NED meter co-ordinates relative to home position
 		//TODO multiple waypoints needs to be integrated into the GCS, macro flag enables the multiple waypoint functionality
 		#ifdef MULTIPLE_WAYPOINTS
