@@ -10,6 +10,8 @@
 #define USART1TX_DMA_COMPLETE DMA1_FLAG_TC4
 //Watchdog timeout
 #define MAIN_LOOP_TIMEOUT 250	/*250ms*/
+//Cluster preallocation on the SD card, 3MB should be enough for an hour or so of logging
+#define PRE_SIZE 3000000UL
 
 /* Private functions ---------------------------------------------------------*/
 

@@ -360,11 +360,22 @@ void Initialisation() {
 	RTC_init;				//initialise the RTC, turning on the BKP domain
 	Set_RTC_From_GPS(Gps.week,Gps.time);	//First set the RTC correctly, so it can be used by filesystem
 	if((f_err_code = f_mount(0, &FATFS_Obj)))Usart_Send_Str((char*)"FatFs mount error\r\n");//this should only error if internal error
-	else {					//FATFS initialised ok, try init the card, this also sets up the SPI in fast mode (9MHz) if card 
-		if(err=f_open(&FATFS_logfile,"logfile.txt",FA_CREATE_ALWAYS | FA_WRITE)){//present
+	else {					//FATFS initialised ok, try init the card, this also sets up the SPI in fast mode (9MHz) if card
+		Spi_Locked=1;			//Lockout the SPI from being used by the Si4432 IRQ service 
+		if(err=f_open(&FATFS_logfile,"logfile.txt",FA_CREATE_ALWAYS | FA_WRITE)) {//present
 			Usart_Send_Str((char*)"FatFs drive error\r\n");
-			if(err==1)Usart_Send_Str((char*)"No uSD card inserted?\r\n");
+			if(err==FR_DISK_ERR)Usart_Send_Str((char*)"No uSD card inserted?\r\n");
 		}
+		else{				//We have a mounted card
+			err=f_lseek(&FATFS_logfile, PRE_SIZE);/* Pre-allocate clusters */
+			if (err || f_tell(&FATFS_logfile) != PRE_SIZE)/* Check if the file size has been increased correctly */
+				Usart_Send_Str((char*)"Pre-Allocation error\r\n");
+			else {
+				if(f_lseek(&FATFS_logfile, 0))//Seek back to start of file to start writing
+					Usart_Send_Str((char*)"Seek error\r\n");
+			}
+		}
+		Spi_Locked=0;			//Unlock the SPI
 	}
 	Init_Timers();				//Start PWM output timers running (need to enable GPIO seperately)
 	Enable_Servos();			//Setup the GPIO pins to drive the servos
