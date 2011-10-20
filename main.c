@@ -161,6 +161,8 @@ int main(void) {
 		#endif
 		//Logfiles and SD card related functionality can go here
 		//Spi_Locked=1; //Lock the spi2 bus
+		//if(!f_err_code) {//if the logfile opened ok
+		//File logging "Black box" goes here
 		/*
 		UAVtalk_Register_Object(6,(uint8_t*)&uavtalk_ism_port.flightStats);//Initialise the link stats objects
 		UAVtalk_Register_Object(7,(uint8_t*)&uavtalk_ism_port.gcsStats);//These are attached to the port, set before using the port
@@ -176,6 +178,7 @@ int main(void) {
 			printf("%5f\r\n",Balt);
 			Balt=-1.0;
 		}*/
+		//}
 		//Spi_Locked=0; //Unlock the spi2 bus
 	}
 }
@@ -362,13 +365,13 @@ void Initialisation() {
 	if((f_err_code = f_mount(0, &FATFS_Obj)))Usart_Send_Str((char*)"FatFs mount error\r\n");//this should only error if internal error
 	else {					//FATFS initialised ok, try init the card, this also sets up the SPI in fast mode (9MHz) if card
 		Spi_Locked=1;			//Lockout the SPI from being used by the Si4432 IRQ service 
-		if(err=f_open(&FATFS_logfile,"logfile.txt",FA_CREATE_ALWAYS | FA_WRITE)) {//present
+		if(f_err_code=f_open(&FATFS_logfile,"logfile.txt",FA_CREATE_ALWAYS | FA_WRITE)) {//present
 			Usart_Send_Str((char*)"FatFs drive error\r\n");
-			if(err==FR_DISK_ERR)Usart_Send_Str((char*)"No uSD card inserted?\r\n");
+			if(f_err_code==FR_DISK_ERR)Usart_Send_Str((char*)"No uSD card inserted?\r\n");
 		}
 		else{				//We have a mounted card
-			err=f_lseek(&FATFS_logfile, PRE_SIZE);/* Pre-allocate clusters */
-			if (err || f_tell(&FATFS_logfile) != PRE_SIZE)/* Check if the file size has been increased correctly */
+			f_err_code=f_lseek(&FATFS_logfile, PRE_SIZE);/* Pre-allocate clusters */
+			if (f_err_code || f_tell(&FATFS_logfile) != PRE_SIZE)/* Check if the file size has been increased correctly */
 				Usart_Send_Str((char*)"Pre-Allocation error\r\n");
 			else {
 				if(f_lseek(&FATFS_logfile, 0))//Seek back to start of file to start writing
