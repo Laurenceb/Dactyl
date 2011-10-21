@@ -44,23 +44,22 @@ void I2C1_EV_IRQHandler(void) {
 		}
 	}
 	else if(I2C_GetITStatus(I2C1,I2C_IT_ADDR)) {//we just sent the address - EV6 in ref manual
+		uint8_t a=I2C1->SR1;//Read SR1,2 to clear ADDR
+		a=I2C1->SR2;
 		if(1==I2C_jobs[job].bytes && I2C_Direction_Receiver==I2C_jobs[job].direction && subaddress_sent) {//we are receiving 1 byte - EV6_3
 			I2C_AcknowledgeConfig(I2C1, DISABLE);//turn off ACK
-			uint8_t a=I2C1->SR1;//Read SR1,2 to clear ADDR
-			a=I2C1->SR2;
 			I2C_GenerateSTOP(I2C1,ENABLE);//program the stop
 			I2C_ITConfig(I2C1, I2C_IT_BUF, ENABLE);//allow up to have an EV7
 		}
-		else {//EV6 and EV6_1
-			uint8_t a=I2C1->SR1;//Read SR1,2 to clear ADDR
-			a=I2C1->SR2;
-			if(2==I2C_jobs[job].bytes && I2C_Direction_Receiver==I2C_jobs[job].direction && subaddress_sent) { //rx 2 bytes - EV6_1
-				I2C_AcknowledgeConfig(I2C1, DISABLE);//turn off ACK
-				I2C_ITConfig(I2C1, I2C_IT_BUF, DISABLE);//disable TXE to allow the buffer to fill
-			}
-			else
-				I2C_ITConfig(I2C1, I2C_IT_BUF, ENABLE);//enable TXE to allow the EV7/EV8
+		//EV6 and EV6_1
+		else if(2==I2C_jobs[job].bytes && I2C_Direction_Receiver==I2C_jobs[job].direction && subaddress_sent) { //rx 2 bytes - EV6_1
+			I2C_AcknowledgeConfig(I2C1, DISABLE);//turn off ACK
+			I2C_ITConfig(I2C1, I2C_IT_BUF, DISABLE);//disable TXE to allow the buffer to fill
 		}
+		else if(3==I2C_jobs[job].bytes && I2C_Direction_Receiver==I2C_jobs[job].direction && subaddress_sent)//rx 3 bytes
+			I2C_ITConfig(I2C1, I2C_IT_BUF, DISABLE);//make sure RXNE disabled so we get a BTF in two bytes time
+		else //receiving greater than three bytes, sending subaddress, or transmitting
+			I2C_ITConfig(I2C1, I2C_IT_BUF, ENABLE);
 	}
 	else if(I2C_GetITStatus(I2C1,I2C_IT_BTF)) {//Byte transfer finished - EV7_2, EV7_3 or EV8_2
 		if(I2C_Direction_Receiver==I2C_jobs[job].direction && subaddress_sent) {//EV7_2, EV7_3
