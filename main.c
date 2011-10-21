@@ -212,7 +212,7 @@ void Initialisation() {
 	SCHEDULE_CONFIG;
 	//Enable interrupts - note the EKF still hasnt been enabled
 	EXTI_Config();					//Configure the all the interrupts - the EKF wont run yet
-	for(;err;err++) {
+	for(err=1;err;err++) {
 		if(!Jobs)				//All scheduled jobs completed
 			break;
 		Delay(0x0FFFF);				//A delay in the loop

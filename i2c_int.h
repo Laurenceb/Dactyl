@@ -72,7 +72,7 @@ extern volatile I2C_Error_Type I2C1error;	//used to store error state
 #define GYRO_CLK_NO 12
 //Config all the sensors
 #define CONFIG_SENSORS (uint32_t)((1<<MAGNO_CONFIG_NO)|(1<<GYRO_CONFIG_NO)|(1<<GYRO_CLK_NO)|(1<<ACCEL_CONFIG_NO)|(1<<PITOT_CONFIG_NO)|(1<<BMP_READ))
-#define SCHEDULE_CONFIG Jobs|=CONFIG_SENSORS/*This just adds directly jobs - will require an attempted sensor read (accel) to kick the i2c interrupts off*/
+#define SCHEDULE_CONFIG I2C1_Request_Job(MAGNO_CONFIG_NO);Jobs|=CONFIG_SENSORS/*Just adds directly - job request call starts i2c interrupts off*/
 //Tasking control macros
 //Filter Software ISR config
 #define KALMAN_SW_ISR_NO   EXTI4_IRQn		/*software trigger EXTI4 to run the kalman*/
