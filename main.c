@@ -122,18 +122,20 @@ int main(void) {
 		if(Get_Si4432_DRDY())//IRQ flag line from the Si4432 modem - this is handled in the software ISR, but poll here to speed up
 			RF22_Service_ISR();
 		//Get reply from server - first to allow response in loop
-		RF22_recvfromAckTimeout(&(Si4432_buff.data),(uint8_t*)&(Si4432_buff.tail),0,SERVER);//Note only works on Little Endian (Cortex M3)
-		for(n=0;n<Si4432_buff.tail;n++) //if there is any data on the mavlink port, there may be a packet
-			UAVtalk_Process_Byte(Si4432_buff.data[n],&uavtalk_si4432_port);//grab a byte from the usart isr buffer
-		Si4432_buff.tail=0;//tail is zero as we have read all the data
-		updateTelemetryStats(&uavtalk_si4432_port, Millis);//Process the telemetery
-		//Now we process any received data (the dma has to be turned off afterwards so spi can be used)
-		if(uavtalk_si4432_port.type&0x0F) {	//A response is required
-			if((uavtalk_si4432_port.type&0x0F)==1)//object request
-				uavtalk_si4432_port.type&=~0x01;//clear the type least sig bit so we send an object back (OBJ type=0)
-			if((uavtalk_si4432_port.type&0x0F)==2)//We need to send an ack to the object that was sent
-				uavtalk_si4432_port.type|=0x01;//Set the least significant bit (ACK type=3)
-			UAVtalk_Generate_Packet(&uavtalk_si4432_port, &Si4432_buff);//setup the packet first - load dma buffer
+		RF22_recvfromAckTimeout(Si4432_buff.data,(uint8_t*)&(Si4432_buff.tail),0,(uint8_t*)&n);//Note only for Little Endian (Cortex M3)
+		if(SERVER==n) {		//Message can only come from the server
+			for(n=0;n<Si4432_buff.tail;n++) //if there is any data on the mavlink port, there may be a packet
+				UAVtalk_Process_Byte(Si4432_buff.data[n],&uavtalk_si4432_port);//grab a byte from the usart isr buffer
+			Si4432_buff.tail=0;//tail is zero as we have read all the data
+			updateTelemetryStats(&uavtalk_si4432_port, Millis);//Process the telemetery
+			//Now we process any received data (the dma has to be turned off afterwards so spi can be used)
+			if(uavtalk_si4432_port.type&0x0F) {	//A response is required
+				if((uavtalk_si4432_port.type&0x0F)==1)//object request
+					uavtalk_si4432_port.type&=~0x01;//clear the type least sig bit so we send an object back (OBJ type=0)
+				if((uavtalk_si4432_port.type&0x0F)==2)//We need to send an ack to the object that was sent
+					uavtalk_si4432_port.type|=0x01;//Set the least significant bit (ACK type=3)
+				UAVtalk_Generate_Packet(&uavtalk_si4432_port, &Si4432_buff);//setup the packet first - load dma buffer
+			}
 		}
 		//We find a streamed object to place in the buffer - will run until buffer full
 		UAVtalk_Run_Streams(&uavtalk_si4432_port, &Si4432_buff, Millis, 64);//Run the stream function with the current time
@@ -288,7 +290,7 @@ void Initialisation() {
 		home[1]+=(float)Gps.longitude;
 		home[2]-=(float)Gps.mslaltitude;//NED frame - alititude is negative
 		if(Completed_Jobs&(1<<BMP_24BIT)){//BMP085 has been read (it should have been)
-			Completed_Jobs&~(1<<BMP_24BIT);//check off the job
+			Completed_Jobs&=~(1<<BMP_24BIT);//check off the job
 			Bmp_Simp_Conv(&device_temperature,&raw_pressure);//convert to pressure
 			mean_pressure+=raw_pressure;
 		}
@@ -366,7 +368,7 @@ void Initialisation() {
 		if(RF22_Sendtowait(0x00,0x00,SERVER)) {	//Ping the networks server at 0x01
 			printf("Sucessfully connected to the network\r\n");
 			uint8_t buf,len=1,from;
-			if(RF22_recvfromAckTimeout(buf, &len, 3000, &from)) {//Wait for a reply from the server - 3s timeout (assigned address)
+			if(RF22_recvfromAckTimeout(&buf, &len, 3000, &from)) {//Wait for a reply from the server - 3s timeout (assigned address)
 				if(len>1 || from!=SERVER || !buf)//Shouldnt happen - we receive one byte!=0 from server
 					printf("Protocol error\r\n");
 				else {
