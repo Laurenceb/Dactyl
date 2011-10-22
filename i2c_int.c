@@ -104,7 +104,8 @@ void I2C1_EV_IRQHandler(void) {
 		else {
 			index++;
 			I2C_SendData(I2C1,I2C_jobs[job].subaddress);//send the subaddress
-			I2C_ITConfig(I2C1, I2C_IT_BUF, DISABLE);//disable TXE to allow the buffer to flush
+			if(I2C_Direction_Receiver==I2C_jobs[job].direction || !I2C_jobs[job].bytes)//if receiving or sending 0 bytes, flush now
+				I2C_ITConfig(I2C1, I2C_IT_BUF, DISABLE);//disable TXE to allow the buffer to flush
 		}
 	}
 	if(I2C_jobs[job].bytes+1==index) {//we have completed the current job
@@ -161,11 +162,11 @@ void I2C1_ER_IRQHandler(void) {
   * @param : job number
   * @retval : None
   */
-void I2C1_Request_Job(uint8_t job) {
-	if(job<32) {			//sanity check
+void I2C1_Request_Job(uint8_t job_) {
+	if(job_<32) {			//sanity check
 		if(!Jobs)		//if we are restarting the driver, send a start
 			I2C_GenerateSTART(I2C1,ENABLE);//send the start for the new job
-		Jobs|=1<<job;		//set the job bit
+		Jobs|=1<<job_;		//set the job bit
 	}
 }
 
@@ -174,9 +175,9 @@ void I2C1_Request_Job(uint8_t job) {
   * @param : job number, pointer to data
   * @retval : None
   */
-void I2C1_Setup_Job(uint8_t job, uint8_t* data) {
-	if(job<I2C_NUMBER_JOBS)
-		I2C_jobs[job].data_pointer=data;
+void I2C1_Setup_Job(uint8_t job_, uint8_t* data) {
+	if(job_<I2C_NUMBER_JOBS)
+		I2C_jobs[job_].data_pointer=data;
 }
 
 /**
@@ -193,13 +194,13 @@ void I2C_Config() {			// Configure I2C1 for the sensor bus
 	I2C_InitStructure.I2C_AcknowledgedAddress= I2C_AcknowledgedAddress_7bit;
 	I2C_InitStructure.I2C_ClockSpeed = 400000;
 	//Setup the pointers to the read data
-	I2C1_Setup_Job(GYRO_READ, Gyro_Data_Buffer);//Gyro data buffer
-	I2C1_Setup_Job(ACCEL_READ, Accel_Data_Buffer);//Accel data buffer
-	I2C1_Setup_Job(MAGNO_READ, Magno_Data_Buffer);//Accel data buffer
-	I2C1_Setup_Job(BMP_16BIT, &Bmp_Temp_Buffer);//BMP temperature buffer
-	I2C1_Setup_Job(BMP_24BIT, &Bmp_Press_Buffer);//BMP pressure buffer
-	I2C1_Setup_Job(BMP_READ, &Our_Sensorcal);//BMP calibration data
-	I2C1_Setup_Job(PITOT_READ, &Pitot_Pressure);//Pitot (LTC2481 adc) read
+	I2C1_Setup_Job(GYRO_READ, (uint8_t*)Gyro_Data_Buffer);//Gyro data buffer
+	I2C1_Setup_Job(ACCEL_READ, (uint8_t*)Accel_Data_Buffer);//Accel data buffer
+	I2C1_Setup_Job(MAGNO_READ, (uint8_t*)Magno_Data_Buffer);//Accel data buffer
+	I2C1_Setup_Job(BMP_16BIT, (uint8_t*)&Bmp_Temp_Buffer);//BMP temperature buffer
+	I2C1_Setup_Job(BMP_24BIT, (uint8_t*)&Bmp_Press_Buffer);//BMP pressure buffer
+	I2C1_Setup_Job(BMP_READ, (uint8_t*)&Our_Sensorcal);//BMP calibration data
+	I2C1_Setup_Job(PITOT_READ, (uint8_t*)&Pitot_Pressure);//Pitot (LTC2481 adc) read
 	//Enable the hardware
 	I2C_ITConfig(I2C1, I2C_IT_EVT|I2C_IT_ERR, ENABLE);//Enable EVT and ERR interrupts
 	I2C_Init( I2C1, &I2C_InitStructure );

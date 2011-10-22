@@ -163,7 +163,7 @@ boolean RF22::init()
     setModemConfig(FSK_Rb2_4Fd36);
 //    setModemConfig(FSK_Rb125Fd125);
     // Minimum power
-    setTxPower(RF22_TXPOW_8DBM);
+    setTxPower(RF22_TXPOW_1DBM);
 //    setTxPower(RF22_TXPOW_17DBM);
 
     return true;

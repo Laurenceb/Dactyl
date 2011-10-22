@@ -122,7 +122,7 @@ int main(void) {
 		if(Get_Si4432_DRDY())//IRQ flag line from the Si4432 modem - this is handled in the software ISR, but poll here to speed up
 			RF22_Service_ISR();
 		//Get reply from server - first to allow response in loop
-		RF22_recvfromAckTimeout(&(Si4432_buff.data),&(Si4432_buff.tail),0,SERVER);
+		RF22_recvfromAckTimeout(&(Si4432_buff.data),(uint8_t*)&(Si4432_buff.tail),0,SERVER);//Note only works on Little Endian (Cortex M3)
 		for(n=0;n<Si4432_buff.tail;n++) //if there is any data on the mavlink port, there may be a packet
 			UAVtalk_Process_Byte(Si4432_buff.data[n],&uavtalk_si4432_port);//grab a byte from the usart isr buffer
 		Si4432_buff.tail=0;//tail is zero as we have read all the data
@@ -143,12 +143,12 @@ int main(void) {
 		}
 		if(Si4432_buff.tail>=RF22_MESH_MAX_MESSAGE_LEN_) {//Message is spread over two packets
 			n=RF22_MESH_MAX_MESSAGE_LEN_;	//First send a packet of packed UAVObjects to the Server
-			RF22_Sendtowait(Si4432_buff.data,&n,SERVER);//Send to server
+			RF22_Sendtowait(Si4432_buff.data,n,SERVER);//Send to server
 			n=Si4432_buff.tail-RF22_MESH_MAX_MESSAGE_LEN_;
-			RF22_Sendtowait(&(Si4432_buff.data[RF22_MESH_MAX_MESSAGE_LEN_]),&n,SERVER);
+			RF22_Sendtowait(&(Si4432_buff.data[RF22_MESH_MAX_MESSAGE_LEN_]),n,SERVER);
 		}
 		else
-			RF22_Sendtowait(Si4432_buff.data,&Si4432_buff.tail,SERVER);//Send single packet
+			RF22_Sendtowait(Si4432_buff.data,Si4432_buff.tail,SERVER);//Send single packet
 		//Process waypoints here - waypoints are in local NED meter co-ordinates relative to home position
 		//TODO multiple waypoints needs to be integrated into the GCS, macro flag enables the multiple waypoint functionality
 		#ifdef MULTIPLE_WAYPOINTS
@@ -257,28 +257,6 @@ void Initialisation() {
 	//Test the pitot tube sensor
 	Delay(0x30FFFF);				//At least 100ms delay for the pitot to enter sleep mode
 	printf("Pitot ADC reads %ld\r\n",Pitot_Conv((uint32_t)Pitot_Pressure));//Debug
-	//Configure and test the Si4432 ISM band radio using RF22 C++ libs from arduino (mesh network mode)
-	if(!RF22_Init())
-		printf("Si4432 init error\r\n");//this goes via the wrapper function
-	else {
-		printf("Connecting to Network..\r\n");
-		if(RF22_Sendtowait(0x00,0x00,SERVER)) {	//Ping the networks server at 0x01
-			printf("Sucessfully connected to the network\r\n");
-			uint8_t buf,len=1,from;
-			if(RF22_recvfromAckTimeout(buf, &len, 3000, &from)) {//Wait for a reply from the server - 3s timeout (assigned address)
-				if(len>1 || from!=SERVER || !buf)//Shouldnt happen - we receive one byte!=0 from server
-					printf("Protocol error\r\n");
-				else {
-					RF22_Reassign(buf);//Set the designated address
-					printf("We are 0x%2x\r\n",buf);
-				}
-			}
-			else
-				printf("Network response error\r\n");
-		}
-		else
-			printf("Network connection error\r\n");
-	}
 	//Configure the GPS and test it, block until it gets a lock
 	if(!Config_Gps()) Usart_Send_Str((char*)"Setup GPS ok - awaiting fix\r\n");//If not the function printfs its error
 	while(Gps.status!=UBLOX_3D) {		//Wait for a 3D fix
@@ -365,7 +343,7 @@ void Initialisation() {
 	if((f_err_code = f_mount(0, &FATFS_Obj)))Usart_Send_Str((char*)"FatFs mount error\r\n");//this should only error if internal error
 	else {					//FATFS initialised ok, try init the card, this also sets up the SPI in fast mode (9MHz) if card
 		Spi_Locked=1;			//Lockout the SPI from being used by the Si4432 IRQ service 
-		if(f_err_code=f_open(&FATFS_logfile,"logfile.txt",FA_CREATE_ALWAYS | FA_WRITE)) {//present
+		if((f_err_code=f_open(&FATFS_logfile,"logfile.txt",FA_CREATE_ALWAYS | FA_WRITE))) {//present
 			Usart_Send_Str((char*)"FatFs drive error\r\n");
 			if(f_err_code==FR_DISK_ERR)Usart_Send_Str((char*)"No uSD card inserted?\r\n");
 		}
@@ -379,6 +357,28 @@ void Initialisation() {
 			}
 		}
 		Spi_Locked=0;			//Unlock the SPI
+	}
+	//Configure and test the Si4432 ISM band radio using RF22 C++ libs from arduino (mesh network mode)
+	if(!RF22_Init())
+		printf("Si4432 init error\r\n");//this goes via the wrapper function
+	else {
+		printf("Connecting to Network..\r\n");
+		if(RF22_Sendtowait(0x00,0x00,SERVER)) {	//Ping the networks server at 0x01
+			printf("Sucessfully connected to the network\r\n");
+			uint8_t buf,len=1,from;
+			if(RF22_recvfromAckTimeout(buf, &len, 3000, &from)) {//Wait for a reply from the server - 3s timeout (assigned address)
+				if(len>1 || from!=SERVER || !buf)//Shouldnt happen - we receive one byte!=0 from server
+					printf("Protocol error\r\n");
+				else {
+					RF22_Reassign(buf);//Set the designated address
+					printf("We are 0x%2x\r\n",buf);
+				}
+			}
+			else
+				printf("Network response error\r\n");
+		}
+		else
+			printf("Network connection error\r\n");
 	}
 	Init_Timers();				//Start PWM output timers running (need to enable GPIO seperately)
 	Enable_Servos();			//Setup the GPIO pins to drive the servos

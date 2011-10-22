@@ -81,7 +81,7 @@ extern volatile I2C_Error_Type I2C1error;	//used to store error state
 #define PITOT_PERIOD (10000/145)		/*14.5Hz pitot*/
 
 //Function prototypes
-void I2C1_Request_Job(uint8_t job);//Requests a job
-void I2C1_Setup_Job(uint8_t job, uint8_t* data);//Sets up the data pointer for a job
+void I2C1_Request_Job(uint8_t job_);//Requests a job
+void I2C1_Setup_Job(uint8_t job_, uint8_t* data);//Sets up the data pointer for a job
 void I2C_Config(void);//configures the hardware
 #define Flipbytes(x) x=(x>>8)|(x<<8) 
