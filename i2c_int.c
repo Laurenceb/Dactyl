@@ -78,11 +78,11 @@ void I2C1_EV_IRQHandler(void) {
 			}
 		}
 		else {//EV8_2, which may be due to a subaddress sent or a write completion
-			if(subaddress_sent) {
+			if(subaddress_sent || I2C_Direction_Transmitter==I2C_jobs[job].direction) {
 				I2C_GenerateSTOP(I2C1,ENABLE);//program the Stop
 				index++;//to show that the job is complete
 			}
-			else {
+			else {		//We need to send a subaddress
 				I2C_GenerateSTART(I2C1,ENABLE);//program the repeated Start
 				subaddress_sent=1;//this is set back to zero upon completion of the current task
 			}
