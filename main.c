@@ -208,6 +208,7 @@ void Initialisation() {
     	Usarts_Init();
 	//Greeting
 	Usart_Send_Str((char*)"Dactyl project, for v1.0 hardware, compiled " __DATE__ " " __TIME__ "\r\n");
+	Delay(0x4FFFF);//Delay to let all the sensors boot up TODO move this somewhere more sane
 	// Setup the I2C1
 	I2C_Config();
 	//Schedule all I2C1 sensors to be configured
@@ -252,12 +253,14 @@ void Initialisation() {
 	printf(" %d,%d,%d\r\n",Flipbytes(Magno_Data_Buffer[0]),Flipbytes(Magno_Data_Buffer[1]),Flipbytes(Magno_Data_Buffer[2]));
 	printf(" %d,%d,%d\r\n",Accel_Data_Buffer[0],Accel_Data_Buffer[1],Accel_Data_Buffer[2]);//Accel has correct endianess
 	printf(" %d,%d,%d\r\n",Flipbytes(Gyro_Data_Buffer[0]),Flipbytes(Gyro_Data_Buffer[1]),Flipbytes(Gyro_Data_Buffer[2]));
-	Millis+=TEMPERATURE_PERIOD;			//Hack the system uptime in order to cause a bmp05 temperature
+	Millis+=TEMPERATURE_PERIOD;		//Hack the system uptime in order to cause a bmp05 temperature
 	Delay(0x4FFFF);//Wait for a short period to allow the interrupt driven I2C1 to read bmp pressure
+	raw_pressure=Bmp_Press_Buffer;
+	device_temperature=Bmp_Temp_Buffer;	//Copy the data over from the device driver buffers
 	Bmp_Simp_Conv(&device_temperature,&raw_pressure);//convert to pressure and calibrated temperature output using i2c driver data
 	printf("Baro pressure is %ld Pascals, temperature is %ld C\r\n",raw_pressure,device_temperature/10);//Debug
 	//Test the pitot tube sensor
-	Delay(0x30FFFF);				//At least 100ms delay for the pitot to enter sleep mode
+	Delay(0x3FFFF);				//At least 100ms delay for the pitot to enter sleep mode
 	printf("Pitot ADC reads %ld\r\n",Pitot_Conv((uint32_t)Pitot_Pressure));//Debug
 	//Configure the GPS and test it, block until it gets a lock
 	if(!Config_Gps()) Usart_Send_Str((char*)"Setup GPS ok - awaiting fix\r\n");//If not the function printfs its error

@@ -52,7 +52,7 @@ extern volatile I2C_Error_Type I2C1error;	//used to store error state
 {GYRO_ADDR,I2C_Direction_Transmitter,3,0x15,Gyro_config}, /*Configure the gyro - exclusing the pll*/\
 {GYRO_ADDR,I2C_Direction_Transmitter,1,0x3E,Gyro_clk_config}, /*Configure the gyro - pll*/\
 {LTC2481_R,I2C_Direction_Receiver,3,0xFF,NULL}, /*Read the Pitot*/\
-{LTC2481_W,I2C_Direction_Transmitter,1,0xFF,Pitot_conv}, /*Setup the Pitot for pressure conversions (could swap pointer to do temperature)*/\
+{LTC2481_R,I2C_Direction_Transmitter,1,0xFF,Pitot_conv}, /*Setup the Pitot for pressure conversions (could swap pointer to do temperature)*/\
 }
 //Job identifiers used to run the accel downsampler, trigger jobs from the EXTI, and trigger the Kalman task
 #define ACCEL_READ 3
