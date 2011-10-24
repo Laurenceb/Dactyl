@@ -78,7 +78,7 @@ void EXTI_Config(void)
   //NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
   NVIC_Init(&NVIC_InitStructure);
   //Now we configure the I2C Error ISR
-  NVIC_InitStructure.NVIC_IRQChannel = I2C1_EV_IRQn;//The I2C1 triggered interrupt	
+  NVIC_InitStructure.NVIC_IRQChannel = I2C1_ER_IRQn;//The I2C1 triggered interrupt	
   //NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x00;//Higher pre-emption priority
   NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x00;//Highest group priority
   //NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
