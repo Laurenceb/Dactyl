@@ -31,7 +31,7 @@ void I2C1_EV_IRQHandler(void) {
 	static uint8_t subaddress_sent;	//current job number, bytes that have been rx/tx, flag to indicate if subaddess sent
 	static int8_t index;		//index is signed -1==send the subaddress
 	if(!((Jobs>>job)&0x00000001))	//if the current job bit is not set
-		for(job=0;!((Jobs>>job)&0x00000001);job++);//find the first uncompleted job, starting at current job zero
+		for(job=0;!((Jobs>>job)&0x00000001) && job<I2C_NUMBER_JOBS;job++);//find the first uncompleted job, starting at current job zero
 	if(I2C_GetITStatus(I2C1,I2C_IT_SB)) {//we just sent a start - EV5 in ref manual
 		I2C_AcknowledgeConfig(I2C1, ENABLE);//make sure ACK is on
 		index=0;		//reset the index
