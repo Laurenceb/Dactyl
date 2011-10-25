@@ -208,13 +208,13 @@ void Initialisation() {
     	Usarts_Init();
 	//Greeting
 	Usart_Send_Str((char*)"Dactyl project, for v1.0 hardware, compiled " __DATE__ " " __TIME__ "\r\n");
+	//Enable interrupts - note the EKF still hasnt been enabled
+	EXTI_Config();					//Configure the all the interrupts - the EKF wont run yet
 	Delay(0x4FFFF);//Delay to let all the sensors boot up TODO move this somewhere more sane
 	// Setup the I2C1
 	I2C_Config();
 	//Schedule all I2C1 sensors to be configured
 	SCHEDULE_CONFIG;
-	//Enable interrupts - note the EKF still hasnt been enabled
-	EXTI_Config();					//Configure the all the interrupts - the EKF wont run yet
 	for(err=200;err;err++) {
 		if(!Jobs)				//All scheduled jobs completed
 			break;
@@ -250,9 +250,10 @@ void Initialisation() {
 		}
 	}
 	Delay(0x4FFFF);//Wait for a short period to allow the interrupt driven I2C1 reads to fire off and retrieve us some data
-	printf(" %d,%d,%d\r\n",Flipbytes(Magno_Data_Buffer[0]),Flipbytes(Magno_Data_Buffer[1]),Flipbytes(Magno_Data_Buffer[2]));
-	printf(" %d,%d,%d\r\n",Accel_Data_Buffer[0],Accel_Data_Buffer[1],Accel_Data_Buffer[2]);//Accel has correct endianess
-	printf(" %d,%d,%d\r\n",Flipbytes(Gyro_Data_Buffer[0]),Flipbytes(Gyro_Data_Buffer[1]),Flipbytes(Gyro_Data_Buffer[2]));
+	printf("Magno %d,%d,%d\r\n",Flipbytes(Magno_Data_Buffer[0]),Flipbytes(Magno_Data_Buffer[1]),Flipbytes(Magno_Data_Buffer[2]));
+	printf("Accel %d,%d,%d\r\n",Accel_Data_Buffer[0],Accel_Data_Buffer[1],Accel_Data_Buffer[2]);//Accel has correct endianess
+	printf("Gyro  %d,%d,%d\r\n",Flipbytes(Gyro_Data_Buffer[1]),Flipbytes(Gyro_Data_Buffer[2]),Flipbytes(Gyro_Data_Buffer[3]));
+	printf("Temp  %d\r\n",Flipbytes(Gyro_Data_Buffer[0]));
 	Millis+=TEMPERATURE_PERIOD;		//Hack the system uptime in order to cause a bmp05 temperature
 	Delay(0x4FFFF);//Wait for a short period to allow the interrupt driven I2C1 to read bmp pressure
 	raw_pressure=Bmp_Press_Buffer;
@@ -262,6 +263,7 @@ void Initialisation() {
 	//Test the pitot tube sensor
 	Delay(0x3FFFF);				//At least 100ms delay for the pitot to enter sleep mode
 	printf("Pitot ADC reads %ld\r\n",Pitot_Conv((uint32_t)Pitot_Pressure));//Debug
+	printf("%d\r\n",Completed_Jobs);
 	//Configure the GPS and test it, block until it gets a lock
 	if(!Config_Gps()) Usart_Send_Str((char*)"Setup GPS ok - awaiting fix\r\n");//If not the function printfs its error
 	while(Gps.status!=UBLOX_3D) {		//Wait for a 3D fix

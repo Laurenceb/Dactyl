@@ -202,6 +202,7 @@ void Add_To_ISR_Buffer(ISR_Buffer_Type* buff, uint8_t c) {
 uint8_t Get_From_ISR_Buffer(ISR_Buffer_Type* buff) {
 	uint8_t a=buff->data[buff->tail++];
 	buff->tail%=BUFFER_SIZE;
+	return a;
 }
 
 /**

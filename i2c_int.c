@@ -20,7 +20,7 @@ const uint8_t Accel_config[]=ACCEL_SETUP;
 const uint8_t Gyro_config[]=GYRO_SETUP;
 const uint8_t Gyro_clk_config[]=ITG_CLOCK;
 const uint8_t Pitot_conv[]={LTC2481_ADC};
-I2C_Job_Type I2C_jobs[]=I2C_JOBS_INITIALISER;//sets up the const jobs
+volatile I2C_Job_Type I2C_jobs[]=I2C_JOBS_INITIALISER;//sets up the const jobs
 
 /**
   * @brief  This function handles I2C1 Event interrupt request.
@@ -44,12 +44,12 @@ void I2C1_EV_IRQHandler(void) {
 		}
 	}
 	else if(I2C_GetITStatus(I2C1,I2C_IT_ADDR)) {//we just sent the address - EV6 in ref manual
-		uint8_t a=I2C1->SR1;//Read SR1,2 to clear ADDR
+		volatile uint8_t a=I2C1->SR1;//Read SR1,2 to clear ADDR
 		a=I2C1->SR2;
 		if(1==I2C_jobs[job].bytes && I2C_Direction_Receiver==I2C_jobs[job].direction && subaddress_sent) {//we are receiving 1 byte - EV6_3
 			I2C_AcknowledgeConfig(I2C1, DISABLE);//turn off ACK
 			I2C_GenerateSTOP(I2C1,ENABLE);//program the stop
-			I2C_ITConfig(I2C1, I2C_IT_BUF, ENABLE);//allow up to have an EV7
+			I2C_ITConfig(I2C1, I2C_IT_BUF, ENABLE);//allow us to have an EV7
 		}
 		//EV6 and EV6_1
 		else if(2==I2C_jobs[job].bytes && I2C_Direction_Receiver==I2C_jobs[job].direction && subaddress_sent) { //rx 2 bytes - EV6_1
@@ -108,7 +108,7 @@ void I2C1_EV_IRQHandler(void) {
 				I2C_ITConfig(I2C1, I2C_IT_BUF, DISABLE);//disable TXE to allow the buffer to flush
 		}
 	}
-	if(I2C_jobs[job].bytes+1==index) {//we have completed the current job
+	if((I2C_jobs[job].bytes+1)==index) {//we have completed the current job
 		//Completion Tasks go here
 		if(GYRO_READ==job) {	//if we completed the first task (read the gyro)
 			NVIC_SetPendingIRQ(KALMAN_SW_ISR_NO);//set the kalman filter isr to run (in a lower pre-emption priority)
@@ -175,7 +175,7 @@ void I2C1_Request_Job(uint8_t job_) {
   * @param : job number, pointer to data
   * @retval : None
   */
-void I2C1_Setup_Job(uint8_t job_, uint8_t* data) {
+void I2C1_Setup_Job(uint8_t job_, volatile uint8_t* data) {
 	if(job_<I2C_NUMBER_JOBS)
 		I2C_jobs[job_].data_pointer=data;
 }
@@ -194,13 +194,13 @@ void I2C_Config() {			// Configure I2C1 for the sensor bus
 	I2C_InitStructure.I2C_AcknowledgedAddress= I2C_AcknowledgedAddress_7bit;
 	I2C_InitStructure.I2C_ClockSpeed = 400000;
 	//Setup the pointers to the read data
-	I2C1_Setup_Job(GYRO_READ, (uint8_t*)Gyro_Data_Buffer);//Gyro data buffer
-	I2C1_Setup_Job(ACCEL_READ, (uint8_t*)Accel_Data_Buffer);//Accel data buffer
-	I2C1_Setup_Job(MAGNO_READ, (uint8_t*)Magno_Data_Buffer);//Accel data buffer
-	I2C1_Setup_Job(BMP_16BIT, (uint8_t*)&Bmp_Temp_Buffer);//BMP temperature buffer
-	I2C1_Setup_Job(BMP_24BIT, (uint8_t*)&Bmp_Press_Buffer);//BMP pressure buffer
-	I2C1_Setup_Job(BMP_READ, (uint8_t*)&Our_Sensorcal);//BMP calibration data
-	I2C1_Setup_Job(PITOT_READ, (uint8_t*)&Pitot_Pressure);//Pitot (LTC2481 adc) read
+	I2C1_Setup_Job(GYRO_READ, (volatile uint8_t*)Gyro_Data_Buffer);//Gyro data buffer
+	I2C1_Setup_Job(ACCEL_READ, (volatile uint8_t*)Accel_Data_Buffer);//Accel data buffer
+	I2C1_Setup_Job(MAGNO_READ, (volatile uint8_t*)Magno_Data_Buffer);//Accel data buffer
+	I2C1_Setup_Job(BMP_16BIT, (volatile uint8_t*)&Bmp_Temp_Buffer);//BMP temperature buffer
+	I2C1_Setup_Job(BMP_24BIT, (volatile uint8_t*)&Bmp_Press_Buffer);//BMP pressure buffer
+	I2C1_Setup_Job(BMP_READ, (volatile uint8_t*)&Our_Sensorcal);//BMP calibration data
+	I2C1_Setup_Job(PITOT_READ, (volatile uint8_t*)&Pitot_Pressure);//Pitot (LTC2481 adc) read
 	//Enable the hardware
 	I2C_ITConfig(I2C1, I2C_IT_EVT|I2C_IT_ERR, ENABLE);//Enable EVT and ERR interrupts
 	I2C_Init( I2C1, &I2C_InitStructure );
