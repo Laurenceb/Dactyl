@@ -14,6 +14,11 @@ volatile int32_t Pitot_Pressure;
   * @retval Corrected value
   */
 int32_t Pitot_Conv(uint32_t d) {
+	#ifndef PITOT_POLLED
+	uint8_t b[4];
+	*(uint32_t*)b=d;
+	d=(((uint32_t)b[0] <<16) | ((uint32_t)b[1] <<8) | ((uint32_t)b[2]));
+	#endif
 	d&=0x00FFFFFF;
 	if(d&0x00400000)return ((d>>6)|0xFFFF0000);//-ive result
 	else return ((d>>6)&0x0000FFFF);	//+ive result

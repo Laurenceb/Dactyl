@@ -3,10 +3,10 @@
 #include "math.h"
 
 
-Bmp_Cal_Type Our_Sensorcal __attribute__((packed));		//Global cal for our sensor
+volatile Bmp_Cal_Type Our_Sensorcal;				//Global cal for our sensor
 int32_t Bmp_temp;
-uint16_t Bmp_Temp_Buffer;					//Holds the data from the temperature convertor
-uint32_t Bmp_Press_Buffer;					//Bmp085 pressure data buffer 
+volatile uint16_t Bmp_Temp_Buffer;				//Holds the data from the temperature convertor
+volatile uint32_t Bmp_Press_Buffer;				//Bmp085 pressure data buffer 
 float Sea_Level_Pressure;
 
 /**
@@ -51,12 +51,22 @@ float Baro_Convert_Pressure(uint32_t p) {
 }
 
 #ifndef BMP_POLLED
-void flip_sensorcal(Bmp_cal_Type* cal) {
+/**
+  * @brief  Fixes endianess of the BMP085 sensor calibration EEPROM data
+  * @param  Uncorrected value pointer - this gets corrected
+  * @retval void
+  */
+void flip_sensorcal(Bmp_Cal_Type* cal) {
 	uint8_t n;
-	for(n=0;n<sizeof(Bmp_cal_Type)/2;n++)
+	for(n=0;n<sizeof(Bmp_Cal_Type)/2;n++)
 		Flipbytes(((uint16_t*)cal)[n]);
 }
 
+/**
+  * @brief  Fixes endianess of the BMP085 sensor adc, and gives correct bit alignment
+  * @param  Uncorrected value pointer - this gets corrected
+  * @retval void
+  */
 void flip_adc24(uint32_t* a) {
 	uint8_t b[4];
 	*(uint32_t*)b=*a;

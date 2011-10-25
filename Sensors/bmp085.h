@@ -14,16 +14,16 @@ typedef struct{			//Structure for holding calibration data from onboard EEPROM
 	int16_t mb;
 	int16_t mc;
 	int16_t md;
-}	Bmp_Cal_Type;
+}__attribute__((packed)) Bmp_Cal_Type;
 
-extern Bmp_Cal_Type Our_Sensorcal __attribute__((packed));//Global cal for our sensor
+extern volatile Bmp_Cal_Type Our_Sensorcal;//Global cal for our sensor
 extern int32_t Bmp_temp;	//This is in integer units of 0.1C
-extern uint16_t Bmp_Temp_Buffer;//Holds the data from the temperature convertor
-extern uint32_t Bmp_Press_Buffer;//Operates as bmp085 pressure buffer 
+extern volatile uint16_t Bmp_Temp_Buffer;//Holds the data from the temperature convertor
+extern volatile uint32_t Bmp_Press_Buffer;//Operates as bmp085 pressure buffer 
 extern float Sea_Level_Pressure;
 
-				//Maximum oversampling
-#define OSS 3
+				//Oversampling to give 7.5ms sample time
+#define OSS 1
 #define BMP085_W 0xEE
 #define BMP085_ADC 0xF6
 #define BMP085_CTRL 0xF4
@@ -54,10 +54,10 @@ I2C_Returntype Baro_Read_ADC(int32_t* data);
 I2C_Returntype Baro_Read_Full_ADC(uint32_t* data);
 I2C_Returntype Baro_Setup_Pressure(void);
 I2C_Returntype Baro_Setup_Temperature(void);
-#define Bmp_Copy_Temp() Bmp_temp=Bmp_Temp_Buffer;/*copy over buffer*/
+#define Bmp_Copy_Temp() Bmp_temp=Bmp_Temp_Buffer/*copy over buffer*/
 #else
-void flip_sensorcal(Bmp_cal_Type* cal);
+void flip_sensorcal(Bmp_Cal_Type* cal);
 void flip_adc24(uint32_t* a);
-#define Bmp_Copy_Temp() Flipbytes(Bmp_Temp_Buffer);Bmp_temp=Bmp_Temp_Buffer;/*Flip enbianess, then copy over buffer*/
+#define Bmp_Copy_Temp() Flipbytes(Bmp_Temp_Buffer);Bmp_temp=Bmp_Temp_Buffer/*Flip enbianess, then copy over buffer*/
 #endif
 float Baro_Convert_Pressure(uint32_t p);

@@ -249,6 +249,7 @@ void Initialisation() {
 			Usart_Send_Str((char*)"Setup gyro clk\r\n");
 		}
 	}
+	flip_sensorcal(&Our_Sensorcal);		//Fix BMP085 sensor calibration endianess
 	Delay(0x4FFFF);//Wait for a short period to allow the interrupt driven I2C1 reads to fire off and retrieve us some data
 	printf("Magno %d,%d,%d\r\n",Flipbytes(Magno_Data_Buffer[0]),Flipbytes(Magno_Data_Buffer[1]),Flipbytes(Magno_Data_Buffer[2]));
 	printf("Accel %d,%d,%d\r\n",Accel_Data_Buffer[0],Accel_Data_Buffer[1],Accel_Data_Buffer[2]);//Accel has correct endianess
@@ -257,6 +258,7 @@ void Initialisation() {
 	Millis+=TEMPERATURE_PERIOD;		//Hack the system uptime in order to cause a bmp05 temperature
 	Delay(0x0FFFF);//Wait for a short period to allow the interrupt driven I2C1 to read bmp pressure
 	raw_pressure=Bmp_Press_Buffer;		//Copy the data over from the device driver buffers
+	flip_adc24(&raw_pressure);
 	Bmp_Copy_Temp();			//Copy the 16 bit temperature out of its buffer into the temperature global
 	Bmp_Simp_Conv(&device_temperature,&raw_pressure);//convert to pressure and calibrated temperature output using i2c driver data
 	printf("Baro pressure is %ld Pascals, temperature is %ld C\r\n",raw_pressure,device_temperature/10);//Debug
