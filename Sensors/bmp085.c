@@ -50,6 +50,21 @@ float Baro_Convert_Pressure(uint32_t p) {
 	return 44330.0*(1.0-pow(((float)p/Sea_Level_Pressure),0.190295));
 }
 
+#ifndef BMP_POLLED
+void flip_sensorcal(Bmp_cal_Type* cal) {
+	uint8_t n;
+	for(n=0;n<sizeof(Bmp_cal_Type)/2;n++)
+		Flipbytes(((uint16_t*)cal)[n]);
+}
+
+void flip_adc24(uint32_t* a) {
+	uint8_t b[4];
+	*(uint32_t*)b=*a;
+	*a=((((uint32_t)b[0] <<16) | ((uint32_t)b[1] <<8) | ((uint32_t)b[2])) >> (8-OSS));
+}
+#endif
+
+
 //--------------------------------OLD FUNCTIONS----------------------------------------------
 #ifdef BMP_POLLED
 /**

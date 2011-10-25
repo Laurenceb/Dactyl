@@ -153,15 +153,17 @@ void EXTI4_IRQHandler(void)
   {
     /* Clear the  EXTI line 4 pending bit (shouldnt be set anyway)*/
     EXTI_ClearITPendingBit(EXTI_Line4);
-    /* Clear the NVIC bit directly - this is set by software*/
-    NVIC_ClearPendingIRQ(KALMAN_SW_ISR_NO);
-    /*Called Code goes here*/
-    if(Kalman_Enabled)		//KALmaaaaaannnnnn!!!
-    	run_imu();		//run the kalman filter in this isr (low group priority so others can nest inside)
-    disk_timerproc();		//Run the FatFS timing control - Note: this is run at 8ms (or whatever kalman rate is), not 10ms as in spec
-    if(!Spi_Locked&&Get_Si4432_DRDY()) //SPI2 unlocked, and IRQ flag line from the Si4432 modem
-	RF22_Service_ISR();	//Service the interrupt here - means we have up to 8ms latency
   }
+  /* Clear the NVIC bit directly - this is set by software*/
+  NVIC_ClearPendingIRQ(KALMAN_SW_ISR_NO);
+  /*Called Code goes here*/
+  if(Kalman_Enabled)		//KALmaaaaaannnnnn!!!
+	run_imu();		//run the kalman filter in this isr (low group priority so others can nest inside)
+  disk_timerproc();		//Run the FatFS timing control - Note: this is run at 8ms (or whatever kalman rate is), not 10ms as in spec
+  if(!Spi_Locked&&Get_Si4432_DRDY()) //SPI2 unlocked, and IRQ flag line from the Si4432 modem
+	RF22_Service_ISR();	//Service the interrupt here - means we have up to 8ms latency
+  //Change the system timer
+  Millis+=DELTA_TIME*1000;	//Time is in milliseconds NOTE this will roll over after 4Mseconds system uptime
 }
 
 /* The following interrupts should be present, though you can of course

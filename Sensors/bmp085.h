@@ -54,6 +54,10 @@ I2C_Returntype Baro_Read_ADC(int32_t* data);
 I2C_Returntype Baro_Read_Full_ADC(uint32_t* data);
 I2C_Returntype Baro_Setup_Pressure(void);
 I2C_Returntype Baro_Setup_Temperature(void);
+#define Bmp_Copy_Temp() Bmp_temp=Bmp_Temp_Buffer;/*copy over buffer*/
+#else
+void flip_sensorcal(Bmp_cal_Type* cal);
+void flip_adc24(uint32_t* a);
+#define Bmp_Copy_Temp() Flipbytes(Bmp_Temp_Buffer);Bmp_temp=Bmp_Temp_Buffer;/*Flip enbianess, then copy over buffer*/
 #endif
 float Baro_Convert_Pressure(uint32_t p);
-#define Bmp_Copy_Temp() Bmp_temp=Bmp_Temp_Buffer;/*copy over buffer*/

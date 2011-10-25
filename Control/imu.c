@@ -25,7 +25,6 @@ extern float Long_To_Meters_Home;
 extern volatile Ubx_Gps_Type Gps;
 extern volatile Nav_Type Nav_Global,Nav;	
 extern volatile uint8_t Nav_Flag,New_Waypoint_Flagged,Ground_Flag;
-extern volatile uint8_t Millis;
 extern volatile float UAVtalk_Altitude_Array[3];	
 //Just here for debug
 extern volatile float Balt;
@@ -54,8 +53,6 @@ void run_imu(void) {
 	float Delta_Time=DELTA_TIME,x_down,y_down,h_offset,N_t_x,N_t_y,time_to_waypoint,Horiz_t,GPS_Errors[4];
 	uint16_t SensorsUsed=0;			//We by default have no sensors
 	int32_t Baro_Temperature;		//In units of 0.1C
-	//Change the system timer
-	Millis+=DELTA_TIME*1000;		//Time is in milliseconds NOTE this will roll over after 4Mseconds system uptime
 	//Now read the gyro buffer, convert to float from uint16_t and apply the calibration
 	Accel_Access_Flag=LOCKED;		//Lock the data
 	/*LOCKED*/Calibrate_3(ac,Accel_Data_Buffer,&Acc_Cal_Dat);//Grab the data from the accel downsampler/DSP filter
