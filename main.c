@@ -221,7 +221,7 @@ void Initialisation() {
 		Delay(0x0FFFF);				//A delay in the loop
 	}
 	if(!Jobs)
-		Usart_Send_Str((char*)"Setup all sensors\r\n");
+		Usart_Send_Str((char*)"All jobs completed\r\n");
 	else {
 		printf("I2C error:%d at job number:%d\r\n",I2C1error.error,I2C1error.job);
 		if(Completed_Jobs&(1<<PITOT_CONFIG_NO)){
