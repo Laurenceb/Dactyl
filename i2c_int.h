@@ -46,13 +46,13 @@ extern volatile I2C_Error_Type I2C1error;	//used to store error state
 {BMP085_W,I2C_Direction_Transmitter,1,BMP085_CTRL,Bmp_pressure}, /*Setup a BMP085 pressure conv*/\
 {BMP085_W,I2C_Direction_Receiver,2,BMP085_ADC,NULL}, /*Read BMP085 ADC - 16bit mode*/\
 {BMP085_W,I2C_Direction_Receiver,3,BMP085_ADC,NULL}, /*Read BMP085 ADC - 24/19bit mode*/\
-{BMP085_W,I2C_Direction_Receiver,22,BMP085_DATA,NULL}, /*Read BMP085 EEPROM - 22 bytes*/\
 {ACCEL_ADDR,I2C_Direction_Transmitter,4,0xA0,Accel_config}, /*Configure the accelerometer*/\
 {MAGNO_ADDR,I2C_Direction_Transmitter,3,0x00,Magno_config}, /*Configure the magno*/\
 {GYRO_ADDR,I2C_Direction_Transmitter,3,0x15,Gyro_config}, /*Configure the gyro - exclusing the pll*/\
 {GYRO_ADDR,I2C_Direction_Transmitter,1,0x3E,Gyro_clk_config}, /*Configure the gyro - pll*/\
 {LTC2481_R,I2C_Direction_Receiver,3,0xFF,NULL}, /*Read the Pitot*/\
 {LTC2481_R,I2C_Direction_Transmitter,1,0xFF,Pitot_conv}, /*Setup the Pitot for pressure conversions (could swap pointer to do temperature)*/\
+{BMP085_W,I2C_Direction_Receiver,22,BMP085_DATA,NULL}, /*Read BMP085 EEPROM - 22 bytes*/\
 }
 //Job identifiers used to run the accel downsampler, trigger jobs from the EXTI, and trigger the Kalman task
 #define ACCEL_READ 3
@@ -63,13 +63,13 @@ extern volatile I2C_Error_Type I2C1error;	//used to store error state
 #define BMP_PRESS 5
 #define BMP_16BIT 6
 #define BMP_24BIT 7
-#define PITOT_READ 13
-#define PITOT_CONFIG_NO 14
-#define BMP_READ 8
-#define ACCEL_CONFIG_NO 9
-#define MAGNO_CONFIG_NO 10
-#define GYRO_CONFIG_NO 11
-#define GYRO_CLK_NO 12
+#define PITOT_READ 12
+#define PITOT_CONFIG_NO 13
+#define BMP_READ 14
+#define ACCEL_CONFIG_NO 8
+#define MAGNO_CONFIG_NO 9
+#define GYRO_CONFIG_NO 10
+#define GYRO_CLK_NO 11
 //Config all the sensors
 #define CONFIG_SENSORS (uint32_t)((1<<MAGNO_CONFIG_NO)|(1<<GYRO_CONFIG_NO)|(1<<GYRO_CLK_NO)|(1<<ACCEL_CONFIG_NO)|(1<<PITOT_CONFIG_NO)|(1<<BMP_READ))
 #define SCHEDULE_CONFIG I2C1_Request_Job(MAGNO_CONFIG_NO);Jobs|=CONFIG_SENSORS/*Just adds directly - job request call starts i2c interrupts off*/
@@ -78,7 +78,7 @@ extern volatile I2C_Error_Type I2C1error;	//used to store error state
 #define KALMAN_SW_ISR_NO   EXTI4_IRQn		/*software trigger EXTI4 to run the kalman*/
 //Timing stuff
 #define TEMPERATURE_PERIOD 1000			/*1Hz temperature*/
-#define PITOT_PERIOD (10000/145)		/*14.5Hz pitot*/
+#define PITOT_PERIOD (uint32_t)(10000.0/145.0)	/*14.5Hz pitot*/
 
 //Function prototypes
 void I2C1_Request_Job(uint8_t job_);//Requests a job

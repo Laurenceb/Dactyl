@@ -208,38 +208,40 @@ void Initialisation() {
     	Usarts_Init();
 	//Greeting
 	Usart_Send_Str((char*)"Dactyl project, for v1.0 hardware, compiled " __DATE__ " " __TIME__ "\r\n");
+	Delay(0x4FFFF);//Delay to let all the sensors boot up TODO move this somewhere more sane
 	//Enable interrupts - note the EKF still hasnt been enabled
 	EXTI_Config();				//Configure the all the interrupts - the EKF wont run yet
-	Delay(0x4FFFF);//Delay to let all the sensors boot up TODO move this somewhere more sane
 	// Setup the I2C1
 	I2C_Config();
 	//Schedule all I2C1 sensors to be configured
 	SCHEDULE_CONFIG;
-	for(err=200;err;err++) {
+	for(err=1;err;err++) {
 		if(!Jobs)			//All scheduled jobs completed
 			break;
-		Delay(0x0FFFF);			//A delay in the loop
+		Delay(0xFFF);			//A delay in the loop
 	}
 	if(!Jobs)
-		Usart_Send_Str((char*)"All jobs completed\r\n");
+		Usart_Send_Str((char*)"All setup jobs completed\r\n");
 	if(I2C1error.error)
-		printf("I2C error:%d at job number:%d\r\n",I2C1error.error,I2C1error.job);
-	if(!Completed_Jobs&(1<<PITOT_CONFIG_NO))
+		printf("I2C error:%d at job number:%d %d\r\n",I2C1error.error,I2C1error.job,Millis);
+	if(!(Completed_Jobs&(1<<PITOT_CONFIG_NO)))
 		Usart_Send_Str((char*)"Pitot");
-	if(!Completed_Jobs&(1<<MAGNO_CONFIG_NO))
+	if(!(Completed_Jobs&(1<<MAGNO_CONFIG_NO)))
 		Usart_Send_Str((char*)"Magno");
-	if(!Completed_Jobs&(1<<BMP_READ))
+	if(!(Completed_Jobs&(1<<BMP_READ)))
 		Usart_Send_Str((char*)"Baro");
-	if(!Completed_Jobs&(1<<ACCEL_CONFIG_NO))
+	if(!(Completed_Jobs&(1<<ACCEL_CONFIG_NO)))
 		Usart_Send_Str((char*)"Accel");
-	if(!Completed_Jobs&(1<<GYRO_CONFIG_NO))
+	if(!(Completed_Jobs&(1<<GYRO_CONFIG_NO)))
 		Usart_Send_Str((char*)"Gyro");
-	if(!Completed_Jobs&(1<<GYRO_CLK_NO))
+	if(!(Completed_Jobs&(1<<GYRO_CLK_NO)))
 		Usart_Send_Str((char*)"Gyro clk");
 	if((Completed_Jobs&CONFIG_SENSORS)!=CONFIG_SENSORS)
 		Usart_Send_Str((char*)" setup error\r\n");
 	flip_sensorcal(&Our_Sensorcal);		//Fix BMP085 sensor calibration endianess
-	Delay(0x4FFFF);//Wait for a short period to allow the interrupt driven I2C1 reads to fire off and retrieve us some data
+	I2C1_Request_Job(GYRO_READ);		//Make sure any previous data is read to clear data ready lines
+	I2C1_Request_Job(ACCEL_READ);
+	Delay(0x1FFFF);//Wait for a short period to allow the interrupt driven I2C1 reads to fire off and retrieve us some data
 	printf("Magno %d,%d,%d\r\n",Flipbytes(Magno_Data_Buffer[0]),Flipbytes(Magno_Data_Buffer[1]),Flipbytes(Magno_Data_Buffer[2]));
 	printf("Accel %d,%d,%d\r\n",Accel_Data_Buffer[0],Accel_Data_Buffer[1],Accel_Data_Buffer[2]);//Accel has correct endianess
 	printf("Gyro  %d,%d,%d\r\n",Flipbytes(Gyro_Data_Buffer[1]),Flipbytes(Gyro_Data_Buffer[2]),Flipbytes(Gyro_Data_Buffer[3]));
@@ -254,7 +256,9 @@ void Initialisation() {
 	//Test the pitot tube sensor
 	Delay(0x3FFFF);				//At least 100ms delay for the pitot to enter sleep mode
 	printf("Pitot ADC reads %ld\r\n",Pitot_Conv((uint32_t)Pitot_Pressure));//Debug
-	printf("Completed i2c jobs are%4x, Outstanding jobs are%4x\r\n",Completed_Jobs,Jobs);
+	printf("Completed i2c jobs are: %4x, Outstanding jobs are: %4x\r\n",Completed_Jobs,Jobs);
+	if(I2C1error.error)
+		printf("I2C error:%d at job number:%d %d\r\n",I2C1error.error,I2C1error.job,Millis-TEMPERATURE_PERIOD);
 	//Configure the GPS and test it, block until it gets a lock
 	if(!Config_Gps()) Usart_Send_Str((char*)"Setup GPS ok - awaiting fix\r\n");//If not the function printfs its error
 	while(Gps.status!=UBLOX_3D) {		//Wait for a 3D fix
