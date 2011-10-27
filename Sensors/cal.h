@@ -22,7 +22,7 @@ extern const Mems_Cal_Type Gyr_Cal_Dat;//Gyro  (ITG-3200) ''        ''
 //Note gyro calibration hasnt been completed, using datasheet sensitivity and leaving out bias as ekf handles it
 #define GYR_CAL_6 { 0,0.00121414,0,0, 0,0,0.00121414,0, 0,0,0,0.00121414}
 //Pitot offset cal
-#define PITOT_OFFSET (int32_t)-341/*560*/
+#define PITOT_OFFSET (int32_t)424/*560*/
 //Pitot gain cal
 #define PITOT_GAIN (float)0.243
 //Calibrate function

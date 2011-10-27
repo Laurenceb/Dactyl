@@ -13,6 +13,7 @@
 #include "Sensors/bmp085.h"
 #include "gpio.h"
 #include "Util/RF22/ctocpp.h"
+#include "Util/Fatfs/diskio.h"
 
 extern volatile uint32_t Millis;	//We need to be aware of the system time to schedule temperature conversions at 1hz
 extern volatile uint8_t Kalman_Enabled,Spi_Locked;// Kalman flag
@@ -106,6 +107,8 @@ void EXTI9_5_IRQHandler(void)
     EXTI_ClearITPendingBit(EXTI_Line6);
     /*Called Code goes here*/
     I2C1_Request_Job(GYRO_READ);//request a gyro read - magno will also be performed on job completion if magno is avaliable
+    if(Millis>100)		//system has to be up and running for this to run, so ADC is configured
+    	I2C1_Request_Job(PITOT_READ);//read the pitot sensor - this is done as often as possible, it will get NACK and quit if no data
     if(i2c_counter)
     	I2C1_Request_Job(BMP_16BIT);//read the temperature sensor
     else
@@ -118,11 +121,11 @@ void EXTI9_5_IRQHandler(void)
     else {
 	I2C1_Request_Job(BMP_PRESS);//schedule a pressure conversion
         i2c_counter=0;
-    }
+    }/*
     if((Millis-millis_pitot)>PITOT_PERIOD) {
 	millis_pitot=Millis;	//update the local time reference
 	I2C1_Request_Job(PITOT_READ);//read the pitot sensor
-    }
+    }This doesnt work as the LTC2481 global address is shared with the BMP085*/
   }
 }
 
