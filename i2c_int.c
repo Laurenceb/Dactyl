@@ -186,6 +186,9 @@ void I2C1_Setup_Job(uint8_t job_, volatile uint8_t* data) {
   * @retval None
   */
 void I2C_Config() {			// Configure I2C1 for the sensor bus
+	I2C_DeInit(I2C1);		//Deinit and reset the I2C to avoid it locking up
+	I2C_SoftwareResetCmd(I2C1, ENABLE);
+	I2C_SoftwareResetCmd(I2C1, DISABLE);
 	I2C_InitTypeDef I2C_InitStructure;
 	I2C_InitStructure.I2C_Mode = I2C_Mode_I2C;
 	I2C_InitStructure.I2C_DutyCycle = I2C_DutyCycle_2;
