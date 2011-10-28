@@ -43,10 +43,10 @@ extern volatile I2C_Error_Type I2C1error;	//used to store error state
 {MAGNO_ADDR,I2C_Direction_Receiver,6,0x03,NULL}, /*Read the Magno data*/\
 {ACCEL_ADDR,I2C_Direction_Receiver,6,0xA8,NULL}, /*Read the Accel data*/\
 {LTC2481_R,I2C_Direction_Receiver,3,LTC2481_ADC/*0xFF*/,NULL}, /*Read the Pitot Note: sets the config incase it overwritten by bmp*/\
+{BMP085_W,I2C_Direction_Receiver,2,BMP085_ADC,NULL}, /*Read BMP085 ADC - 16bit mode Note: may be faster to reverse these, but greater pitot risk*/\
+{BMP085_W,I2C_Direction_Receiver,3,BMP085_ADC,NULL}, /*Read BMP085 ADC - 24/19bit mode*/\
 {BMP085_W,I2C_Direction_Transmitter,1,BMP085_CTRL,Bmp_temperature}, /*Setup a BMP085 temperature conv*/\
 {BMP085_W,I2C_Direction_Transmitter,1,BMP085_CTRL,Bmp_pressure}, /*Setup a BMP085 pressure conv*/\
-{BMP085_W,I2C_Direction_Receiver,2,BMP085_ADC,NULL}, /*Read BMP085 ADC - 16bit mode*/\
-{BMP085_W,I2C_Direction_Receiver,3,BMP085_ADC,NULL}, /*Read BMP085 ADC - 24/19bit mode*/\
 {ACCEL_ADDR,I2C_Direction_Transmitter,4,0xA0,Accel_config}, /*Configure the accelerometer*/\
 {MAGNO_ADDR,I2C_Direction_Transmitter,3,0x00,Magno_config}, /*Configure the magno*/\
 {GYRO_ADDR,I2C_Direction_Transmitter,3,0x15,Gyro_config}, /*Configure the gyro - exclusing the pll*/\
@@ -59,10 +59,10 @@ extern volatile I2C_Error_Type I2C1error;	//used to store error state
 #define GYRO_READ  0
 #define MAGNO_SETUP_NO 1
 #define MAGNO_READ 2
-#define BMP_TEMP 5
-#define BMP_PRESS 6
-#define BMP_16BIT 7
-#define BMP_24BIT 8
+#define BMP_TEMP 7
+#define BMP_PRESS 8
+#define BMP_16BIT 5
+#define BMP_24BIT 6
 #define PITOT_READ 4
 #define PITOT_CONFIG_NO 13
 #define BMP_READ 14

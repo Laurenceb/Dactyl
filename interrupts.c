@@ -99,7 +99,7 @@ void EXTI_Config(void)
   */
 void EXTI9_5_IRQHandler(void)
 {
-  static uint32_t millis_bmp,millis_pitot;
+  static uint32_t millis_bmp;//,millis_pitot;
   static uint8_t i2c_counter;//used to iterate through a task list
   if(EXTI_GetITStatus(EXTI_Line6) != RESET)
   {

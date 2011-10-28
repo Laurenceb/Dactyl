@@ -25,6 +25,7 @@ extern float Long_To_Meters_Home;
 extern volatile Ubx_Gps_Type Gps;
 extern volatile Nav_Type Nav_Global,Nav;	
 extern volatile uint8_t Nav_Flag,New_Waypoint_Flagged,Ground_Flag;
+extern volatile uint32_t Millis;
 extern volatile float UAVtalk_Altitude_Array[3];	
 //Just here for debug
 extern volatile float Balt;
@@ -42,7 +43,7 @@ volatile uint8_t Accel_Access_Flag;		//Used to control access
   */
 void run_imu(void) {
 	//Static variables
-	static uint32_t Iterations=0;		//Number of ekf iterations
+	static uint32_t Iterations=0,millis_pitot;//Number of ekf iterations, pitot sample timestamp
 	static Control_type control=DEFAULT_CONTROL;//The control structure
 	static Ubx_Gps_Type gps __attribute__((packed));//This is our local copy - theres is also a global, be careful with copying
 	static float ac[3],Wind[3];		//The accel is not always avaliable - 100hz update
@@ -108,12 +109,15 @@ void run_imu(void) {
 	}
 	if(Completed_Jobs&(1<<PITOT_READ)) {
 		Completed_Jobs&=~(1<<PITOT_READ);//Wipe the job completed bit
-		Pitot_Pressure=Pitot_Conv((uint32_t)Pitot_Pressure);//Align and sign the adc value - 1lsb=~0.24Pa
-		AirSpeed=Pitot_convert_Airspeed(Pitot_Pressure,(float)gps.mslaltitude*0.001,(float)Baro_Pressure);//windspeed
-		Wind[0]*=WIND_TAU;Wind[1]*=WIND_TAU;//Low pass filter
-		Wind[0]+=(1.0-WIND_TAU)*(Nav.Vel[0]-AirSpeed*Body_x_To_x);//This assumes horizontal wind and neglidgible slip
-		Wind[1]+=(1.0-WIND_TAU)*(Nav.Vel[1]-AirSpeed*Body_x_To_y);
-		Balt=(float)AirSpeed;		//Pitot_Pressure;//Note debug
+		if((Millis-millis_pitot)<2*PITOT_PERIOD) {//An uncorrupted pitot data sample - the bmp085 has same address as ltc2481 global config
+			Pitot_Pressure=Pitot_Conv((uint32_t)Pitot_Pressure);//Align and sign the adc value - 1lsb=~0.24Pa
+			AirSpeed=Pitot_convert_Airspeed(Pitot_Pressure,(float)gps.mslaltitude*0.001,(float)Baro_Pressure);//windspeed
+			Wind[0]*=WIND_TAU;Wind[1]*=WIND_TAU;//Low pass filter
+			Wind[0]+=(1.0-WIND_TAU)*(Nav.Vel[0]-AirSpeed*Body_x_To_x);//This assumes horizontal wind and neglidgible slip
+			Wind[1]+=(1.0-WIND_TAU)*(Nav.Vel[1]-AirSpeed*Body_x_To_y);
+			Balt=(float)AirSpeed;		//Pitot_Pressure;//Note debug
+		}
+		millis_pitot=Millis;		//Save a timestamp so we can monitor conversion time, BMP085 corruption will double this
 	}
 	INSCorrection((float*)&ma,(float*)&gps_position,(float*)&gps_velocity,Baro_Alt+Home_Position.Altitude,SensorsUsed);
 	if(!Nav_Flag) {Nav_Global=Nav; Nav_Flag=(uint32_t)0x01;}//Copy over Nav state if its been unlocked
