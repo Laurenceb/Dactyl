@@ -147,12 +147,6 @@ boolean RF22::init()
     spiWrite (RF22_REG_0D_GPIO_CONFIGURATION2, 0x15) ; // RX state
 
     // Enable interrupts	SPI_I2S_SendData(SPI_RF22, out);
-
-	/* Wait to receive a byte */
-	while (SPI_I2S_GetFlagStatus(SPI_RF22, SPI_I2S_FLAG_RXNE) == RESET) { ; }
-
-	/* Return the byte read from the SPI bus */
-	return SPI_I2S_ReceiveData(SPI_RF22);
     spiWrite(RF22_REG_05_INTERRUPT_ENABLE1, RF22_ENTXFFAEM | RF22_ENRXFFAFULL | RF22_ENPKSENT | RF22_ENPKVALID | RF22_ENCRCERROR | RF22_ENFFERR);
     spiWrite(RF22_REG_06_INTERRUPT_ENABLE2, RF22_ENPREAVAL);
 
