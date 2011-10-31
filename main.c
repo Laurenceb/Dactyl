@@ -349,8 +349,8 @@ void Initialisation() {
 	else {					//FATFS initialised ok, try init the card, this also sets up the SPI in fast mode (9MHz) if card
 		Spi_Locked=1;			//Lockout the SPI from being used by the Si4432 IRQ service 
 		if((f_err_code=f_open(&FATFS_logfile,"logfile.txt",FA_CREATE_ALWAYS | FA_WRITE))) {//present
-			Usart_Send_Str((char*)"FatFs drive error\r\n");
-			if(f_err_code==FR_DISK_ERR)Usart_Send_Str((char*)"No uSD card inserted?\r\n");
+			printf("FatFs drive error %d\r\n",f_err_code);
+			if(f_err_code==FR_DISK_ERR || f_err_code==FR_NOT_READY)Usart_Send_Str((char*)"No uSD card inserted?\r\n");
 		}
 		else{				//We have a mounted card
 			f_err_code=f_lseek(&FATFS_logfile, PRE_SIZE);/* Pre-allocate clusters */
@@ -368,14 +368,15 @@ void Initialisation() {
 		printf("Si4432 init error\r\n");//this goes via the wrapper function
 	else {
 		printf("Connecting to Network..\r\n");
-		if(RF22_Sendtowait(0x00,0x00,SERVER)) {	//Ping the networks server at 0x01
+		uint8_t buf[]="Hello";		//greeting to the server
+		if(RF22_Sendtowait(buf,5,SERVER)) {	//Ping the networks server at 0x01
 			printf("Sucessfully connected to the network\r\n");
-			uint8_t buf,len=1,from;
-			if(RF22_recvfromAckTimeout(&buf, &len, 3000, &from)) {//Wait for a reply from the server - 3s timeout (assigned address)
-				if(len>1 || from!=SERVER || !buf)//Shouldnt happen - we receive one byte!=0 from server
+			uint8_t len=1,from;
+			if(RF22_recvfromAckTimeout(buf, &len, 3000, &from)) {//Wait for a reply from the server - 3s timeout (assigned address)
+				if(len>1 || from!=SERVER || !buf[0])//Shouldnt happen - we receive one byte!=0 from server
 					printf("Protocol error\r\n");
 				else {
-					RF22_Reassign(buf);//Set the designated address
+					RF22_Reassign(buf[0]);//Set the designated address
 					printf("We are 0x%2x\r\n",buf);
 				}
 			}
