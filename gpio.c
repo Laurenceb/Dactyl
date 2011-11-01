@@ -48,7 +48,7 @@ void MEMS_Status_Configuration() {		//sets up the mems status pins
 	GPIO_InitTypeDef    GPIO_InitStructure;
 	GPIO_InitStructure.GPIO_Pin = ITG_DTRD_PIN|LSM303M_DTRD_PIN;//these sensors to port a
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPD;//pull down
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_10MHz;//doesnt need to be exceptionally fast
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;//needs to be faster than the spi
 	GPIO_Init( GPIOA, &GPIO_InitStructure );
 	GPIO_InitStructure.GPIO_Pin = LSM303A_DTRD_PIN;//this sensor goes to port b
 	GPIO_Init( GPIOB, &GPIO_InitStructure );

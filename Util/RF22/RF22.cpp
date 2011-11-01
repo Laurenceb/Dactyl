@@ -321,7 +321,7 @@ void RF22::spiBurstRead(uint8_t reg, uint8_t* dest, uint8_t len)
     	/* Wait to receive a byte */
     	while (SPI_I2S_GetFlagStatus(SPI_RF22, SPI_I2S_FLAG_RXNE) == RESET) { ; }
     	/* Return the byte read from the SPI bus */
-    	*dest++ = SPI_I2S_ReceiveData(SPI_RF22);
+    	*(dest++) = SPI_I2S_ReceiveData(SPI_RF22);
     }
     Set_Si4432_Nsel(Bit_SET);
 }
@@ -335,7 +335,7 @@ void RF22::spiBurstWrite(uint8_t reg, uint8_t* src, uint8_t len)
     /* Return the byte read from the SPI bus */
     SPI_I2S_ReceiveData(SPI_RF22);//dummy read
     while (len--) {
-    	SPI_I2S_SendData(SPI_RF22, *src++);// Send the data
+    	SPI_I2S_SendData(SPI_RF22, *(src++));// Send the data
     	/* Wait to receive a byte */
     	while (SPI_I2S_GetFlagStatus(SPI_RF22, SPI_I2S_FLAG_RXNE) == RESET) { ; }
     	/* Return the byte read from the SPI bus */

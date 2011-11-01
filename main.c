@@ -301,7 +301,7 @@ void Initialisation() {
 	Home_Position.Latitude=home[0]/err;	//Home is in raw units of degrees x 10^7
 	Home_Position.Longitude=home[1]/err;
 	Home_Position.Altitude=home[2]/((float)err*1000.0);//Find average position - note altitude converted to meters
-	mean_pressure/=(float)(err>>1);		//Average pressure in pascals
+	mean_pressure/=(float)err;		//Average pressure in pascals
 	Long_To_Meters_Home=LAT_TO_METERS*cos(UBX_DEG_TO_RADS*Home_Position.Latitude);
 	printf("Home position set\r\n");
 	//Init the ekf, must do this before the mag model
