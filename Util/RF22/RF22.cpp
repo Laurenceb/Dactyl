@@ -542,8 +542,10 @@ bool RF22::waitAvailableTimeout(uint16_t timeout)
 {
     unsigned long endtime = Millis + timeout;
     while (Millis < endtime)
+    {
 	if (available())
 	    return true;
+    }
     return false;
 }
 

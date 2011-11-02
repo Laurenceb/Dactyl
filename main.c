@@ -331,10 +331,10 @@ void Initialisation() {
 	//Set the earths gravity
 	INSSetGravity(Home_Position.g_e);
 	//Use home position to initialise the ekf - assume that we intialise stationary with no gyro bias, and grab accel and magno data
-	Calibrate_3(&mag_corr,Magno_Data_Buffer,&Mag_Cal_Dat);
-	Calibrate_3(&acc_corr,Accel_Data_Buffer,&Acc_Cal_Dat);
+	Calibrate_3(mag_corr,Magno_Data_Buffer,&Mag_Cal_Dat);
+	Calibrate_3(acc_corr,Accel_Data_Buffer,&Acc_Cal_Dat);
 	//quaternion init code - from Openpilot
-	RotFrom2Vectors((float*)&acc_corr, ge, (float*)&mag_corr, Field, Rbe);
+	RotFrom2Vectors((float*)acc_corr, ge, (float*)mag_corr, Field, Rbe);
 	R2Quaternion(Rbe, q);
 	INSSetState(Zeros,Zeros,q,Zeros);	//Home position is defined as the origin
 	//Use the Baro output to find sea level pressure, remeber home altitude is negative
