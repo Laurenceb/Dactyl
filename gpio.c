@@ -80,11 +80,11 @@ void SPI_Control_Configuration() {		//sets up the SPI device related pins
 	GPIO_InitTypeDef    GPIO_InitStructure;
 	GPIO_InitStructure.GPIO_Pin = SI4432_NSEL_PIN;//the negative select pin for the ism transceiver
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;//push pull
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_10MHz;//doesnt need to be exceptionally fast
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;//needs to be as fast as spi
 	GPIO_Init( GPIOA, &GPIO_InitStructure );
 	Set_Si4432_Nsel(Bit_SET);		//deselect it
 	GPIO_InitStructure.GPIO_Pin = SI4432_DTRD_PIN;//this sensor goes to port b
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPD;//pull down, so defaults to no data
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;//pull up, so defaults to no data (nIRQ)
 	GPIO_Init( GPIOA, &GPIO_InitStructure );//all this is on port a
 	GPIO_InitStructure.GPIO_Pin = SD_SEL_PIN;//this selects the sd card
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;//push pull
