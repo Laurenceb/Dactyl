@@ -17,6 +17,8 @@ extern RF22Mesh rf22;
   bool RF22_recvfromAckTimeout(uint8_t* buf, uint8_t* len, uint16_t timeout, uint8_t* from);
   void RF22_Reassign(uint8_t New_address);
   void RF22_Service_ISR(void);
+  bool RF22_Sendto(uint8_t* buf, uint8_t len, uint8_t address);
+//  bool RF22_SendtoWait(uint8_t* buf, uint8_t len, uint8_t address);
 #ifdef __cplusplus
  }
 #endif

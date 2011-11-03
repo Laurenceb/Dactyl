@@ -21,3 +21,11 @@ extern "C" void RF22_Reassign(uint8_t New_address){
 extern "C" void RF22_Service_ISR(void){
   rf22.handleInterrupt();
 }
+
+extern "C" bool RF22_Sendto(uint8_t* buf, uint8_t len, uint8_t address){
+  return rf22.sendto(buf,len,address);
+}
+
+//extern "C" bool RF22_SendtoWait(uint8_t* buf, uint8_t len, uint8_t address){
+//  return rf22.sendtoWait(uint8_t* buf, uint8_t len, uint8_t address);
+//}

@@ -53,7 +53,7 @@ volatile uint8_t Nav_Flag;	//Used to control and lock global nav state access
 volatile uint8_t New_Waypoint_Flagged;
 volatile uint8_t Ground_Flag;
 volatile uint8_t Kalman_Enabled;
-volatile uint8_t Spi_Locked;	//Used to control SPI2 sharing
+volatile uint8_t Spi_Locked=1;	//Used to control SPI2 sharing - locked by default as the spi is not setup
 //FatFs filesystem globals go here
 FRESULT f_err_code;
 static FATFS FATFS_Obj;
@@ -261,14 +261,14 @@ void Initialisation() {
 		printf("I2C error:%d at job number:%d %d\r\n",I2C1error.error,I2C1error.job,Millis-TEMPERATURE_PERIOD);
 	//Configure the GPS and test it, block until it gets a lock
 	if(!Config_Gps()) Usart_Send_Str((char*)"Setup GPS ok - awaiting fix\r\n");//If not the function printfs its error
-	while(Gps.status!=UBLOX_3D) {		//Wait for a 3D fix
+/*	while(Gps.status!=UBLOX_3D) {		//Wait for a 3D fix
 		while(Bytes_In_Buffer(&Gps_Buffer))//Dump all the data
 			Gps_Process_Byte((uint8_t)(Pop_From_Buffer(&Gps_Buffer)),&Gps);
 		if(Gps.packetflag==REQUIRED_DATA){		
 			putchar(0x30+Gps.nosats);putchar(0x2C);//Number of sats seperated by commas
 			Gps.packetflag=0x00;
 		}
-	}
+	}*/
 	Gps.packetflag=0x00;			//Reset
 	while(Gps.packetflag!=REQUIRED_DATA) {	//Wait for all fix data
 		while(Bytes_In_Buffer(&Gps_Buffer))//Dump all the data
@@ -347,7 +347,6 @@ void Initialisation() {
 	Set_RTC_From_GPS(Gps.week,Gps.time);	//First set the RTC correctly, so it can be used by filesystem
 	if((f_err_code = f_mount(0, &FATFS_Obj)))Usart_Send_Str((char*)"FatFs mount error\r\n");//this should only error if internal error
 	else {					//FATFS initialised ok, try init the card, this also sets up the SPI in fast mode (9MHz) if card
-		Spi_Locked=1;			//Lockout the SPI from being used by the Si4432 IRQ service 
 		if((f_err_code=f_open(&FATFS_logfile,"logfile.txt",FA_CREATE_ALWAYS | FA_WRITE))) {//present
 			printf("FatFs drive error %d\r\n",f_err_code);
 			if(f_err_code==FR_DISK_ERR || f_err_code==FR_NOT_READY)Usart_Send_Str((char*)"No uSD card inserted?\r\n");
@@ -361,15 +360,17 @@ void Initialisation() {
 					Usart_Send_Str((char*)"Seek error\r\n");
 			}
 		}
-		Spi_Locked=0;			//Unlock the SPI
 	}
 	//Configure and test the Si4432 ISM band radio using RF22 C++ libs from arduino (mesh network mode)
 	if(!RF22_Init())
 		printf("Si4432 init error\r\n");//this goes via the wrapper function
 	else {
-		printf("Connecting to Network..\r\n");
 		uint8_t buf[]="Hello";		//greeting to the server
-		if(RF22_Sendtowait(buf,5,SERVER)) {	//Ping the networks server at 0x01
+		//printf("sendtst %d\r\n",(uint8_t)RF22_Sendto(buf,5,SERVER));
+		//printf("sendwaittst %d\r\n",(uint8_t)RF22_SendtoWait(buf,5,SERVER));
+		printf("Connecting to Network..\r\n");
+		Spi_Locked=0;			//Unlock the SPI
+		if(!RF22_Sendtowait(buf,5,SERVER)) {//Ping networks server at 0x01 - error 1invalid length,2no route,3timeout,4no reply,5unable
 			printf("Sucessfully connected to the network\r\n");
 			uint8_t len=1,from;
 			if(RF22_recvfromAckTimeout(buf, &len, 3000, &from)) {//Wait for a reply from the server - 3s timeout (assigned address)
