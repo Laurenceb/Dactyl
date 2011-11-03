@@ -7,6 +7,6 @@
   * Note this is compensated for the sysclk speed
   */
 void Delay(volatile uint32_t delay) {
-	delay*=SystemFrequency/(1000000*4);
+	delay*=SystemFrequency/(1000000*9);
 	for(; delay;){--delay;}
 }

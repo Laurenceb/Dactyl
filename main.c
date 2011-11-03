@@ -83,9 +83,11 @@ int main(void) {
 	UAVtalk_Register_Object(HOME_LOCATION,(uint8_t*)&Home_Position);//Home position structure, this is set at initialisation
 	for(;;) {
 		//All USART1 UAVtalk streams go here
+		printf("In main loop\r\n");
 		UAVtalk_Register_Object(FLIGHT_STATS,(uint8_t*)&uavtalk_usart_port.flightStats);//Initialise the link stats objects
 		UAVtalk_Register_Object(GCS_STATS,(uint8_t*)&uavtalk_usart_port.gcsStats);//These attach to the port, set before using the port
-		usart1_send_data_dma(&Usart1tx);//enable the usart1 dma, dma for spi2 cannot be used now - blocks until tx complete
+		if(Usart1tx.tail)			//only send if we have data
+			usart1_send_data_dma(&Usart1tx);//enable the usart1 dma, dma for spi2 cannot be used now - blocks until tx complete
 		uavtalk_usart_port.type=0;//Reset this before proceeding
 		while(Bytes_In_ISR_Buffer(&Usart1_rx_buff)) //if there is any data on the mavlink port, there may be a packet
 			UAVtalk_Process_Byte(Get_From_ISR_Buffer(&Usart1_rx_buff),&uavtalk_usart_port);//grab a byte from the usart isr buffer
@@ -115,18 +117,23 @@ int main(void) {
 			UAVtalk_conf.semaphores[POSITION_DESIRED_NO]=READ;//mark the object as read 	
 		}
 		usart1_disable_dma();			//Disable the TX DMA so the DMA is ready for use by SPI2
+		printf("Handling Si4432\r\n");
 		//Now take care of the Si4432 radio modem
 		UAVtalk_Register_Object(FLIGHT_STATS,(uint8_t*)&uavtalk_si4432_port.flightStats);//Initialise the link stats objects
 		UAVtalk_Register_Object(GCS_STATS,(uint8_t*)&uavtalk_si4432_port.gcsStats);//These attach to the port, set before using the port
-		uavtalk_si4432_port.type=0;//Reset this before proceeding
-		if(Get_Si4432_DRDY())//IRQ flag line from the Si4432 modem - this is handled in the software ISR, but poll here to speed up
+		uavtalk_si4432_port.type=0;		//Reset this before proceeding
+		if(!Get_Si4432_DRDY()) {//nIRQ flag line from the Si4432 modem - this is handled in the software ISR, but poll here to speed up
+			Spi_Locked=1;			//Block the interrupt code from running here and screwing the bus
 			RF22_Service_ISR();
-		//Get reply from server - first to allow response in loop
-		RF22_recvfromAckTimeout(Si4432_buff.data,(uint8_t*)&(Si4432_buff.tail),0,(uint8_t*)&n);//Note only for Little Endian (Cortex M3)
-		if(SERVER==n) {		//Message can only come from the server
+			Spi_Locked=0;
+		}
+		//Get reply from server - first to allow response in loop - timeout after 1ms (0 can cause issues with comparisons)
+		RF22_recvfromAckTimeout(Si4432_buff.data,(uint8_t*)&(Si4432_buff.tail),1,(uint8_t*)&n);//Note only for Little Endian (Cortex M3)
+		if(SERVER==n) {				//Message can only come from the server
+			printf("Si4432 from server\r\n");
 			for(n=0;n<Si4432_buff.tail;n++) //if there is any data on the mavlink port, there may be a packet
 				UAVtalk_Process_Byte(Si4432_buff.data[n],&uavtalk_si4432_port);//grab a byte from the usart isr buffer
-			Si4432_buff.tail=0;//tail is zero as we have read all the data
+			Si4432_buff.tail=0;		//tail is zero as we have read all the data
 			updateTelemetryStats(&uavtalk_si4432_port, Millis);//Process the telemetery
 			//Now we process any received data (the dma has to be turned off afterwards so spi can be used)
 			if(uavtalk_si4432_port.type&0x0F) {	//A response is required
@@ -137,6 +144,9 @@ int main(void) {
 				UAVtalk_Generate_Packet(&uavtalk_si4432_port, &Si4432_buff);//setup the packet first - load dma buffer
 			}
 		}
+		else					//This is bad - protocol error
+			Si4432_buff.tail=0;		//tail is zeroed before we start filling with anything bad that happened due to protocol error
+		printf("Handling \r\n");
 		//We find a streamed object to place in the buffer - will run until buffer full
 		UAVtalk_Run_Streams(&uavtalk_si4432_port, &Si4432_buff, Millis, 64);//Run the stream function with the current time
 		if(uavtalk_si4432_port.object_no==POSITION_DESIRED_NO && UAVtalk_conf.semaphores[1]==WRITE) {//Note the guidance could do this
@@ -370,7 +380,7 @@ void Initialisation() {
 		//printf("sendwaittst %d\r\n",(uint8_t)RF22_SendtoWait(buf,5,SERVER));
 		printf("Connecting to Network..\r\n");
 		Spi_Locked=0;			//Unlock the SPI
-		if(!RF22_Sendtowait(buf,5,SERVER)) {//Ping networks server at 0x01 - error 1invalid length,2no route,3timeout,4no reply,5unable
+		if(!(err=RF22_Sendtowait(buf,5,SERVER))) {//Ping networks server at 0x01 - error 1invalid length,2no route,3timeout,4no reply,5unable
 			printf("Sucessfully connected to the network\r\n");
 			uint8_t len=1,from;
 			if(RF22_recvfromAckTimeout(buf, &len, 3000, &from)) {//Wait for a reply from the server - 3s timeout (assigned address)
@@ -382,10 +392,10 @@ void Initialisation() {
 				}
 			}
 			else
-				printf("Network response error\r\n");
+				printf("No response from network\r\n");
 		}
 		else
-			printf("Network connection error\r\n");
+			printf("Network connection error: %d\r\n",err);
 	}
 	Init_Timers();				//Start PWM output timers running (need to enable GPIO seperately)
 	Enable_Servos();			//Setup the GPIO pins to drive the servos

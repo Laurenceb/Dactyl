@@ -272,7 +272,7 @@ void RF22::reset()
 {
     spiWrite(RF22_REG_07_OPERATING_MODE1, RF22_SWRES);
     // Wait for it to settle
-    Delay((uint32_t)200); // SWReset time is nominally 100usec
+    Delay((uint32_t)400);// SWReset time is nominally 250usec - dont know whats going on here - this had be increased to boot ok
 }
 
 uint8_t RF22::spiRead(uint8_t reg)

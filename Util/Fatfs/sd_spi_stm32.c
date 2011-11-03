@@ -77,7 +77,7 @@
  #define RCC_APBPeriphClockCmd_SPI_SD  RCC_APB1PeriphClockCmd
  #define RCC_APBPeriph_SPI_SD     RCC_APB1Periph_SPI2
  /* - for SPI2 and full-speed APB1: 72MHz/(4*2)=9mhz */
- #define SPI_BaudRatePrescaler_SPI_SD  SPI_BaudRatePrescaler_2
+ #define SPI_BaudRatePrescaler_SPI_SD  SPI_BaudRatePrescaler_4/*Note that the ST perif lib defines prescale as F_APB/S_SPI*/
 
 #elif defined(USE_STM32_P103)
  // Olimex STM32-P103 not tested!
