@@ -228,6 +228,8 @@ extern "C" {
     extern volatile uint32_t Millis;	//System uptime
 }
 #define boolean bool
+
+//**************Main config stuff here - note message lenght in cpptoc.h to allow c linkage to mesh packet lenght*********
 #define SPI_RF22 SPI2			/*Si4432 is on spi2*/
 // These defs cause trouble on some versions of Arduino
 #undef round
@@ -235,6 +237,10 @@ extern "C" {
 
 // This is the bit in the SPI address that marks it as a write
 #define RF22_SPI_WRITE_MASK 0x80
+
+#define RF22_HOPTIMEOUT 60		/*Origionally 200ms*/
+#define RF22_HOPRETRIES 3
+#define RF22_ARPTIMEOUT 400		/*Origionally 4000ms*/
 
 // This is the maximum message length that can be supported by this library. Limited by
 // the message length octet in the header. Yes, 255 is correct even though the FIFO size in the RF22 is only
@@ -245,6 +251,7 @@ extern "C" {
 //#define RF22_MAX_MESSAGE_LEN 255
 #define RF22_MAX_MESSAGE_LEN 64 /*Reduced to allow packets to fit entirely in the FIFO buffers*/
 #endif
+//************************************************************************************************************************
 
 // Max number of octets the RF22 Rx and Tx FIFOs can hold
 #define RF22_FIFO_SIZE 64

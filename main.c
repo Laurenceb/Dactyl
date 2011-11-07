@@ -83,7 +83,7 @@ int main(void) {
 	UAVtalk_Register_Object(HOME_LOCATION,(uint8_t*)&Home_Position);//Home position structure, this is set at initialisation
 	for(;;) {
 		//All USART1 UAVtalk streams go here
-		printf("In main loop\r\n");
+		//printf("In main loop\r\n");
 		UAVtalk_Register_Object(FLIGHT_STATS,(uint8_t*)&uavtalk_usart_port.flightStats);//Initialise the link stats objects
 		UAVtalk_Register_Object(GCS_STATS,(uint8_t*)&uavtalk_usart_port.gcsStats);//These attach to the port, set before using the port
 		if(Usart1tx.tail)			//only send if we have data
@@ -117,7 +117,7 @@ int main(void) {
 			UAVtalk_conf.semaphores[POSITION_DESIRED_NO]=READ;//mark the object as read 	
 		}
 		usart1_disable_dma();			//Disable the TX DMA so the DMA is ready for use by SPI2
-		printf("Handling Si4432\r\n");
+		//printf("Handling Si4432\r\n");
 		//Now take care of the Si4432 radio modem
 		UAVtalk_Register_Object(FLIGHT_STATS,(uint8_t*)&uavtalk_si4432_port.flightStats);//Initialise the link stats objects
 		UAVtalk_Register_Object(GCS_STATS,(uint8_t*)&uavtalk_si4432_port.gcsStats);//These attach to the port, set before using the port
@@ -130,7 +130,7 @@ int main(void) {
 		//Get reply from server - first to allow response in loop - timeout after 1ms (0 can cause issues with comparisons)
 		RF22_recvfromAckTimeout(Si4432_buff.data,(uint8_t*)&(Si4432_buff.tail),1,(uint8_t*)&n);//Note only for Little Endian (Cortex M3)
 		if(SERVER==n) {				//Message can only come from the server
-			printf("Si4432 from server\r\n");
+			//printf("Si4432 from server\r\n");
 			for(n=0;n<Si4432_buff.tail;n++) //if there is any data on the mavlink port, there may be a packet
 				UAVtalk_Process_Byte(Si4432_buff.data[n],&uavtalk_si4432_port);//grab a byte from the usart isr buffer
 			Si4432_buff.tail=0;		//tail is zero as we have read all the data
@@ -146,7 +146,7 @@ int main(void) {
 		}
 		else					//This is bad - protocol error
 			Si4432_buff.tail=0;		//tail is zeroed before we start filling with anything bad that happened due to protocol error
-		printf("Handling \r\n");
+		//printf("Handling \r\n");
 		//We find a streamed object to place in the buffer - will run until buffer full
 		UAVtalk_Run_Streams(&uavtalk_si4432_port, &Si4432_buff, Millis, 64);//Run the stream function with the current time
 		if(uavtalk_si4432_port.object_no==POSITION_DESIRED_NO && UAVtalk_conf.semaphores[1]==WRITE) {//Note the guidance could do this

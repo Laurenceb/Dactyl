@@ -38,7 +38,7 @@ uint8_t RF22Mesh::sendtoWait(uint8_t* buf, uint8_t len, uint8_t address)
     if (!route && !doArp(address))
 	return RF22_ROUTER_ERROR_NO_ROUTE;
 
-    // Now have a route. Contruct an applicaiotn layer message and dend it via that route
+    // Now have a route. Contruct an application layer message and dend it via that route
     MeshApplicationMessage* a = (MeshApplicationMessage*)&_tmpMessage;
     a->header.msgType = RF22_MESH_MESSAGE_TYPE_APPLICATION;
     memcpy(a->data, buf, len);
@@ -62,7 +62,7 @@ boolean RF22Mesh::doArp(uint8_t address)
     // It will contain the complete route to the destination
     uint8_t messageLen = sizeof(_tmpMessage);
     // FIXME: timeout should be configurable
-    unsigned long endtime = Millis + 4000;
+    unsigned long endtime = Millis + RF22_ARPTIMEOUT;
     while (Millis < endtime)
     {
 	if (RF22Router::recvfromAck(_tmpMessage, &messageLen))

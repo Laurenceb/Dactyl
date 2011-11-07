@@ -9,7 +9,7 @@
 #define USART1TX_DMA1 DMA1_Channel4
 #define USART1TX_DMA_COMPLETE DMA1_FLAG_TC4
 //Watchdog timeout
-#define MAIN_LOOP_TIMEOUT 250	/*250ms*/
+#define MAIN_LOOP_TIMEOUT 1000	/*1000ms- allow for SD card blocking and a mesh network ARP ping*/
 //Cluster preallocation on the SD card, 3MB should be enough for an hour or so of logging
 #define PRE_SIZE 3000000UL
 

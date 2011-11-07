@@ -21,8 +21,8 @@ RF22ReliableDatagram::RF22ReliableDatagram(uint8_t thisAddress, uint8_t slaveSel
 {
     _retransmissions = 0;
     _lastSequenceNumber = 0;
-    _timeout = 200;
-    _retries = 3;
+    _timeout = RF22_HOPTIMEOUT;
+    _retries = RF22_HOPRETRIES;
 }
 
 ////////////////////////////////////////////////////////////////////
