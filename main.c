@@ -299,12 +299,16 @@ void Initialisation() {
 		home[0]+=(float)Gps.latitude;
 		home[1]+=(float)Gps.longitude;
 		home[2]-=(float)Gps.mslaltitude;//NED frame - alititude is negative
-		if(Completed_Jobs&(1<<BMP_24BIT)){//BMP085 has been read (it should have been)
+		if(Completed_Jobs&(1<<BMP_24BIT)) {//BMP085 has been read (it should have been)
 			Completed_Jobs&=~(1<<BMP_24BIT);//check off the job
 			raw_pressure=Bmp_Press_Buffer;//Copy the data over from the device driver buffers
 			flip_adc24(&raw_pressure);
-			Bmp_Copy_Temp();	//Copy the 16 bit temperature out of its buffer into the temperature global
+			if(Completed_Jobs&(1<<BMP_16BIT)) {
+				Completed_Jobs&=~(1<<BMP_16BIT);//check off the job
+				Bmp_Copy_Temp();//Copy the 16 bit temperature out of its buffer into the temperature global
+			}
 			Bmp_Simp_Conv(&device_temperature,&raw_pressure);//convert to pressure
+			//printf("Baro pressure is %ld Pascals, temperature is %ld C\r\n",raw_pressure,device_temperature/10);//Debug - remove later
 			mean_pressure+=raw_pressure;
 		}
 	}
