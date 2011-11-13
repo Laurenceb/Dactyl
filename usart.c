@@ -161,8 +161,9 @@ void assert_failed(uint8_t* file, uint32_t line)
   */
 void usart1_send_data_dma(Buffer_Type* tx_buffer) {
 	DMA_USART1_Configuration(0xFF, tx_buffer);	//Enable the DMA on USART1
-	USART_DMACmd(USART1_USART, USART_DMAReq_Tx , ENABLE);//Enable the dma for tx
 	DMA_Cmd(USART1TX_DMA1, ENABLE);			//Enable the DMA
+	USART_DMACmd(USART1_USART, USART_DMAReq_Tx , ENABLE);//Enable the dma for tx
+	DMA_ClearFlag(USART1TX_DMA_COMPLETE);		//Clear the completion flag in software
 	while (DMA_GetFlagStatus(USART1TX_DMA_COMPLETE) == RESET) { ; }//Wait for the transmission to complete
 }
 

@@ -83,9 +83,10 @@ int main(void) {
 	UAVtalk_Register_Object(HOME_LOCATION,(uint8_t*)&Home_Position);//Home position structure, this is set at initialisation
 	for(;;) {
 		//All USART1 UAVtalk streams go here
-		//printf("In main loop\r\n");
 		UAVtalk_Register_Object(FLIGHT_STATS,(uint8_t*)&uavtalk_usart_port.flightStats);//Initialise the link stats objects
 		UAVtalk_Register_Object(GCS_STATS,(uint8_t*)&uavtalk_usart_port.gcsStats);//These attach to the port, set before using the port
+		//printf("In main loop\r\n");
+		//Usart1tx.data[0]=0x54;Usart1tx.data[1]=0x45;Usart1tx.data[2]=0x53;Usart1tx.data[3]=0x54;Usart1tx.tail=4;//Debug - should say 'TEST'
 		if(Usart1tx.tail)			//only send if we have data
 			usart1_send_data_dma(&Usart1tx);//enable the usart1 dma, dma for spi2 cannot be used now - blocks until tx complete
 		uavtalk_usart_port.type=0;//Reset this before proceeding
