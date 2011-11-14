@@ -87,12 +87,15 @@ int main(void) {
 		UAVtalk_Register_Object(GCS_STATS,(uint8_t*)&uavtalk_usart_port.gcsStats);//These attach to the port, set before using the port
 		//printf("In main loop\r\n");
 		//Usart1tx.data[0]=0x54;Usart1tx.data[1]=0x45;Usart1tx.data[2]=0x53;Usart1tx.data[3]=0x54;Usart1tx.tail=4;//Debug - should say 'TEST'
-		if(Usart1tx.tail)			//only send if we have data
-			usart1_send_data_dma(&Usart1tx);//enable the usart1 dma, dma for spi2 cannot be used now - blocks until tx complete
 		uavtalk_usart_port.type=0;//Reset this before proceeding
-		while(Bytes_In_ISR_Buffer(&Usart1_rx_buff)) //if there is any data on the mavlink port, there may be a packet
+		while(Bytes_In_ISR_Buffer(&Usart1_rx_buff)) //if there is any data on the uavtalk usart port, there may be a packet
 			UAVtalk_Process_Byte(Get_From_ISR_Buffer(&Usart1_rx_buff),&uavtalk_usart_port);//grab a byte from the usart isr buffer
 		updateTelemetryStats(&uavtalk_usart_port, Millis);//Process the telemetery
+		//Next, check if we received a desired position
+		if(uavtalk_usart_port.object_no==POSITION_DESIRED_NO && UAVtalk_conf.semaphores[1]==WRITE) {//Note the guidance could do this
+			New_Waypoint_Flagged=1;		//set the flag so the guidance knows data is ready
+			UAVtalk_conf.semaphores[POSITION_DESIRED_NO]=READ;//mark the object as read 	
+		}
 		//Now we process and received data (the dma has to be turned off afterwards so spi can be used)
 		if(uavtalk_usart_port.type&0x0F) {	//A response is required
 			if((uavtalk_usart_port.type&0x0F)==1)//object request
@@ -101,8 +104,6 @@ int main(void) {
 				uavtalk_usart_port.type|=0x01;//Set the least significant bit (ACK type=3)
 			UAVtalk_Generate_Packet(&uavtalk_usart_port, &Usart1tx);//setup the packet first - load dma buffer
 		}
-		//We find a streamed object to place in the buffer to fill it
-		UAVtalk_Run_Streams(&uavtalk_usart_port, &Usart1tx, Millis, 0);//Run the stream function with the current time
 		if(Nav_Flag) {//the isr has run for guidance
 			Watchdog_Reset(); 		//Watchdog reset goes here - requires the guidance to be running also
 			memcpy(UAVtalk_Attitude_Array,&Nav_Global.q[0],16);//copy over the quaternion
@@ -112,12 +113,11 @@ int main(void) {
 			UAVtalk_conf.semaphores[POSITION_ACTUAL]=WRITE;//Mark the position as written (Note this object points directly to kalman)
 			UAVtalk_conf.semaphores[VELOCITY_ACTUAL]=WRITE;
 			UAVtalk_conf.semaphores[HOME_LOCATION]=WRITE;//Note this is just done so the home can be repeatedly read, its only set once
-		}//Next, check if we received a desired position
-		if(uavtalk_usart_port.object_no==POSITION_DESIRED_NO && UAVtalk_conf.semaphores[1]==WRITE) {//Note the guidance could do this
-			New_Waypoint_Flagged=1;		//set the flag so the guidance knows data is ready
-			UAVtalk_conf.semaphores[POSITION_DESIRED_NO]=READ;//mark the object as read 	
 		}
-		usart1_disable_dma();			//Disable the TX DMA so the DMA is ready for use by SPI2
+		//We find a streamed object to place in the buffer to fill it
+		UAVtalk_Run_Streams(&uavtalk_usart_port, &Usart1tx, Millis, 0);//Run the stream function with the current time
+		if(Usart1tx.tail)			//only send if we have data
+			usart1_send_data_dma(&Usart1tx,0);//enable the usart1 dma, dma for spi2 cannot be used now - do not until tx complete
 		//printf("Handling Si4432\r\n");
 		//Now take care of the Si4432 radio modem
 		UAVtalk_Register_Object(FLIGHT_STATS,(uint8_t*)&uavtalk_si4432_port.flightStats);//Initialise the link stats objects
@@ -172,6 +172,7 @@ int main(void) {
 			New_Waypoint_Flagged=1;		//Set the flag to let guidance know new waypoint is ready
 		}
 		#endif
+		usart1_disable_dma(0x01);		//Disable the TX DMA so the DMA is ready for use by SPI2 - this blocks until DMA1 ch4 is free 
 		//Logfiles and SD card related functionality can go here
 		//Spi_Locked=1; //Lock the spi2 bus
 		//if(!f_err_code) {//if the logfile opened ok
