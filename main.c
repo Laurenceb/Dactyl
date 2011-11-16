@@ -129,41 +129,43 @@ int main(void) {
 			RF22_Service_ISR();
 			Spi_Locked=0;
 		}
-		//Get reply from server - first to allow response in loop - timeout after 1ms (0 can cause issues with comparisons)
-		RF22_recvfromAckTimeout(Si4432_buff.data,(uint8_t*)&(Si4432_buff.tail),1,(uint8_t*)&n);//Note only for Little Endian (Cortex M3)
+		//Get reply from server - first to allow response in loop - timeout after 1ms (0 can cause issues with comparisons), Note offset to end of buffer
+		RF22_recvfromAckTimeout(&Si4432_buff.data[192],(uint8_t*)&(Si4432_buff.tail),1,(uint8_t*)&n);//Note only for Little Endian (Cortex M3)
 		if(SERVER==n) {				//Message can only come from the server
 			//printf("Si4432 from server\r\n");
 			rxobjs=uavtalk_si4432_port.rxObjects;//Store number of objects
-			m=Si4432_buff.tail;		//Store this, so we can 'hack' the tail index
-			Si4432_buff.tail=64;		//Hack the pointer to 64, so the lower 64 bytes can be used to store the rx data
-			for(n=0;n<m;n++) {		//If there is any data, there may be a packet
-				UAVtalk_Process_Byte(Si4432_buff.data[n],&uavtalk_si4432_port);//grab a byte from the usart isr buffer
+			m=Si4432_buff.tail;		//Store this, so we can reset the tail index
+			Si4432_buff.tail=0;		//Index to 0, so the tx data goes to bottom of buffer
+			for(n=192;n<m+192;n++) {	//If there is any data, there may be a packet
+				UAVtalk_Process_Byte(Si4432_buff.data[n],&uavtalk_si4432_port);//Grab a byte from the Si4432 Rx data area of buffer
 				if(uavtalk_usart_port.rxObjects>rxobjs) {//We got an object
-					updateTelemetryStats(&uavtalk_usart_port, Millis);//Process the telemetery
+					updateTelemetryStats(&uavtalk_usart_port, Millis);//Process the telemetery status
 					if(UAVtalk_Handle_Protocol(&uavtalk_usart_port))//Now we process any received data
-						UAVtalk_Generate_Packet(&uavtalk_usart_port, &Si4432_buff);//setup the packet first - load dma buffer
-					rxobjs=uavtalk_si4432_port.rxObjects;
+						UAVtalk_Generate_Packet(&uavtalk_si4432_port, &Si4432_buff);//Setup the packet - loads into the buffer
+					rxobjs=uavtalk_si4432_port.rxObjects;//Update this variable
 				}
 			}
 		}
 		else					//This is bad - protocol error
 			Si4432_buff.tail=0;		//Tail is zeroed before we start filling with anything bad that happened due to protocol error
 		//printf("Handling \r\n");
-		//We find a streamed object to place in the buffer - will run until buffer full (note 64 added to account for the tail offset)
-		UAVtalk_Run_Streams(&uavtalk_si4432_port, &Si4432_buff, Millis, RF22_MESH_MAX_MESSAGE_LEN_+64);//Run the stream function with the current time
+		//We find a streamed object to place in the buffer - will run until buffer full
+		if(Si4432_buff.tail>=RF22_MESH_MAX_MESSAGE_LEN_)//We have already spread over two packets - try for two packets
+			UAVtalk_Run_Streams(&uavtalk_si4432_port, &Si4432_buff, Millis, 2*RF22_MESH_MAX_MESSAGE_LEN_);//Run stream function with current time
+		else					//Aim for a single packet
+			UAVtalk_Run_Streams(&uavtalk_si4432_port, &Si4432_buff, Millis, RF22_MESH_MAX_MESSAGE_LEN_);//Run stream function with current time
 		if(uavtalk_si4432_port.object_no==POSITION_DESIRED_NO && UAVtalk_conf.semaphores[POSITION_DESIRED_NO]==WRITE) {//Note the guidance could do this
 			New_Waypoint_Flagged=1;		//set the flag so the guidance knows data is ready
 			UAVtalk_conf.semaphores[POSITION_DESIRED_NO]=READ;//mark the object as read 	
 		}
-		Si4432_buff.tail-=64;			//Compensate for the hacked tail
 		if(Si4432_buff.tail>=RF22_MESH_MAX_MESSAGE_LEN_) {//Message is spread over two packets - the streams function will avoid this if poss
 			n=RF22_MESH_MAX_MESSAGE_LEN_;	//First send a packet of packed UAVObjects to the Server
-			RF22_Sendtowait(&Si4432_buff.data[64],n,SERVER);//Send to server
+			RF22_Sendtowait(Si4432_buff.data,n,SERVER);//Send to server
 			n=Si4432_buff.tail-RF22_MESH_MAX_MESSAGE_LEN_;
-			RF22_Sendtowait(&(Si4432_buff.data[RF22_MESH_MAX_MESSAGE_LEN_+64]),n,SERVER);
+			RF22_Sendtowait(&(Si4432_buff.data[RF22_MESH_MAX_MESSAGE_LEN_]),n,SERVER);
 		}
 		else
-			RF22_Sendtowait(&Si4432_buff.data[64],Si4432_buff.tail,SERVER);//Send single packet
+			RF22_Sendtowait(Si4432_buff.data,Si4432_buff.tail,SERVER);//Send single packet
 		//Process waypoints here - waypoints are in local NED meter co-ordinates relative to home position
 		//TODO multiple waypoints needs to be integrated into the GCS, macro flag enables the multiple waypoint functionality
 		#ifdef MULTIPLE_WAYPOINTS
