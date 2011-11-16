@@ -70,6 +70,7 @@ void UAVtalk_Generate_Packet(UAVtalk_Port_Type* msg, Buffer_Type* buff);
 void UAVtalk_Run_Streams(UAVtalk_Port_Type* port,Buffer_Type* buff,uint32_t uptime,uint8_t tryfor);
 void UAVtalk_Register_Object(uint16_t object_no, uint8_t* object_pointer);
 void updateTelemetryStats(UAVtalk_Port_Type* port, uint32_t timeNow);
+uint8_t UAVtalk_Handle_Protocol(UAVtalk_Port_Type* port);
 
 //global variables (configuration structure)
 extern UAVtalk_Config_Type UAVtalk_conf;//We need this here to set semaphores

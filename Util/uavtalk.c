@@ -122,7 +122,7 @@ void UAVtalk_Process_Byte(uint8_t c,UAVtalk_Port_Type* msg) {//The raw USART/ISM
 			msg->checksum=CRC_updateCRC(msg->checksum,msg->rx_buffer,msg->bytes_written);
 			if(msg->checksum==c) {	//Checksum matches
 				if(msg->object_no>=0) {//Object exists
-					if(UAVtalk_conf.semaphores[msg->object_no]==READ) {//UAVtalk packet ok, copy to global
+					if(UAVtalk_conf.semaphores[msg->object_no]==READ) {//UAVtalk packet ok, copy to global - will copy 0 bytes for a OBJ_REQ
 						UAVtalk_conf.semaphores[msg->object_no]=0;//Lock the data
 						memcpy((uint8_t*)(UAVtalk_conf.object_pointers[msg->object_no]),\
 						msg->rx_buffer,msg->bytes_written);
@@ -174,7 +174,7 @@ void UAVtalk_Generate_Packet(UAVtalk_Port_Type* msg, Buffer_Type* buff) {
 		//Packet overhead is 11 bytes - CRC8 does not run over the CRC8
 		buff->tail+=i;
 		i+=10;
-		buff->data[buff->tail++]=CRC_updateCRC(0,buff->data[buff->tail-i],i);//Add to CRC8 to end
+		buff->data[buff->tail++]=CRC_updateCRC(0,&buff->data[buff->tail-i],i);//Add to CRC8 to end
 		msg->flightStats.TxDataRate+=(i+1);//Update the telemetery stats using data pointer
 	}
 }
@@ -281,3 +281,25 @@ void updateTelemetryStats(UAVtalk_Port_Type* port, uint32_t timeNow) {
 	UAVtalk_conf.semaphores[FLIGHT_STATS]=WRITE;
 }
 
+/**
+  * @brief  Runs UAVtalk ACK/NACK/send OBJ handshaking
+  * @param  Pointer to UAVtalk port
+  * @retval uint8_t, if true we need to send a packet - just call the generate packet function without changing the port structure
+  */
+uint8_t UAVtalk_Handle_Protocol(UAVtalk_Port_Type* port) {
+	if(port->type&0x0F) {		//A response is required
+		if(port->object_no>=0) {//object exists
+			if((port->type&0x0F)==1)//object request
+				port->type&=~0x01;//clear the type least significant bit so we send an object back (OBJ type=0)
+			if((port->type&0x0F)==2)//We need to send an ack to the object that was sent
+				port->type|=0x01;//Set the least significant bit (ACK type=3)
+			//cases 3 and 4 (ACK/NACK) from groundstation are presently ignored, as there is no timeout handling for ACK/NACK from GCS TODO: impliment?
+		}
+		else
+			port->type=(UAVTALK_VERSION<<4)|0x04;//NACK as GCS referenced a nonexistent object
+		port->type=0;		//reset this here to prevent this function running multiple times on the same object
+		return 1;		//true as a response is required
+	}
+	else
+		return 0;		//dont need to respond
+}
