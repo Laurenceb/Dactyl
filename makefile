@@ -58,6 +58,7 @@ endif
 
 CC = arm-none-eabi-gcc
 CXX = arm-none-eabi-g++
+SIZE = arm-none-eabi-size
 CFLAGS = -std=gnu99 $(COMPILE_OPTS)
 CXXFLAGS = $(COMPILE_OPTS)
 
@@ -103,7 +104,6 @@ $(CONTROL_OBJS): OPTIMISE= -Os
 
 .PHONY: all
 all: $(MAIN_BIN)
-
 
 # main
 
@@ -157,6 +157,12 @@ flash-bin: all
 upload: all
 	@python jtag/stm32loader.py -p $(STM32LDR_PORT) -b $(STM32LDR_BAUD)\
     -e $(STM32LDR_VERIFY) -w main.bin
+
+.PHONY: size
+size:   all
+	@echo "Size:"
+	$(SIZE) $(MAIN_OUT) $@
+	@$(CAT) $@
 
 
 # clean

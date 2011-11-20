@@ -174,8 +174,8 @@ void UAVtalk_Generate_Packet(UAVtalk_Port_Type* msg, Buffer_Type* buff) {
 		//Packet overhead is 11 bytes - CRC8 does not run over the CRC8
 		buff->tail+=i;
 		i+=10;
-		buff->data[buff->tail++]=CRC_updateCRC(0,&buff->data[buff->tail-i],i);//Add to CRC8 to end
-		msg->flightStats.TxDataRate+=(i+1);//Update the telemetery stats using data pointer
+		buff->data[buff->tail++]=CRC_updateCRC(0,&buff->data[buff->tail-i],i);//Add to CRC8 to end - Note runs over the buffer, going back over added data
+		msg->flightStats.TxDataRate+=(i+1);//Update the telemetery stats using data pointer (+1 due to extra CRC byte)
 	}
 }
 
