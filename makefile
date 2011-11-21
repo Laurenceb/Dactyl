@@ -100,13 +100,16 @@ $(MAIN_OBJS): OPTIMISE= -Os
 
 $(CONTROL_OBJS): OPTIMISE= -Os
 
-# all
+#size and all
+.PHONY: size
+size: $(MAIN_OUT)
+	$(SIZE) $(MAIN_OUT)
 
+# all
 .PHONY: all
-all: $(MAIN_BIN)
+all: $(MAIN_BIN) 
 
 # main
-
 $(MAIN_OUT): $(MAIN_OBJS) $(CONTROL_OBJS) $(FWLIB) $(USBLIB)
 	$(LD) $(TARGET_ARCH) $^ -o $@ $(LDFLAGS)
 
@@ -160,13 +163,11 @@ upload: all
 
 .PHONY: size
 size:   all
-	@echo "Size:"
+  	@echo "Size:"
 	$(SIZE) $(MAIN_OUT) $@
 	@$(CAT) $@
 
-
 # clean
-
 .PHONY: clean
 clean:
 	-rm -f $(MAIN_OBJS) $(MAIN_OUT) $(MAIN_MAP) $(MAIN_BIN)
