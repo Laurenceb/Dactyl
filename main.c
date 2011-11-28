@@ -118,7 +118,7 @@ int main(void) {
 		//We find a streamed object to place in the buffer to fill it
 		UAVtalk_Run_Streams(&uavtalk_usart_port, &Usart1tx, Millis, 0);//Run the stream function with the current time
 		if(Usart1tx.tail)			//only send if we have data
-			usart1_send_data_dma(&Usart1tx,0);//enable the usart1 dma, dma for spi2 cannot be used now - block later until tx complete
+			usart1_send_data_dma(&Usart1tx,1);//0);//enable the usart1 dma, dma for spi2 cannot be used now - block later until tx complete
 		//printf("Handling Si4432\r\n");
 		//Now take care of the Si4432 radio modem
 		UAVtalk_Register_Object(FLIGHT_STATS,(uint8_t*)&uavtalk_si4432_port.flightStats);//Initialise the link stats objects
@@ -138,9 +138,9 @@ int main(void) {
 			Si4432_buff.tail=0;		//Index to 0, so the tx data goes to bottom of buffer
 			for(n=192;n<m+192;n++) {	//If there is any data, there may be a packet
 				UAVtalk_Process_Byte(Si4432_buff.data[n],&uavtalk_si4432_port);//Grab a byte from the Si4432 Rx data area of buffer
-				if(uavtalk_usart_port.rxObjects>rxobjs) {//We got an object
-					updateTelemetryStats(&uavtalk_usart_port, Millis);//Process the telemetery status
-					if(UAVtalk_Handle_Protocol(&uavtalk_usart_port))//Now we process any received data
+				if(uavtalk_si4432_port.rxObjects>rxobjs) {//We got an object
+					updateTelemetryStats(&uavtalk_si4432_port, Millis);//Process the telemetery status
+					if(UAVtalk_Handle_Protocol(&uavtalk_si4432_port))//Now we process any received data
 						UAVtalk_Generate_Packet(&uavtalk_si4432_port, &Si4432_buff);//Setup the packet - loads into the buffer
 					rxobjs=uavtalk_si4432_port.rxObjects;//Update this variable
 				}
@@ -158,13 +158,14 @@ int main(void) {
 			New_Waypoint_Flagged=1;		//set the flag so the guidance knows data is ready
 			UAVtalk_conf.semaphores[POSITION_DESIRED_NO]=READ;//mark the object as read 	
 		}
+		//printf("sending %d\r\n",Si4432_buff.tail);
 		if(Si4432_buff.tail>=RF22_MESH_MAX_MESSAGE_LEN_) {//Message is spread over two packets - the streams function will avoid this if poss
 			n=RF22_MESH_MAX_MESSAGE_LEN_;	//First send a packet of packed UAVObjects to the Server
 			RF22_Sendtowait(Si4432_buff.data,n,SERVER);//Send to server
 			n=Si4432_buff.tail-RF22_MESH_MAX_MESSAGE_LEN_;
 			RF22_Sendtowait(&(Si4432_buff.data[RF22_MESH_MAX_MESSAGE_LEN_]),n,SERVER);
 		}
-		else
+		else if(Si4432_buff.tail)		//Only try sending if we actually have some data
 			RF22_Sendtowait(Si4432_buff.data,Si4432_buff.tail,SERVER);//Send single packet
 		//Process waypoints here - waypoints are in local NED meter co-ordinates relative to home position
 		//TODO multiple waypoints needs to be integrated into the GCS, macro flag enables the multiple waypoint functionality
@@ -176,7 +177,10 @@ int main(void) {
 			New_Waypoint_Flagged=1;		//Set the flag to let guidance know new waypoint is ready
 		}
 		#endif
-		usart1_disable_dma(0x01);		//Disable the TX DMA so the DMA is ready for use by SPI2 - this blocks until DMA1 ch4 is free 
+		if(Usart1tx.tail) {
+			Usart1tx.tail=0;
+			usart1_disable_dma(0x01);	//Disable the TX DMA so the DMA is ready for use by SPI2 - this blocks until DMA1 ch4 is free 
+		}
 		//Logfiles and SD card related functionality can go here
 		//Spi_Locked=1; //Lock the spi2 bus
 		//if(!f_err_code) {//if the logfile opened ok

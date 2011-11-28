@@ -174,8 +174,9 @@ void usart1_send_data_dma(Buffer_Type* tx_buffer, uint8_t  block) {
   * @retval None
   */
 void usart1_disable_dma(uint8_t block) {
-	if(block)
+	if(block) {
 		while (DMA_GetFlagStatus(USART1TX_DMA_COMPLETE) == RESET) { ; }//Wait for the transmission to complete
+	}
 	USART_DMACmd(USART1_USART, USART_DMAReq_Tx , DISABLE);//disable the Tx<->DMA
 	DMA_USART1_Configuration(0x00,NULL);		//Disable the DMA on USART1
 }
