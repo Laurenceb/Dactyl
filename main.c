@@ -88,13 +88,13 @@ int main(void) {
 		UAVtalk_Register_Object(GCS_STATS,(uint8_t*)&uavtalk_usart_port.gcsStats);//These attach to the port, set before using the port
 		//printf("In main loop\r\n");
 		//Usart1tx.data[0]=0x54;Usart1tx.data[1]=0x45;Usart1tx.data[2]=0x53;Usart1tx.data[3]=0x54;Usart1tx.tail=4;//Debug - should say 'TEST'
-		uavtalk_usart_port.type=0;		//Reset this before proceeding
+		uavtalk_usart_port.type=0;		//Reset this before proceeding - is this needed?
 		rxobjs=uavtalk_usart_port.rxObjects;	//Store number of objects
 		while(Bytes_In_ISR_Buffer(&Usart1_rx_buff)) {//While data on the uavtalk usart port, and no rx packet
 			UAVtalk_Process_Byte(Get_From_ISR_Buffer(&Usart1_rx_buff),&uavtalk_usart_port);//grab a byte from the usart isr buffer
 			if(uavtalk_usart_port.rxObjects>rxobjs) {
 				updateTelemetryStats(&uavtalk_usart_port, Millis);//Process the telemetery
-				break;
+				break;			//Exit here - meaning we only ever process one received Usart UAVObject per main loop interation
 			}
 		}
 		//Next, check if we received a desired position
