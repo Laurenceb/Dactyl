@@ -153,7 +153,8 @@ void run_imu(void) {
 		Run_PID(&(control.roll_setpoint),&(control.airframe.roll_setpoint),h_offset,0);
 		if(Ground_Flag&0xF0) {//If we are Armed, the motor can be run - defaults to disarmed
 			//Throttle set according to altitude error
-			Run_PID(&(control.throttle),&(control.airframe.throttle),target_vector[2],Nav.Vel[2]);
+			Run_PID(&(control.throttle),&(control.airframe.throttle),\
+			target_vector[2]-(pow(AirSpeed,2)-pow(control.airframe.airspeed,2))/(2*Home_Position.g_e),Nav.Vel[2]);
 			control.throttle.out+=control.airframe.throttle_optimal;
 		}
 		else
