@@ -10,7 +10,7 @@ typedef struct {
     float RNE[9];
     float Be[3];
     float g_e;
-}	__attribute__((packed)) Home_Position_Type;
+}	Home_Position_Type;
 //The telemetery status datatype
 typedef struct {
     uint8_t Status;
@@ -19,7 +19,17 @@ typedef struct {
     uint32_t TxFailures;
     uint32_t RxFailures;
     uint32_t TxRetries;
-}	__attribute__((packed)) Telemetery_Stats_Type;
+}	Telemetery_Stats_Type;
+//The battery status type
+typedef struct {//Note this has been modified from the normal OpenPilot structure, where we have peak and average currents, energy consumed and estimated flight time
+	float Voltage;//Not actual flight time since bootup/launch
+	float Flighttime;
+}	Battery_State_Type;
+//The manual control status type - note we only support position hold or manual with pwm feedthrough
+typedef struct {
+	uint8_t Armed;
+	uint8_t Flightmode;
+}	Flight_Status_Type;
 /* Enumeration options for gcs Status */
 typedef enum { GCSTELEMETRYSTATS_STATUS_DISCONNECTED=0, GCSTELEMETRYSTATS_STATUS_HANDSHAKEREQ=1, GCSTELEMETRYSTATS_STATUS_HANDSHAKEACK=2, GCSTELEMETRYSTATS_STATUS_CONNECTED=3 } GCSTelemetryStatsStatusOptions;
 /* Enumeration options for field Status */

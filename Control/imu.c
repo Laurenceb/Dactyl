@@ -49,6 +49,7 @@ void run_imu(void) {
 	static float ac[3],Wind[3];		//The accel is not always avaliable - 100hz update
 	static float AirSpeed=0,Baro_Alt,Body_x_To_x=0,Body_x_To_y=0,Mean_Alt_Err=0;
 	static uint32_t Baro_Pressure;		//Baro pressure is static for use in air density calculations
+	static uint8_t PWM_Disabled;		//Keeps track of PWM hardware passthrough state
 	//Non Static
 	float ma[3],gy[3],gps_velocity[3],gps_position[3],target_vector[3],waypoint[3];
 	float Delta_Time=DELTA_TIME,x_down,y_down,h_offset,N_t_x,N_t_y,time_to_waypoint,Horiz_t,GPS_Errors[4];
@@ -141,13 +142,22 @@ void run_imu(void) {
 	Body_x_To_y=2*Nav.q[1] * Nav.q[2] + Nav.q[0] * Nav.q[3];//These are saved for subsequent iterations as static variables
 	h_offset=Body_x_To_x * N_t_y - Body_x_To_y * N_t_x;
 	//Run the control loops if we arent controlled from the ground
-	if(!Ground_Flag) {//TODO implement ground control using PWM input capture and sanity check
+	if(Ground_Flag&0x0F) {//TODO implement ground control using PWM input capture and sanity check, as well as PWM passthrough?
+		if(PWM_Disabled) {//If PWM isnt already enabled, enable it
+			Timer_GPIO_Enable();
+			PWM_Disabled=0;
+		}
 		//Pitch setpoint control pid (actually a PI) -- Note- uses dynamic pressure 
 		Run_PID(&(control.pitch_setpoint),&(control.airframe.pitch_setpoint),control.airframe.airspeed-AirSpeed,0);
 		//Roll setpoint set by heading error
 		Run_PID(&(control.roll_setpoint),&(control.airframe.roll_setpoint),h_offset,0);
-		//Throttle set according to altitude error
-		Run_PID(&(control.throttle),&(control.airframe.throttle),target_vector[2],Nav.Vel[2]);
+		if(Ground_Flag&0xF0) {//If we are Armed, the motor can be run - defaults to disarmed
+			//Throttle set according to altitude error
+			Run_PID(&(control.throttle),&(control.airframe.throttle),target_vector[2],Nav.Vel[2]);
+			control.throttle.out+=control.airframe.throttle_optimal;
+		}
+		else
+			control.throttle.out=-1.0;//Apply zero throttle to stop motor spinning
 		//Elevator, remember x_down is reversed sign
 		Run_PID(&(control.elevator),&(control.airframe.elevator),control.pitch_setpoint.out+x_down,gy[1]-Nav.gyro_bias[1]);
 		//Ailerons, TODO - work out if signs sane
@@ -158,5 +168,10 @@ void run_imu(void) {
 		control.rudder.out+=control.airframe.rudder_feedforward*control.roll_setpoint.out;
 		Apply_Servos(&control);//Servo driver function called here using pwm
 	}
-	//else{}//any control code to run whilst in ground mode goes here		
+	else {//any control code to run whilst in ground mode goes here	
+		if(!PWM_Disabled) {//If PWM was previously enabled, disable it
+			Timer_GPIO_Enable();
+			PWM_Disabled=1;
+		}
+	}	
 }

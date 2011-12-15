@@ -26,10 +26,12 @@
 #define HOME_LOCATION 5
 #define FLIGHT_STATS 6
 #define GCS_STATS 7
+#define BATTERY_STATE 8
+#define FLIGHT_STATUS 9
 /*Number of objects supported*/
-#define NUM_OBJECTS 8
+#define NUM_OBJECTS 10
 /*Number of streams supported*/
-#define NUM_STREAMS 4
+#define NUM_STREAMS 6
 
 //datatype declarations
 typedef struct {

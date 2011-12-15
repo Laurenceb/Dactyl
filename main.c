@@ -14,6 +14,7 @@
 #include "gpio.h"
 #include "interrupts.h"
 #include "watchdog.h"
+#include "adc.h"
 //Include for printf if wanted
 #ifdef USE_LIBC_PRINTF
 	#include <stdio.h>
@@ -65,9 +66,11 @@ UAVtalk_Port_Type uavtalk_si4432_port;
 volatile uint32_t Millis;
 uint8_t UAVtalk_Attitude_Array[28];//Used to hold the attitude object data
 volatile float UAVtalk_Altitude_Array[3];//Used to hold baro altitude data
-Home_Position_Type Home_Position;//The home position
-Telemetery_Stats_Type GCS_Telem;//Telemetery - used for handshaking
-Telemetery_Stats_Type Flight_Telem;
+Home_Position_Type Home_Position __attribute__((packed));//The home position
+Telemetery_Stats_Type GCS_Telem __attribute__((packed));//Telemetery - used for handshaking
+Telemetery_Stats_Type Flight_Telem __attribute__((packed));
+Battery_State_Type Battery_State __attribute__((packed));
+Flight_Status_Type Flight_Status __attribute__((packed));
 //more objects can go here if required (best to try and use existing variables) 
 
 int main(void) {
@@ -177,6 +180,13 @@ int main(void) {
 			New_Waypoint_Flagged=1;		//Set the flag to let guidance know new waypoint is ready
 		}
 		#endif
+		Battery_State.Voltage=BAT_VOLTAGE;	//Set the voltage using the ADC and pot divider input - this blocks whilst adc converts
+		Battery_State.Flighttime=(float)Millis/1000.0;//This is (ab)used to give GCS the system uptime - origional OpenPilot spec calls for est bat life
+		UAVtalk_conf.semaphores[BATTERY_STATE]=WRITE;//Mark object as written
+		if(UAVtalk_conf.semaphores[FLIGHT_STATUS]==WRITE) {//If the Flightstatus was written, read it and pass to ground flag
+			Ground_Flag=(uint8_t)Flight_Status.Flightmode|(uint8_t)(((uint8_t)Flight_Status.Armed)<<4);
+			UAVtalk_conf.semaphores[FLIGHT_STATUS]==READ;
+		}
 		if(Usart1tx.tail) {
 			Usart1tx.tail=0;
 			usart1_disable_dma(0x01);	//Disable the TX DMA so the DMA is ready for use by SPI2 - this blocks until DMA1 ch4 is free 

@@ -33,6 +33,7 @@ extern volatile uint8_t Accel_Access_Flag;		//Used to control access
 typedef struct{
 	float airspeed;				//Target airspeed
 	float rudder_feedforward;		//Feedforward from roll offset
+	float throttle_optimal;			//Offset for mean cruise throttle - means smoother startup
 	PID_ctrl_type pitch_setpoint;
 	PID_ctrl_type roll_setpoint;
 	PID_ctrl_type ailerons;

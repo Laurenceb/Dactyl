@@ -9,14 +9,14 @@
 
 //This is global, holds the configuration for supported packets and their properties
 //Note that the object ids and lenghts are held in flash as they dont change
-//Objects are Attitude, Position_actual, Velocity_actual, Baro_actual, Position_desired, Home, Flighttelemstats, GCStelemstats
-const uint32_t UAVtalk_objects[]={0x33DAD5E6,0xF9691DA4,0x43007EB0,0x99622E6A,0x33C9EAB4,0x53E8110E,0x3F75B7E8,0xB6C346E4};//Array of supported ids
-const uint8_t UAVtalk_lenghts[]={28,12,12,12,12,77,21,21};//Array of message lenghts - payload in bytes
+//Objects are Attitude, Position_actual, Velocity_actual, Baro_actual, Position_desired, Home, Flighttelemstats, GCStelemstats, Flightbatterystats, Flightstatus
+const uint32_t UAVtalk_objects[]={0x33DAD5E6,0xF9691DA4,0x43007EB0,0x99622E6A,0x33C9EAB4,0x53E8110E,0x3F75B7E8,0xB6C346E4,0x8C0D756,0x743DB13C};//Array of supp' ids
+const uint8_t UAVtalk_lenghts[]={28,12,12,12,12,77,21,21,8,2};//Array of message lenghts - payload in bytes
 volatile uint8_t UAVtalk_semaphores[NUM_OBJECTS];//Semaphores array, initialise as read (false)
 uint8_t* UAVtalk_pointers[NUM_OBJECTS];		//Initialsed as zero, or (const uint8_t*)NULL)) Pointers to the objects
-const uint8_t UAVtalk_stream_objs[]={0,1,2,3,6};//First 4 objects are streamed (Attitude,Position,Velocity,Baro)+FlightStats
-const uint8_t UAVtalk_stream_types[]={OBJ,OBJ,OBJ,OBJ,OBJ_W_ACK};//First 4 objects are not acknowledged, Flightstats is acked
-const uint16_t UAVtalk_stream_timeouts[]={100,250,100,1000,5000};//Send every <x>milliseconds
+const uint8_t UAVtalk_stream_objs[]={0,1,2,3,6,8};//First 4 objects are streamed (Attitude,Position,Velocity,Baro)+FlightStats+Flightbatterystats
+const uint8_t UAVtalk_stream_types[]={OBJ,OBJ,OBJ,OBJ,OBJ_W_ACK,OBJ};//First 4 objects are not acknowledged, Flightstats is acked, Flightbatterystats not
+const uint16_t UAVtalk_stream_timeouts[]={100,250,100,1000,5000,1000};//Send every <x>milliseconds
 uint32_t UAVtalk_stream_timers[NUM_STREAMS];	//Timers will be set to zero as they are global
 //Note we can add more packets as needed, be careful not to saturate the link with too many streamed packets
 UAVtalk_Config_Type UAVtalk_conf={UAVTALK_VERSION,NUM_OBJECTS,UAVtalk_objects,UAVtalk_pointers,UAVtalk_lenghts,UAVtalk_semaphores,NUM_STREAMS,\

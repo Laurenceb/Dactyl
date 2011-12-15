@@ -42,6 +42,9 @@ void Init_Timers(void) {
   TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
   TIM_OCInitStructure.TIM_Pulse = SERVO_CENTERED;
   TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
+  TIM_OCInitStructure.TIM_OutputNState = TIM_OutputNState_Disable;//These settings need to be applied on timers 1 and 8                 
+  TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_Low; 
+  TIM_OCInitStructure.TIM_OCIdleState = TIM_OCIdleState_Set;
 
   TIM_OC1Init(TIM1, &TIM_OCInitStructure);
   TIM_OC1PreloadConfig(TIM1, TIM_OCPreload_Disable);
@@ -50,22 +53,16 @@ void Init_Timers(void) {
   TIM_OC1PreloadConfig(TIM4, TIM_OCPreload_Disable);
 
   /* PWM1 Mode configuration: Channel2 on TIM4*/
-  TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
-  TIM_OCInitStructure.TIM_Pulse = SERVO_CENTERED;
-
   TIM_OC2Init(TIM4, &TIM_OCInitStructure);
   TIM_OC2PreloadConfig(TIM4, TIM_OCPreload_Disable);
 
   /* PWM1 Mode configuration: Channel4 on TIM1*/
-  TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
-  TIM_OCInitStructure.TIM_Pulse = SERVO_CENTERED;
-
   TIM_OC4Init(TIM1, &TIM_OCInitStructure);
   TIM_OC4PreloadConfig(TIM1, TIM_OCPreload_Disable);
 
   TIM_ARRPreloadConfig(TIM1, DISABLE);
   TIM_ARRPreloadConfig(TIM4, DISABLE);
-
+  TIM_CtrlPWMOutputs(TIM1, ENABLE);		//Needs to be applied on 1 and 8
   /* TIM1 enable counter */
   TIM_Cmd(TIM1, ENABLE);
   /* TIM4 enable counter */
