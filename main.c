@@ -40,6 +40,7 @@
 #include "Util/uavtalk.h"
 #include "Util/gravity.h"
 #include "Util/RF22/ctocpp.h"
+#include "Util/uavobjconv.h"
 //Control loop headers
 #include "Control/insgps.h"
 
@@ -71,6 +72,7 @@ Telemetery_Stats_Type GCS_Telem __attribute__((packed));//Telemetery - used for 
 Telemetery_Stats_Type Flight_Telem __attribute__((packed));
 Battery_State_Type Battery_State __attribute__((packed));
 Flight_Status_Type Flight_Status __attribute__((packed));
+GPS_Position_Type GPS_Position __attribute__((packed));
 //more objects can go here if required (best to try and use existing variables) 
 
 int main(void) {
@@ -85,6 +87,9 @@ int main(void) {
 	UAVtalk_Register_Object(BARO_ACTUAL,(uint8_t*)UAVtalk_Altitude_Array);//The baro_actual points to the global baro data array
 	UAVtalk_Register_Object(POSITION_DESIRED_NO,(uint8_t*)&Waypoint_Global);//The desired position points to the waypoint
 	UAVtalk_Register_Object(HOME_LOCATION,(uint8_t*)&Home_Position);//Home position structure, this is set at initialisation
+	UAVtalk_Register_Object(BATTERY_STATE,(uint8_t*)&Battery_State);//Battery info
+	UAVtalk_Register_Object(FLIGHT_STATUS,(uint8_t*)&Flight_Status);//Flight control
+	UAVtalk_Register_Object(GPS_POSITION,(uint8_t*)&GPS_Position);//GPS fix UAVtalk info
 	for(;;) {
 		//All USART1 UAVtalk streams go here
 		UAVtalk_Register_Object(FLIGHT_STATS,(uint8_t*)&uavtalk_usart_port.flightStats);//Initialise the link stats objects
@@ -180,12 +185,17 @@ int main(void) {
 			New_Waypoint_Flagged=1;		//Set the flag to let guidance know new waypoint is ready
 		}
 		#endif
+		//Now we update some less important UAVObjects with relevant info
 		Battery_State.Voltage=BAT_VOLTAGE;	//Set the voltage using the ADC and pot divider input - this blocks whilst adc converts
 		Battery_State.Flighttime=(float)Millis/1000.0;//This is (ab)used to give GCS the system uptime - origional OpenPilot spec calls for est bat life
 		UAVtalk_conf.semaphores[BATTERY_STATE]=WRITE;//Mark object as written
 		if(UAVtalk_conf.semaphores[FLIGHT_STATUS]==WRITE) {//If the Flightstatus was written, read it and pass to ground flag
 			Ground_Flag=(uint8_t)Flight_Status.Flightmode|(uint8_t)(((uint8_t)Flight_Status.Armed)<<4);
 			UAVtalk_conf.semaphores[FLIGHT_STATUS]==READ;
+		}
+		if(UAVtalk_conf.semaphores[GPS_POSITION]==READ) {//If the gps position has been sent, reload the structure (note, leads to 1s lag but its simple)
+			GPSPosition_from_UBX(&Gps, &GPS_Position);//Fill the structure
+			UAVtalk_conf.semaphores[GPS_POSITION]==WRITE;
 		}
 		if(Usart1tx.tail) {
 			Usart1tx.tail=0;

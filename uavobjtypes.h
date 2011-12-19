@@ -1,5 +1,5 @@
 //Dactyl project v1.0
-
+#pragma once
 //The Home position datatype
 typedef struct {
     uint8_t Set;
@@ -30,6 +30,20 @@ typedef struct {
 	uint8_t Armed;
 	uint8_t Flightmode;
 }	Flight_Status_Type;
+//The GPS Position type
+typedef struct {
+	uint8_t Status;//NoGPS,NoFix,Fix2D,Fix3D
+	uint32_t Latitude;//degrees x 10^-7
+	uint32_t Longitude;//degrees x 10^-7
+	float Altitude;//Meters
+	float GeoidSeparation;//Meters
+	float Heading;//Degrees
+	float Groundspeed;//m/s
+	uint8_t Satellites;
+	float PDOP;
+	float HDOP;
+	float VDOP;//These are hacked to carry actual estimated errors
+}	GPS_Position_Type;
 /* Enumeration options for gcs Status */
 typedef enum { GCSTELEMETRYSTATS_STATUS_DISCONNECTED=0, GCSTELEMETRYSTATS_STATUS_HANDSHAKEREQ=1, GCSTELEMETRYSTATS_STATUS_HANDSHAKEACK=2, GCSTELEMETRYSTATS_STATUS_CONNECTED=3 } GCSTelemetryStatsStatusOptions;
 /* Enumeration options for field Status */
