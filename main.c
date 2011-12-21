@@ -65,7 +65,7 @@ volatile float Balt;
 UAVtalk_Port_Type uavtalk_usart_port;
 UAVtalk_Port_Type uavtalk_si4432_port;
 volatile uint32_t Millis;
-uint8_t UAVtalk_Attitude_Array[28];//Used to hold the attitude object data
+float UAVtalk_Attitude_Array[7];//Used to hold the attitude object data
 volatile float UAVtalk_Altitude_Array[3];//Used to hold baro altitude data
 Home_Position_Type Home_Position __attribute__((packed));//The home position
 Telemetery_Stats_Type GCS_Telem __attribute__((packed));//Telemetery - used for handshaking
@@ -81,7 +81,7 @@ int main(void) {
 	rprintfInit(__usart_send_char);//inititalise reduced printf functionality
 	Initialisation();//initialise all hardware
 	Si4432_buff.size=RF22_MESH_MAX_MESSAGE_LEN_*2;//Set the Si4432 buffer size - note buffer is 256 bytes, so we have wasted space :-/
-	UAVtalk_Register_Object(ATTITUDE,UAVtalk_Attitude_Array);//Initialise UAVtalk objects here
+	UAVtalk_Register_Object(ATTITUDE,(uint8_t*)UAVtalk_Attitude_Array);//Initialise UAVtalk objects here
 	UAVtalk_Register_Object(POSITION_ACTUAL,(uint8_t*)&Nav_Global);//Actual pos points to the first three elements of the global kalman state
 	UAVtalk_Register_Object(VELOCITY_ACTUAL,(uint8_t*)&Nav_Global.Vel[0]);//Velocity points to the fourth element of the global kalman state
 	UAVtalk_Register_Object(BARO_ACTUAL,(uint8_t*)UAVtalk_Altitude_Array);//The baro_actual points to the global baro data array
@@ -115,8 +115,7 @@ int main(void) {
 			UAVtalk_Generate_Packet(&uavtalk_usart_port, &Usart1tx);//setup the packet first - load dma buffer
 		if(Nav_Flag) {//the isr has run for guidance
 			Watchdog_Reset(); 		//Watchdog reset goes here - requires the guidance to be running also
-			memcpy(UAVtalk_Attitude_Array,&Nav_Global.q[0],16);//copy over the quaternion
-			Quaternion2RPY((float*)&Nav_Global.q[0],(float*)&UAVtalk_Attitude_Array[12]);//Generate rpy, copy to byte array
+			Populate_Attitude((float*)UAVtalk_Attitude_Array,(float*)&Nav_Global.q[0]);//Generate rpy, copy to byte array
 			Nav_Flag=0;			//Reset the flag
 			UAVtalk_conf.semaphores[ATTITUDE]=WRITE;//Mark the attitude packet as written (Note this needs to be done with all streams)
 			UAVtalk_conf.semaphores[POSITION_ACTUAL]=WRITE;//Mark the position as written (Note this object points directly to kalman)
@@ -180,7 +179,6 @@ int main(void) {
 		#ifdef MULTIPLE_WAYPOINTS
 		if(pow(waypoint_used.x-Nav_Global.Pos[0],2)+pow(waypoint_used.y-Nav_Global.Pos[1],2)<pow(waypoint_horiz,2)&&\
 		pow(waypoint_used.z-Nav_Global.Pos[2],2)<waypoint_vert) {
-
 			Waypoint_Global=Waypoints[waypoint_index++];//Load the next waypoint
 			New_Waypoint_Flagged=1;		//Set the flag to let guidance know new waypoint is ready
 		}

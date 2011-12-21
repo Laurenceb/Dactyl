@@ -12,11 +12,12 @@
 //Objects are Attitude, Position_actual, Velocity_actual, Baro_actual, Position_desired, Home, Flighttelemstats, GCStelemstats, Flightbatterystats, Flightstatus, GPSPosition
 const uint32_t UAVtalk_objects[]={0x33DAD5E6,0xF9691DA4,0x43007EB0,0x99622E6A,0x33C9EAB4,0x53E8110E,0x3F75B7E8,0xB6C346E4,0x8C0D756,0x743DB13C\
 ,0x58C0A8A8};//Array of supp' ids
-const uint8_t UAVtalk_lenghts[]={28,12,12,12,12,77,21,21,8,sizeof(Flight_Status_Type),sizeof(GPS_Position_Type)};//Array of message lenghts - payload in bytes
+const uint8_t UAVtalk_lenghts[]={28,12,12,12,12,sizeof(Home_Position_Type),sizeof(Telemetery_Stats_Type),sizeof(Telemetery_Stats_Type),\
+sizeof(Battery_State_Type),sizeof(Flight_Status_Type),sizeof(GPS_Position_Type)};//Array of message lenghts; payload in bytes, sizeof type accept for int/float arrays
 volatile uint8_t UAVtalk_semaphores[NUM_OBJECTS];//Semaphores array, initialise as read (false)
 uint8_t* UAVtalk_pointers[NUM_OBJECTS];		//Initialsed as zero, or (const uint8_t*)NULL)) Pointers to the objects
 const uint8_t UAVtalk_stream_objs[]={0,1,2,3,6,8,10};//Objects to stream (Attitude,Position,Velocity,Baro)+FlightStats+Flightbatterystats+GPSPos
-const uint8_t UAVtalk_stream_types[]={OBJ,OBJ,OBJ,OBJ,OBJ_W_ACK,OBJ,OBJ};//First 4 objects are not acknowledged, Flightstats is acked, Flightbatterystats not, GPSPos is not
+const uint8_t UAVtalk_stream_types[]={OBJ,OBJ,OBJ,OBJ,OBJ_W_ACK,OBJ,OBJ};//First 4 objects are not acked, Flightstats is acked, Flightbatterystats not, GPSPos is not
 const uint16_t UAVtalk_stream_timeouts[]={100,250,100,1000,5000,1000,1000};//Send every <x>milliseconds
 uint32_t UAVtalk_stream_timers[NUM_STREAMS];	//Timers will be set to zero as they are global
 //Note we can add more packets as needed, be careful not to saturate the link with too many streamed packets
