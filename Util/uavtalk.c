@@ -11,18 +11,18 @@
 //Note that the object ids and lenghts are held in flash as they dont change
 //Objects are Attitude, Position_actual, Velocity_actual, Baro_actual, Position_desired, Home, Flighttelemstats, GCStelemstats, Flightbatterystats, Flightstatus, GPSPosition
 const uint32_t UAVtalk_objects[]={0x33DAD5E6,0xF9691DA4,0x43007EB0,0x99622E6A,0x33C9EAB4,0x53E8110E,0x3F75B7E8,0xB6C346E4,0x8C0D756,0x743DB13C\
-,0x58C0A8A8};//Array of supp' ids
+,0x58C0A8A8};					//Array of supp' ids
 const uint8_t UAVtalk_lenghts[]={28,12,12,12,12,sizeof(Home_Position_Type),sizeof(Telemetery_Stats_Type),sizeof(Telemetery_Stats_Type),\
-sizeof(Battery_State_Type),sizeof(Flight_Status_Type),sizeof(GPS_Position_Type)};//Array of message lenghts; payload in bytes, sizeof type accept for int/float arrays
-volatile uint8_t UAVtalk_semaphores[NUM_OBJECTS];//Semaphores array, initialise as read (false)
-uint8_t* UAVtalk_pointers[NUM_OBJECTS];		//Initialsed as zero, or (const uint8_t*)NULL)) Pointers to the objects
-const uint8_t UAVtalk_stream_objs[]={0,1,2,3,6,8,10};//Objects to stream (Attitude,Position,Velocity,Baro)+FlightStats+Flightbatterystats+GPSPos
+sizeof(Battery_State_Type),sizeof(Flight_Status_Type),sizeof(GPS_Position_Type)};//Payload in bytes, sizeof type accept for int/float arrays
+volatile uint8_t UAVtalk_semaphores[sizeof(UAVtalk_lenghts)];//Semaphores array, initialise as read (false)
+uint8_t* UAVtalk_pointers[sizeof(UAVtalk_lenghts)];//Initialsed as zero, or (const uint8_t*)NULL)) Pointers to the objects
+const uint8_t UAVtalk_stream_objs[]={ATTITUDE,POSITION_ACTUAL,VELOCITY_ACTUAL,BARO_ACTUAL,FLIGHT_STATS,BATTERY_STATE,GPS_POSITION};//Stream Objects
 const uint8_t UAVtalk_stream_types[]={OBJ,OBJ,OBJ,OBJ,OBJ_W_ACK,OBJ,OBJ};//First 4 objects are not acked, Flightstats is acked, Flightbatterystats not, GPSPos is not
 const uint16_t UAVtalk_stream_timeouts[]={100,250,100,1000,5000,1000,1000};//Send every <x>milliseconds
-uint32_t UAVtalk_stream_timers[NUM_STREAMS];	//Timers will be set to zero as they are global
+uint32_t UAVtalk_stream_timers[sizeof(UAVtalk_stream_objs)];//Timers will be set to zero as they are global
 //Note we can add more packets as needed, be careful not to saturate the link with too many streamed packets
-UAVtalk_Config_Type UAVtalk_conf={UAVTALK_VERSION,NUM_OBJECTS,UAVtalk_objects,UAVtalk_pointers,UAVtalk_lenghts,UAVtalk_semaphores,NUM_STREAMS,\
-UAVtalk_stream_objs,UAVtalk_stream_types,UAVtalk_stream_timeouts,UAVtalk_stream_timers};
+UAVtalk_Config_Type UAVtalk_conf={UAVTALK_VERSION,sizeof(UAVtalk_lenghts),UAVtalk_objects,UAVtalk_pointers,UAVtalk_lenghts,\
+UAVtalk_semaphores,sizeof(UAVtalk_stream_objs),UAVtalk_stream_objs,UAVtalk_stream_types,UAVtalk_stream_timeouts,UAVtalk_stream_timers};
 
 /**
   * @brief  Sets the object pointer to point to data

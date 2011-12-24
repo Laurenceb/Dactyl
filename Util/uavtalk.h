@@ -1,7 +1,7 @@
 //Dactyl project v1.0
 #pragma once
 #include "../dma.h"
-#include "../uavobjtypes.h"
+#include "uavobjtypes.h"
 //UAVtalk definitions
 #define UAVTALK_VERSION 1
 #define UAVTALK_SYNC 0x3C
@@ -29,10 +29,6 @@
 #define BATTERY_STATE 8
 #define FLIGHT_STATUS 9
 #define GPS_POSITION 10
-/*Number of objects supported*/
-#define NUM_OBJECTS 11
-/*Number of streams supported*/
-#define NUM_STREAMS 7
 
 //datatype declarations
 typedef struct {
