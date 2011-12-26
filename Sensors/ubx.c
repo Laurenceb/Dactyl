@@ -170,7 +170,11 @@ uint8_t Get_UBX_Ack(uint8_t Class, uint8_t Id) {
 	}
 }
 
-
+/**
+  * @brief  Configures the GPS
+  * @param  None
+  * @retval Success code - zero is ok
+  */
 uint8_t Config_Gps(void) {
 	static const char* gll_off=GLL_OFF;
 	static const char* zda_off=ZDA_OFF;
