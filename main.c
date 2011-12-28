@@ -94,7 +94,7 @@ int main(void) {
 		//All USART1 UAVtalk streams go here
 		UAVtalk_Register_Object(FLIGHT_STATS,(uint8_t*)&uavtalk_usart_port.flightStats);//Initialise the link stats objects
 		UAVtalk_Register_Object(GCS_STATS,(uint8_t*)&uavtalk_usart_port.gcsStats);//These attach to the port, set before using the port
-		//printf("In main loop\r\n");
+		printf("In main loop\r\n");
 		//Usart1tx.data[0]=0x54;Usart1tx.data[1]=0x45;Usart1tx.data[2]=0x53;Usart1tx.data[3]=0x54;Usart1tx.tail=4;//Debug - should say 'TEST'
 		uavtalk_usart_port.type=0;		//Reset this before proceeding - is this needed?
 		rxobjs=uavtalk_usart_port.rxObjects;	//Store number of objects
@@ -125,8 +125,8 @@ int main(void) {
 		//We find a streamed object to place in the buffer to fill it
 		UAVtalk_Run_Streams(&uavtalk_usart_port, &Usart1tx, Millis, 0);//Run the stream function with the current time
 		if(Usart1tx.tail)			//only send if we have data
-			usart1_send_data_dma(&Usart1tx,0);//1);//enable the usart1 dma, dma for spi2 cannot be used now - block later until tx complete
-		//printf("Handling Si4432\r\n");
+			usart1_send_data_dma(&Usart1tx,1);//0);//enable the usart1 dma, dma for spi2 cannot be used now - block later until tx complete
+		printf("Handling Si4432\r\n");
 		//Now take care of the Si4432 radio modem
 		UAVtalk_Register_Object(FLIGHT_STATS,(uint8_t*)&uavtalk_si4432_port.flightStats);//Initialise the link stats objects
 		UAVtalk_Register_Object(GCS_STATS,(uint8_t*)&uavtalk_si4432_port.gcsStats);//These attach to the port, set before using the port
@@ -155,7 +155,7 @@ int main(void) {
 		}
 		else					//This is bad - protocol error
 			Si4432_buff.tail=0;		//Tail is zeroed before we start filling with anything bad that happened due to protocol error
-		//printf("Handling \r\n");
+		printf("Handling \r\n");
 		//We find a streamed object to place in the buffer - will run until buffer full
 		if(Si4432_buff.tail>=RF22_MESH_MAX_MESSAGE_LEN_)//We have already spread over two packets - try for two packets
 			UAVtalk_Run_Streams(&uavtalk_si4432_port, &Si4432_buff, Millis, 2*RF22_MESH_MAX_MESSAGE_LEN_);//Run stream function with current time
@@ -165,7 +165,7 @@ int main(void) {
 			New_Waypoint_Flagged=1;		//set the flag so the guidance knows data is ready
 			UAVtalk_conf.semaphores[POSITION_DESIRED_NO]=READ;//mark the object as read 	
 		}
-		//printf("sending %d\r\n",Si4432_buff.tail);
+		printf("sending %d\r\n",Si4432_buff.tail);
 		if(Si4432_buff.tail>=RF22_MESH_MAX_MESSAGE_LEN_) {//Message is spread over two packets - the streams function will avoid this if poss
 			n=RF22_MESH_MAX_MESSAGE_LEN_;	//First send a packet of packed UAVObjects to the Server
 			RF22_Sendtowait(Si4432_buff.data,n,SERVER);//Send to server
@@ -174,6 +174,7 @@ int main(void) {
 		}
 		else if(Si4432_buff.tail)		//Only try sending if we actually have some data
 			RF22_Sendtowait(Si4432_buff.data,Si4432_buff.tail,SERVER);//Send single packet
+		printf("UAVtalk completed\r\n");
 		//Process waypoints here - waypoints are in local NED meter co-ordinates relative to home position
 		//TODO multiple waypoints needs to be integrated into the GCS, macro flag enables the multiple waypoint functionality
 		#ifdef MULTIPLE_WAYPOINTS
@@ -197,7 +198,7 @@ int main(void) {
 		}
 		if(Usart1tx.tail) {
 			Usart1tx.tail=0;
-			usart1_disable_dma(0x01);	//Disable the TX DMA so the DMA is ready for use by SPI2 - this blocks until DMA1 ch4 is free 
+			usart1_disable_dma(0);//1);	//Disable the TX DMA so the DMA is ready for use by SPI2 - this blocks until DMA1 ch4 is free 
 		}
 		//Logfiles and SD card related functionality can go here
 		//Spi_Locked=1; //Lock the spi2 bus
@@ -246,7 +247,44 @@ void Initialisation() {
     	Usarts_Init();
 	//Greeting
 	Usart_Send_Str((char*)"Dactyl project, for v1.0 hardware, compiled " __DATE__ " " __TIME__ "\r\n");
-	Delay(0x4FFFF);//Delay to let all the sensors boot up TODO move this somewhere more sane
+	//Read Processor ID and Type
+	uint32_t *Type = (uint32_t*)DBGMCU_BASE;
+	switch((*Type&0x0000000F)>>1) {
+		case 0:
+			Usart_Send_Str((char*)"MD");
+			break;
+		case 1:
+			Usart_Send_Str((char*)"LD");
+			break;
+		case 2:
+			Usart_Send_Str((char*)"HD");
+			break;
+		case 3:
+			Usart_Send_Str((char*)"CL");
+			break;
+		default:
+			Usart_Send_Str((char*)"Unknown");
+	}
+	Usart_Send_Str((char*)" Device, silicon revision:");
+	switch((*Type>>16)&0x0000000F) {
+		case 0:
+			if((*Type)>>28==2)
+				Usart_Send_Str((char*)"B");
+			else
+				Usart_Send_Str((char*)"A");
+			break;
+		case 1:
+			Usart_Send_Str((char*)"Z");
+			break;
+		case 3:
+			Usart_Send_Str((char*)"Y");
+			break;
+		default:
+			Usart_Send_Str((char*)"Unknown");
+	}
+	Usart_Send_Str((char*)"\r\n");
+	ADC_Configuration();			//Setup the ADC for battery monitoring
+	Delay(0x4FFFF);				//Delay to let all the sensors boot up TODO move this somewhere more sane
 	//Enable interrupts - note the EKF still hasnt been enabled
 	EXTI_Config();				//Configure the all the interrupts - the EKF wont run yet
 	// Setup the I2C1
