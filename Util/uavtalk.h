@@ -47,7 +47,7 @@ typedef struct {
 	uint16_t rxObjects;
 	Telemetery_Stats_Type flightStats;
 	Telemetery_Stats_Type gcsStats;//This enables the ports to be completely independent of one another
-} UAVtalk_Port_Type;		//This is a uavtalk port instance
+} __attribute__((packed)) UAVtalk_Port_Type;//This is a uavtalk port instance
 
 typedef struct {
 	uint8_t version;
@@ -68,6 +68,7 @@ void UAVtalk_Process_Byte(uint8_t c,UAVtalk_Port_Type* msg);
 void UAVtalk_Generate_Packet(UAVtalk_Port_Type* msg, Buffer_Type* buff);
 void UAVtalk_Run_Streams(UAVtalk_Port_Type* port,Buffer_Type* buff,uint32_t uptime,uint8_t tryfor);
 void UAVtalk_Register_Object(uint16_t object_no, uint8_t* object_pointer);
+void UAVtalk_Set_Port(UAVtalk_Port_Type* port);
 void updateTelemetryStats(UAVtalk_Port_Type* port, uint32_t timeNow);
 uint8_t UAVtalk_Handle_Protocol(UAVtalk_Port_Type* port);
 

@@ -19,7 +19,7 @@ uint8_t* UAVtalk_pointers[sizeof(UAVtalk_lenghts)];//Initialsed as zero, or (con
 const uint8_t UAVtalk_stream_objs[]={ATTITUDE,POSITION_ACTUAL,VELOCITY_ACTUAL,BARO_ACTUAL,FLIGHT_STATS,BATTERY_STATE,GPS_POSITION};//Stream Objects
 const uint8_t UAVtalk_stream_types[]={OBJ,OBJ,OBJ,OBJ,OBJ_W_ACK,OBJ,OBJ};//First 4 objects are not acked, Flightstats is acked, Flightbatterystats not, GPSPos is not
 const uint16_t UAVtalk_stream_timeouts[]={100,250,100,1000,5000,1000,1000};//Send every <x>milliseconds
-uint32_t UAVtalk_stream_timers[sizeof(UAVtalk_stream_objs)];//Timers will be set to zero as they are global
+int32_t UAVtalk_stream_timers[sizeof(UAVtalk_stream_objs)];//Timers will be set to zero as they are global
 //Note we can add more packets as needed, be careful not to saturate the link with too many streamed packets
 UAVtalk_Config_Type UAVtalk_conf={UAVTALK_VERSION,sizeof(UAVtalk_lenghts),UAVtalk_objects,UAVtalk_pointers,UAVtalk_lenghts,\
 UAVtalk_semaphores,sizeof(UAVtalk_stream_objs),UAVtalk_stream_objs,UAVtalk_stream_types,UAVtalk_stream_timeouts,UAVtalk_stream_timers};
@@ -32,6 +32,17 @@ UAVtalk_semaphores,sizeof(UAVtalk_stream_objs),UAVtalk_stream_objs,UAVtalk_strea
 void UAVtalk_Register_Object(uint16_t object_no, uint8_t* object_pointer) {
 	if(object_no<UAVtalk_conf.num_objects)//Make sure the object number exists
 		UAVtalk_conf.object_pointers[object_no]=object_pointer;
+}
+
+/**
+  * @brief  Sets the telemetry object pointers to point to the port data
+  * @param  Pointer to used UAVport
+  * @retval None
+  */
+void UAVtalk_Set_Port(UAVtalk_Port_Type* port) {
+	UAVtalk_Register_Object(FLIGHT_STATS,(uint8_t*)&(port->flightStats));//Initialise the link stats objects
+	UAVtalk_Register_Object(GCS_STATS,(uint8_t*)&(port->gcsStats));//These attach to the port, set before using the port
+	UAVtalk_conf.semaphores[FLIGHT_STATS]=WRITE;//Mark data as written (write before read) - so flight stats can be streamed
 }
 
 

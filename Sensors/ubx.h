@@ -24,7 +24,7 @@ typedef struct
 	uint8_t packetflag;				//packetflag lets us see when our packet has been updated
 	uint8_t status;					//type of fix
 	uint8_t nosats;					//number of tracked satellites
-} Ubx_Gps_Type;
+}	 __attribute__((packed))	Ubx_Gps_Type;
 //USX protocol specific stuff
 #define UBLOX 0x90
 #define UBLOX_WRITE UBLOX
