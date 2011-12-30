@@ -41,6 +41,8 @@ typedef struct {
 	uint8_t checksum;
 	uint8_t rx_buffer[UAVTALK_MAX_DATA_LEN];
 	uint16_t bytes_written;
+	uint32_t streamed;	//Stores the last time streamed packets were checked/sent
+	int32_t flight_stats_timer;//Lets the flight stats stream independantly on each port
 	uint32_t rxBytes;	//These are used for generating telemetery stats data
 	uint32_t txBytes;
 	uint32_t rxErrors;

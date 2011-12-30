@@ -201,12 +201,11 @@ void UAVtalk_Generate_Packet(UAVtalk_Port_Type* msg, Buffer_Type* buff) {
 void UAVtalk_Run_Streams(UAVtalk_Port_Type* port,Buffer_Type* buff,uint32_t uptime,uint8_t tryfor) {
 	uint16_t i=0;
 	uint8_t packet_gen=0;			//Logical to let us know a packet has been generated
-	static uint32_t millis=0;		//Local time variable
-	port->type=0x00;			//We only stream basic objects
 	for(i=0;i<UAVtalk_conf.num_stream_objects;i++) {//Loop through, sending objects
 		if(port->flightStats.Status||UAVtalk_conf.stream_object_nos[i]==FLIGHT_STATS) {//only process if connected, except for flight stats
-			UAVtalk_conf.stream_timers[i]-=(uptime-millis);//Adjust timer
-			if(UAVtalk_conf.stream_timers[i]<0 && !packet_gen) {//Timer expired and packet_gen flag not set
+			int32_t* timer=(UAVtalk_conf.stream_object_nos[i]!=FLIGHT_STATS)?&UAVtalk_conf.stream_timers[i]:&port->flight_stats_timer;
+			*timer-=(uptime-port->streamed);//Adjust the flight_stats timer
+			if(*timer<0 && !packet_gen) {//Timer expired and packet_gen flag not set
 				//Stop if the buffer is full - try and fill it as full as poss, note tail holds the top of data
 				if((UAVtalk_conf.lenghts[UAVtalk_conf.stream_object_nos[i]]+11+buff->tail)<buff->size){
 					//Check to see if this packet will go past tryfor limit, and if so give up unless the buffer is empty or tryfor unset
@@ -218,7 +217,7 @@ void UAVtalk_Run_Streams(UAVtalk_Port_Type* port,Buffer_Type* buff,uint32_t upti
 						//UAVtalk_conf.semaphores[port->object_no]=WRITE;//Set the object as written (Note done externally)
 						port->type=UAVtalk_conf.stream_object_types[i];//Set the type
 						UAVtalk_Generate_Packet(port,buff);//Generate the expired packet
-						UAVtalk_conf.stream_timers[i]=UAVtalk_conf.stream_intervals[i];//Reset object timer to default
+						*timer=UAVtalk_conf.stream_intervals[i];//Set the ports flight stats timer
 					}
 				}
 				else
@@ -226,7 +225,7 @@ void UAVtalk_Run_Streams(UAVtalk_Port_Type* port,Buffer_Type* buff,uint32_t upti
 			}
 		}
 	}
-	millis=uptime;				//Set our local time variable
+	port->streamed=uptime;			//Set our local time variable
 }
 
 /**

@@ -94,6 +94,7 @@ int main(void) {
 		//All USART1 UAVtalk streams go here
 		UAVtalk_Set_Port(&uavtalk_usart_port);	//Setup the usart UAVport to be used
 		//printf("In main loop\r\n");
+		//printf("Time: %d\r\n",Millis);
 		//Usart1tx.data[0]=0x54;Usart1tx.data[1]=0x45;Usart1tx.data[2]=0x53;Usart1tx.data[3]=0x54;Usart1tx.tail=4;//Debug - should say 'TEST'
 		uavtalk_usart_port.type=0;		//Reset this before proceeding - is this needed?
 		rxobjs=uavtalk_usart_port.rxObjects;	//Store number of objects
@@ -123,6 +124,13 @@ int main(void) {
 		}
 		//We find a streamed object to place in the buffer to fill it
 		UAVtalk_Run_Streams(&uavtalk_usart_port, &Usart1tx, Millis, 0);//Run the stream function with the current time
+
+						uavtalk_usart_port.object_no=FLIGHT_STATS;//Set the obj no (i.e. 0,1,2,3,4 as in objectid array)
+						//Note we do not set the instance here (TODO find out if its essential)
+						//UAVtalk_conf.semaphores[port->object_no]=WRITE;//Set the object as written (Note done externally)
+						uavtalk_usart_port.type=OBJ;//Set the type
+						UAVtalk_Generate_Packet(&uavtalk_usart_port,&Usart1tx);//Generate the expired packet
+
 		if(Usart1tx.tail)			//only send if we have data
 			usart1_send_data_dma(&Usart1tx,0);//1);//enable the usart1 dma, dma for spi2 cannot be used now - block later until tx complete
 		//printf("Handling Si4432\r\n");
@@ -241,6 +249,9 @@ void Initialisation() {
 	DMA_USART2_Configuration(&Gps_Buffer);
 	// Enable the DMA for USART2
 	DMA_Cmd(USART2RX_DMA1, ENABLE);
+	//Setup the UAVtalk buffers
+	Usart1tx.size=256;
+	Si4432_buff.size=2*RF22_MESH_MAX_MESSAGE_LEN_;	//At the moment we only support a maximum of two packets
 	// Set up the USARTs for outputting sensor information
     	Usarts_Init();
 	//Greeting
