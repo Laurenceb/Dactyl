@@ -104,24 +104,24 @@ void UAVtalk_Process_Byte(uint8_t c,UAVtalk_Port_Type* msg) {//The raw USART/ISM
 			msg->object_id|=(uint32_t)c<<24;//Search for the 32 bit id in the array of objects
 			msg->object_no=memchr_32(msg->object_id,UAVtalk_conf.object_ids,UAVtalk_conf.num_objects);//-1 if nonexistant
 			if(msg->object_no>=0)
-				msg->state=8;	//Object exists
+				msg->state=10;//8;	//Object exists	(Go straight to state 10 if we have no instance containing objects in the build - as is here)
 			else if((msg->type&0x0F)==1 || (msg->type&0x0F)==2)//Object request of object with ACK, or non Object with ACK request
-				msg->state=8;	//We will generate a NACK as object nonexistant 
+				msg->state=10;//8;	//We will generate a NACK as object nonexistant 
 			else {
-				msg->state=0;	//Error
+				msg->state=0;		//Error
 				msg->flightStats.RxFailures++;//There was a failure
 			}
 			break;
 		case 8:
-			msg->instance_id=c;
+			//msg->instance_id=c;
 			msg->state=9;
 			break;
 		case 9:
-			msg->instance_id|=(uint16_t)c<<8;
+			//msg->instance_id|=(uint16_t)c<<8;
 			msg->state=10;
 			break;
 		case 10:			//The data follows
-			if(msg->bytes_written==msg->lenght)//End of data
+			if(msg->bytes_written+8==msg->lenght)//End of data - length includes all of the header - 8 bytes
 				msg->state=11;	//We now miss break and continue onto state 11
 			else if(msg->object_no>=0) {//If we have an object that exists
 				if(msg->bytes_written!=UAVtalk_conf.lenghts[msg->object_no]) {//We havent had too much data
@@ -179,14 +179,14 @@ void UAVtalk_Generate_Packet(UAVtalk_Port_Type* msg, Buffer_Type* buff) {
 		buff->data[buff->tail++]=(uint8_t)((UAVtalk_conf.object_ids[msg->object_no]>>8)&0x000000FF);
 		buff->data[buff->tail++]=(uint8_t)((UAVtalk_conf.object_ids[msg->object_no]>>16)&0x000000FF);
 		buff->data[buff->tail++]=(uint8_t)((UAVtalk_conf.object_ids[msg->object_no]>>24)&0x000000FF);
-		buff->data[buff->tail++]=(uint8_t)(msg->instance_id&0x00FF);
-		buff->data[buff->tail++]=(uint8_t)(msg->instance_id>>8);//Instance - little endian
+		//buff->data[buff->tail++]=(uint8_t)(msg->instance_id&0x00FF);
+		//buff->data[buff->tail++]=(uint8_t)(msg->instance_id>>8);//Instance - little endian
 		//Copy the data into the rest of the tx buffer - if there is a payload
 		if(i) memcpy(&(buff->data[buff->tail]),(uint8_t*)UAVtalk_conf.object_pointers[msg->object_no],i);
 		UAVtalk_conf.semaphores[msg->object_no]=READ;//Mark the data as read from (write before read semaphore in operation)
 		//Packet overhead is 11 bytes - CRC8 does not run over the CRC8
 		buff->tail+=i;
-		i+=10;
+		i+=8;//10;
 		buff->data[buff->tail++]=CRC_updateCRC(0,&buff->data[buff->tail-i],i);//Add to CRC8 to end - Note runs over the buffer, going back over added data
 		msg->flightStats.TxDataRate+=(i+1);//Update the telemetery stats using data pointer (+1 due to extra CRC byte)
 	}

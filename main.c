@@ -124,13 +124,6 @@ int main(void) {
 		}
 		//We find a streamed object to place in the buffer to fill it
 		UAVtalk_Run_Streams(&uavtalk_usart_port, &Usart1tx, Millis, 0);//Run the stream function with the current time
-
-						uavtalk_usart_port.object_no=FLIGHT_STATS;//Set the obj no (i.e. 0,1,2,3,4 as in objectid array)
-						//Note we do not set the instance here (TODO find out if its essential)
-						//UAVtalk_conf.semaphores[port->object_no]=WRITE;//Set the object as written (Note done externally)
-						uavtalk_usart_port.type=OBJ;//Set the type
-						UAVtalk_Generate_Packet(&uavtalk_usart_port,&Usart1tx);//Generate the expired packet
-
 		if(Usart1tx.tail)			//only send if we have data
 			usart1_send_data_dma(&Usart1tx,0);//1);//enable the usart1 dma, dma for spi2 cannot be used now - block later until tx complete
 		//printf("Handling Si4432\r\n");

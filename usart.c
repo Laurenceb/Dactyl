@@ -45,6 +45,8 @@ void Usarts_Init() {
     /* Enable USART2 DMA Rx request */
     USART_DMACmd(USART2_USART, USART_DMAReq_Rx , ENABLE);
 
+    /* Enable the RXNE interrupt on USART1 */
+    USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);
     /* Enable the USART1 */
     USART_Cmd(USART1_USART, ENABLE);
     /* Enable the USART2 */
@@ -186,7 +188,11 @@ void usart1_disable_dma(uint8_t block) {
   * @param  None
   * @retval None
   */
-void USART1_IRQHandler(void) { 
+void USART1_IRQHandler(void) {
+	if(USART_GetITStatus(USART1, USART_IT_RXNE) != RESET) {
+		//Clear pending bit and read the data.
+		USART_ClearITPendingBit(USART1, USART_IT_RXNE);
+	}
 	Add_To_ISR_Buffer(&Usart1_rx_buff, USART_ReceiveData(USART1)); 
 }
 
@@ -217,7 +223,7 @@ uint8_t Get_From_ISR_Buffer(ISR_Buffer_Type* buff) {
   * @retval Bytes in the buffer
   */
 uint16_t Bytes_In_ISR_Buffer(ISR_Buffer_Type* buff) {
-	return ((uint16_t)buff->head-(uint16_t)buff->tail)%BUFFER_SIZE;
+	return (buff->head>=buff->tail)?buff->head-buff->tail:buff->head+BUFFER_SIZE-buff->tail;
 }
 
 //Private functions

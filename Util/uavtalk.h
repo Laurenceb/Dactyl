@@ -3,7 +3,7 @@
 #include "../dma.h"
 #include "uavobjtypes.h"
 //UAVtalk definitions
-#define UAVTALK_VERSION 1
+#define UAVTALK_VERSION 2
 #define UAVTALK_SYNC 0x3C
 #define UAVTALK_MAX_DATA_LEN 77
 #define UAVTALK_MAX_PACKET_LEN UAVTALK_MAX_DATA_LEN+11
@@ -36,7 +36,7 @@ typedef struct {
 	uint8_t type;
 	uint16_t lenght;
 	uint32_t object_id;
-	uint16_t instance_id;
+	//uint16_t instance_id;
 	int16_t object_no;
 	uint8_t checksum;
 	uint8_t rx_buffer[UAVTALK_MAX_DATA_LEN];
