@@ -18,7 +18,7 @@ volatile uint8_t UAVtalk_semaphores[sizeof(UAVtalk_lenghts)];//Semaphores array,
 uint8_t* UAVtalk_pointers[sizeof(UAVtalk_lenghts)];//Initialsed as zero, or (const uint8_t*)NULL)) Pointers to the objects
 const uint8_t UAVtalk_stream_objs[]={ATTITUDE,POSITION_ACTUAL,VELOCITY_ACTUAL,BARO_ACTUAL,FLIGHT_STATS,BATTERY_STATE,GPS_POSITION};//Stream Objects
 const uint8_t UAVtalk_stream_types[]={OBJ,OBJ,OBJ,OBJ,OBJ_W_ACK,OBJ,OBJ};//First 4 objects are not acked, Flightstats is acked, Flightbatterystats not, GPSPos is not
-const uint16_t UAVtalk_stream_timeouts[]={100,250,100,1000,5000,1000,1000};//Send every <x>milliseconds
+const uint16_t UAVtalk_stream_timeouts[]={100,250,100,1000,2000,1000,1000};//Send every <x>milliseconds
 int32_t UAVtalk_stream_timers[sizeof(UAVtalk_stream_objs)];//Timers will be set to zero as they are global
 //Note we can add more packets as needed, be careful not to saturate the link with too many streamed packets
 UAVtalk_Config_Type UAVtalk_conf={UAVTALK_VERSION,sizeof(UAVtalk_lenghts),UAVtalk_objects,UAVtalk_pointers,UAVtalk_lenghts,\
@@ -65,12 +65,15 @@ int16_t memchr_32(uint32_t objectid, uint32_t* object_ids, uint16_t numobjects) 
   * note that this now not handle ACK - read the msg type and generate ACK where appropriate
   */
 void UAVtalk_Process_Byte(uint8_t c,UAVtalk_Port_Type* msg) {//The raw USART/ISM data is fed in
+	if(msg->state && msg->state<10) {	//Run the CRC on the packet header
+		msg->checksum=CRC_updateByte(msg->checksum, c);
+	}
 	switch(msg->state)			//Run packet parser state machine
 	{
 		case 0:				//Start by waiting for the first sync byte
 			if(c==UAVTALK_SYNC) {
 				msg->state=1;
-				msg->checksum=CRC_updateByte(0,c);//CRC-8 checksum initialise
+				msg->checksum=CRC_updateByte(0, c);//CRC-8 checksum initialise
 			}
 			else
 				msg->state=0;
@@ -109,7 +112,7 @@ void UAVtalk_Process_Byte(uint8_t c,UAVtalk_Port_Type* msg) {//The raw USART/ISM
 				msg->state=10;//8;	//We will generate a NACK as object nonexistant 
 			else {
 				msg->state=0;		//Error
-				msg->flightStats.RxFailures++;//There was a failure
+				msg->rxErrors++;//There was a failure
 			}
 			break;
 		case 8:
@@ -129,7 +132,7 @@ void UAVtalk_Process_Byte(uint8_t c,UAVtalk_Port_Type* msg) {//The raw USART/ISM
 					break;
 				}
 				else
-					msg->state=11;
+					msg->state=11;//Continue directly to 11
 			}
 		case 11:			//Checksum byte
 			msg->checksum=CRC_updateCRC(msg->checksum,msg->rx_buffer,msg->bytes_written);
@@ -143,15 +146,20 @@ void UAVtalk_Process_Byte(uint8_t c,UAVtalk_Port_Type* msg) {//The raw USART/ISM
 						msg->flightStats.RxDataRate+=msg->lenght;//Update the telemetery stats object pointer
 						msg->rxObjects++;//We received another object		
 					}
+					else
+						msg->rxErrors++;//There was a failure
 				}
+				else
+					msg->rxErrors++;//We received an invalid object
 				//if(msg->type&0x0F)//If we had anything other than a basic object sent to us
 				//	msg->alert_flag=0xFF;//a action is required as we have to ack/nack/send object
 			}
-			else msg->flightStats.RxFailures++;//There was a failure
+			else
+				msg->rxErrors++;//There was a failure
 			msg->state=0;		//Reset state upon successful packet reception or error
-	}
-	if(msg->state && msg->state<10) {	//Run the CRC on the packet header
-		msg->checksum=CRC_updateByte(msg->checksum, c);
+			break;
+		default:
+			msg->state=0;
 	}
 }
 
@@ -170,10 +178,11 @@ void UAVtalk_Generate_Packet(UAVtalk_Port_Type* msg, Buffer_Type* buff) {
 	else	msg->type=4;			//Set type to NACK packet to indicate object non existant
 	if((msg->type&0x0F)>2) i=0;		//If we have type ACK or NACK we send no payload
 	if(i>=0) {				//If we are able to run
+		i+=8;				//Add on the header length
 		//UAVtalk_conf.semaphores[msg->object_no]=0;//Lock the data by setting it to zero
 		buff->data[buff->tail++]=UAVTALK_SYNC;//Sync byte comes first - buff.tail is used to hold number of bytes in buffer
 		buff->data[buff->tail++]=(UAVtalk_conf.version<<4)|(msg->type&0x0F);//Type of message as setup prev- also proto version
-		buff->data[buff->tail++]=(uint8_t)(i&0x00FF);//The number of payload bytes
+		buff->data[buff->tail++]=(uint8_t)(i&0x00FF);//The number of payload+header bytes
 		buff->data[buff->tail++]=(uint8_t)((i>>8)&0x00FF);//Little endian
 		buff->data[buff->tail++]=(uint8_t)(UAVtalk_conf.object_ids[msg->object_no]&0x000000FF);//Little endian object id
 		buff->data[buff->tail++]=(uint8_t)((UAVtalk_conf.object_ids[msg->object_no]>>8)&0x000000FF);
@@ -182,13 +191,13 @@ void UAVtalk_Generate_Packet(UAVtalk_Port_Type* msg, Buffer_Type* buff) {
 		//buff->data[buff->tail++]=(uint8_t)(msg->instance_id&0x00FF);
 		//buff->data[buff->tail++]=(uint8_t)(msg->instance_id>>8);//Instance - little endian
 		//Copy the data into the rest of the tx buffer - if there is a payload
+		i-=8;
 		if(i) memcpy(&(buff->data[buff->tail]),(uint8_t*)UAVtalk_conf.object_pointers[msg->object_no],i);
 		UAVtalk_conf.semaphores[msg->object_no]=READ;//Mark the data as read from (write before read semaphore in operation)
-		//Packet overhead is 11 bytes - CRC8 does not run over the CRC8
-		buff->tail+=i;
-		i+=8;//10;
-		buff->data[buff->tail++]=CRC_updateCRC(0,&buff->data[buff->tail-i],i);//Add to CRC8 to end - Note runs over the buffer, going back over added data
-		msg->flightStats.TxDataRate+=(i+1);//Update the telemetery stats using data pointer (+1 due to extra CRC byte)
+		//Packet overhead is 9 or 11 bytes - CRC8 does not run over the CRC8
+		buff->data[buff->tail+i]=CRC_updateCRC(0,&buff->data[buff->tail-8],i+8);//Add to CRC8 to end - Note runs over the buffer, going back over added data
+		buff->tail+=i+1;		//Add the extra data length onto the buffer, account for the crc byte also
+		msg->flightStats.TxDataRate+=(i+8+1);//Update the telemetery stats using data pointer (+1 due to extra CRC byte)
 	}
 }
 
@@ -238,6 +247,7 @@ void updateTelemetryStats(UAVtalk_Port_Type* port, uint32_t timeNow) {
 	uint8_t connectionTimeout;
 	static uint32_t timeOfLastObjectUpdate;
 	static uint32_t timeOfLastStats;
+	static uint32_t lastobjects;
 	uint32_t updateinterval=timeNow-timeOfLastStats;
 	timeOfLastStats=timeNow;//Allows this function to run irregularly/asyncronously
 	// Note that externally, before receiving data and processing, the UAVObjects for Stats should be pointed to the corresponding ports
@@ -259,9 +269,9 @@ void updateTelemetryStats(UAVtalk_Port_Type* port, uint32_t timeNow) {
 		port->flightStats.TxRetries = 0;
 	}
 	// Check for connection timeout
-	if (port->rxObjects > 0) {
+	if (port->rxObjects > lastobjects) {
 		timeOfLastObjectUpdate = timeNow;
-		port->rxObjects=0;	//Reset this here
+		lastobjects = port->rxObjects;	//Reset this here
 	}
 	if ((timeNow - timeOfLastObjectUpdate) > CONNECTION_TIMEOUT_MS) {
 		connectionTimeout = 1;
@@ -293,6 +303,8 @@ void updateTelemetryStats(UAVtalk_Port_Type* port, uint32_t timeNow) {
 	}
 	// Update flighttelemeterystats object semaphore to WRITE
 	UAVtalk_conf.semaphores[FLIGHT_STATS]=WRITE;
+	// Update gcstelemeterystats to READ
+	UAVtalk_conf.semaphores[FLIGHT_STATS]=READ;
 }
 
 /**

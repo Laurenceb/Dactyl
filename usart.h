@@ -27,7 +27,7 @@ extern volatile ISR_Buffer_Type Usart1_rx_buff;
 #define USART1_RCC_USART  RCC_APB2Periph_USART1
 #define USART1_TX         GPIO_Pin_9
 #define USART1_RX         GPIO_Pin_10
-#define USART1_BAUD       115200
+#define USART1_BAUD       57600/*115200*/
 //This is the GPS module - must be on same GPIO with this code
 #define USART2_RCC_GPIO   RCC_APB2Periph_GPIOA
 #define USART2_USART      USART2

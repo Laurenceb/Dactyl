@@ -193,7 +193,7 @@ void USART1_IRQHandler(void) {
 		//Clear pending bit and read the data.
 		USART_ClearITPendingBit(USART1, USART_IT_RXNE);
 	}
-	Add_To_ISR_Buffer(&Usart1_rx_buff, USART_ReceiveData(USART1)); 
+	Add_To_ISR_Buffer(&Usart1_rx_buff, (uint8_t)(USART_ReceiveData(USART1)&0x00FF)); 
 }
 
 /**
@@ -204,6 +204,10 @@ void USART1_IRQHandler(void) {
 void Add_To_ISR_Buffer(ISR_Buffer_Type* buff, uint8_t c) {
 	buff->data[buff->head++]=c;	//Add to the buffer
 	buff->head%=BUFFER_SIZE;	//Put head in correct range
+	if(buff->head==buff->tail) {	//Overflow
+		buff->tail++;
+		buff->tail%=BUFFER_SIZE;
+	}
 }
 
 /**

@@ -113,7 +113,7 @@ int main(void) {
 		//Now we process any received data
 		if(UAVtalk_Handle_Protocol(&uavtalk_usart_port))
 			UAVtalk_Generate_Packet(&uavtalk_usart_port, &Usart1tx);//setup the packet first - load dma buffer
-		if(Nav_Flag) {//the isr has run for guidance
+		if(Nav_Flag) {//The isr has run for guidance
 			Watchdog_Reset(); 		//Watchdog reset goes here - requires the guidance to be running also
 			Populate_Attitude((float*)UAVtalk_Attitude_Array,(float*)&Nav_Global.q[0]);//Generate rpy, copy to byte array
 			Nav_Flag=0;			//Reset the flag
