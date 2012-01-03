@@ -33,8 +33,8 @@ typedef struct {
 //The GPS Position type
 typedef struct {
 	uint8_t Status;//NoGPS,NoFix,Fix2D,Fix3D
-	uint32_t Latitude;//degrees x 10^-7
-	uint32_t Longitude;//degrees x 10^-7
+	int32_t Latitude;//degrees x 10^-7
+	int32_t Longitude;//degrees x 10^-7
 	float Altitude;//Meters
 	float GeoidSeparation;//Meters
 	float Heading;//Degrees

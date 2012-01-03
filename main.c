@@ -191,7 +191,8 @@ int main(void) {
 			Ground_Flag=(uint8_t)Flight_Status.Flightmode|(uint8_t)(((uint8_t)Flight_Status.Armed)<<4);
 			UAVtalk_conf.semaphores[FLIGHT_STATUS]==READ;
 		}
-		if(UAVtalk_conf.semaphores[GPS_POSITION]==READ) {//If the gps position has been sent, reload the structure (note, leads to 1s lag but its simple)
+		if(UAVtalk_conf.semaphores[GPS_POSITION]==READ && Gps.packetflag) {//If GPS pos has been sent & new pos, reload (note, leads to 1s lag but simple)
+			Gps.packetflag=0;		//Set the global packetflag to zero to let it be reloaded from the imu code
 			GPSPosition_from_UBX(&Gps, &GPS_Position);//Fill the structure
 			UAVtalk_conf.semaphores[GPS_POSITION]==WRITE;
 		}

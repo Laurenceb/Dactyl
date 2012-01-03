@@ -29,7 +29,7 @@ void GPSPosition_from_UBX(Ubx_Gps_Type* UBX, GPS_Position_Type* GPSPos) {
   */
 void Populate_Attitude(float UAVtalk_Attitude[7], float Quaternion[4]) {
 	memcpy(UAVtalk_Attitude,Quaternion,16);	//Copy over the quaternion
-	Quaternion2RPY(Quaternion,(float*)&UAVtalk_Attitude[4]);//Generate rpy, copy to float array
+	Quaternion2RPY(Quaternion,(float*)&(UAVtalk_Attitude[4]));//Generate rpy, copy to float array
 }
 
 
