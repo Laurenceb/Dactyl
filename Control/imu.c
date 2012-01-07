@@ -96,12 +96,14 @@ void run_imu(void) {
 	if(Completed_Jobs&(1<<BMP_24BIT)) {
 		Completed_Jobs&=~(1<<BMP_24BIT);//Wipe the job completed bit
 		Baro_Pressure=Bmp_Press_Buffer;	//Copy over from the read buffer
+		flip_adc24(&Baro_Pressure);	//Fix endianess
+		Bmp_Copy_Temp();		//Copy the 16 bit temperature out of its buffer into the temperature global
 		Bmp_Simp_Conv(&Baro_Temperature,&Baro_Pressure);//Convert to a pressure in Pa
 		Baro_Alt=Baro_Convert_Pressure(Baro_Pressure);//Convert to an altitude - relative to GPS geoid
-		SensorsUsed|=BARO_SENSOR;	//we have used the baro sensor
-		UAVtalk_Altitude_Array[0]=Baro_Alt;//populate the Baro_altitude UAVtalk packet from here
-		UAVtalk_Altitude_Array[1]=(float)Baro_Temperature/10.0;//note that as baro_actual has three independant 32bit
-		UAVtalk_Altitude_Array[2]=Baro_Pressure;//variables, it can be set directly from here without passing data back
+		SensorsUsed|=BARO_SENSOR;	//We have used the baro sensor
+		UAVtalk_Altitude_Array[0]=Baro_Alt;//Populate the Baro_altitude UAVtalk packet from here
+		UAVtalk_Altitude_Array[1]=(float)Baro_Temperature/10.0;//Note that as baro_actual has three independant 32bit
+		UAVtalk_Altitude_Array[2]=(float)Baro_Pressure;//Variables, it can be set directly from here without passing data back
 		UAVtalk_conf.semaphores[BARO_ACTUAL]=WRITE;//Set the semaphore to indicate this has been written
 	}
 	if(Completed_Jobs&(1<<BMP_16BIT)) {
