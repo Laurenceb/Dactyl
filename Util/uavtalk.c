@@ -177,7 +177,7 @@ void UAVtalk_Generate_Packet(UAVtalk_Port_Type* msg, Buffer_Type* buff) {
 	}
 	else	msg->type=4;			//Set type to NACK packet to indicate object non existant
 	if((msg->type&0x0F)>2) i=0;		//If we have type ACK or NACK we send no payload
-	if(i>=0) {				//If we are able to run
+	if(i>=0 && ((buff->tail+i+8)<=buff->size)) {//If we are able to run (this also checks to make sure we have enough space in buffer)
 		i+=8;				//Add on the header length
 		//UAVtalk_conf.semaphores[msg->object_no]=0;//Lock the data by setting it to zero
 		buff->data[buff->tail++]=UAVTALK_SYNC;//Sync byte comes first - buff.tail is used to hold number of bytes in buffer
@@ -216,9 +216,9 @@ void UAVtalk_Run_Streams(UAVtalk_Port_Type* port,Buffer_Type* buff,uint32_t upti
 			*timer-=(uptime-port->streamed);//Adjust the flight_stats timer
 			if(*timer<0 && !packet_gen) {//Timer expired and packet_gen flag not set
 				//Stop if the buffer is full - try and fill it as full as poss, note tail holds the top of data
-				if((UAVtalk_conf.lenghts[UAVtalk_conf.stream_object_nos[i]]+11+buff->tail)<buff->size){
+				if((UAVtalk_conf.lenghts[UAVtalk_conf.stream_object_nos[i]]+8+buff->tail)<=buff->size){
 					//Check to see if this packet will go past tryfor limit, and if so give up unless the buffer is empty or tryfor unset
-					if((UAVtalk_conf.lenghts[UAVtalk_conf.stream_object_nos[i]]+11+buff->tail)>tryfor && tryfor && buff->tail)
+					if((UAVtalk_conf.lenghts[UAVtalk_conf.stream_object_nos[i]]+8+buff->tail)>tryfor && tryfor && buff->tail)
 						packet_gen=1;
 					else {
 						port->object_no=UAVtalk_conf.stream_object_nos[i];//Set the obj no (i.e. 0,1,2,3,4 as in objectid array)

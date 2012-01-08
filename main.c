@@ -44,27 +44,30 @@
 //Control loop headers
 #include "Control/insgps.h"
 
-//Globals go here - this is the only place in the project where globals accessed globally are declared
+//--Globals go here - this is the only place in the project where globals accessed globally are declared
 Buffer_Type Gps_Buffer, Usart1tx, Si4432_buff;//GPS data buffer, USART1 tx buffer, Mesh networking buffer 
 float Waypoint_Global[3];	//Waypoint in NED
 float Long_To_Meters_Home;	//Conversion factor for longditude to meters
 volatile Ubx_Gps_Type Gps;	//Global Gps, there is also a static gps in the ekf/imu filter code
 volatile Nav_Type Nav_Global;	//EKF state
-//Flags/Mutex go here
+volatile uint32_t Millis;	//System uptime
+uint8_t Si4432_connected;	//If we are connected to an ISM band (mesh)network (Note: atm this is only set at bootup, meaning the server must be live before UAVs)
+//--Flags/Mutex go here
 volatile uint8_t Nav_Flag;	//Used to control and lock global nav state access
 volatile uint8_t New_Waypoint_Flagged;
 volatile uint8_t Ground_Flag;
 volatile uint8_t Kalman_Enabled;
 volatile uint8_t Spi_Locked=1;	//Used to control SPI2 sharing - locked by default as the spi is not setup
-//FatFs filesystem globals go here
+//--FatFs filesystem globals go here
 FRESULT f_err_code;
 static FATFS FATFS_Obj;
 FIL FATFS_logfile;
 volatile float Balt;
-//UAVtalk globals
+//--UAVtalk globals
+//-The ports
 UAVtalk_Port_Type uavtalk_usart_port;
 UAVtalk_Port_Type uavtalk_si4432_port;
-volatile uint32_t Millis;
+//-The objects
 float UAVtalk_Attitude_Array[7];			//Used to hold the attitude object data
 volatile float UAVtalk_Altitude_Array[3];		//Used to hold baro altitude data
 Home_Position_Type Home_Position;			//The home position
@@ -73,7 +76,7 @@ Telemetery_Stats_Type Flight_Telem;
 Battery_State_Type Battery_State;
 Flight_Status_Type Flight_Status;
 GPS_Position_Type GPS_Position;
-//more objects can go here if required (best to try and use existing variables) 
+//-more objects can go here if required (best to try and use existing variables) 
 
 int main(void) {
 	uint8_t n,m;
@@ -127,52 +130,53 @@ int main(void) {
 		if(Usart1tx.tail)			//only send if we have data
 			usart1_send_data_dma(&Usart1tx,0);//1);//enable the usart1 dma, dma for spi2 cannot be used now - block later until tx complete
 		//printf("Handling Si4432\r\n");
-		//Now take care of the Si4432 radio modem
-		UAVtalk_Set_Port(&uavtalk_si4432_port);	//Setup the si4432 UAVport to be used
-		uavtalk_si4432_port.type=0;		//Reset this before proceeding
-		if(!Get_Si4432_DRDY()) {//nIRQ flag line from the Si4432 modem - this is handled in the software ISR, but poll here to speed up
-			Spi_Locked=1;			//Block the interrupt code from running here and screwing the bus
-			RF22_Service_ISR();
-			Spi_Locked=0;
-		}
-		//Get reply from server - first to allow response in loop - timeout after 1ms (0 can cause issues with comparisons), Note offset to end of buffer
-		RF22_recvfromAckTimeout(&Si4432_buff.data[192],(uint8_t*)&(Si4432_buff.tail),1,(uint8_t*)&n);//Note only for Little Endian (Cortex M3)
-		if(SERVER==n) {				//Message can only come from the server
-			//printf("Si4432 from server\r\n");
-			rxobjs=uavtalk_si4432_port.rxObjects;//Store number of objects
-			m=Si4432_buff.tail;		//Store this, so we can reset the tail index
-			Si4432_buff.tail=0;		//Index to 0, so the tx data goes to bottom of buffer
-			for(n=192;n<m+192;n++) {	//If there is any data, there may be a packet
-				UAVtalk_Process_Byte(Si4432_buff.data[n],&uavtalk_si4432_port);//Grab a byte from the Si4432 Rx data area of buffer
-				if(uavtalk_si4432_port.rxObjects>rxobjs) {//We got an object
-					updateTelemetryStats(&uavtalk_si4432_port, Millis);//Process the telemetery status
-					if(UAVtalk_Handle_Protocol(&uavtalk_si4432_port))//Now we process any received data
-						UAVtalk_Generate_Packet(&uavtalk_si4432_port, &Si4432_buff);//Setup the packet - loads into the buffer
-					rxobjs=uavtalk_si4432_port.rxObjects;//Update this variable
+		if(Si4432_connected) {
+			//Now take care of the Si4432 radio modem
+			UAVtalk_Set_Port(&uavtalk_si4432_port);//Setup the si4432 UAVport to be used
+			uavtalk_si4432_port.type=0;	//Reset this before proceeding
+			if(!Get_Si4432_DRDY()) {//nIRQ flag line from the Si4432 modem - this is handled in the software ISR, but poll here to speed up
+				Spi_Locked=1;		//Block the interrupt code from running here and screwing the bus
+				RF22_Service_ISR();
+				Spi_Locked=0;
+			}
+			//Get reply from server first to allow response in loop - timeout after 1ms (0 can cause issues), Note offset to end of buffer
+			n=0;				//Reset n
+			RF22_recvfromAckTimeout(&Si4432_buff.data[192],(uint8_t*)&(Si4432_buff.tail),1,(uint8_t*)&n);//Note only for Little Endian (Cortex M3)
+			if(SERVER==n) {			//Message can only come from the server - We have to ping from server to get replies back (Reduces conjestion)
+				//printf("Si4432 from server\r\n");
+				rxobjs=uavtalk_si4432_port.rxObjects;//Store number of objects
+				m=Si4432_buff.tail;	//Store this, so we can reset the tail index
+				Si4432_buff.tail=0;	//Index to 0, so the tx data goes to bottom of buffer
+				for(n=192;n<m+192;n++) {//If there is any data, there may be a packet
+					UAVtalk_Process_Byte(Si4432_buff.data[n],&uavtalk_si4432_port);//Grab a byte from the Si4432 Rx data area of buffer
+					if(uavtalk_si4432_port.rxObjects>rxobjs) {//We got an object
+						updateTelemetryStats(&uavtalk_si4432_port, Millis);//Process the telemetery status
+						if(UAVtalk_Handle_Protocol(&uavtalk_si4432_port))//Now we process any received data
+							UAVtalk_Generate_Packet(&uavtalk_si4432_port, &Si4432_buff);//Setup the packet - loads into the buffer
+						rxobjs=uavtalk_si4432_port.rxObjects;//Update this variable
+					}
 				}
+				//printf("Handling \r\n");
+				//We find a streamed object to place in the buffer - will run until buffer full
+				if(Si4432_buff.tail>=RF22_MESH_MAX_MESSAGE_LEN_)//We have already spread over two packets - try for two packets
+					UAVtalk_Run_Streams(&uavtalk_si4432_port, &Si4432_buff, Millis, 2*RF22_MESH_MAX_MESSAGE_LEN_);//Run streams with current time
+				else			//Aim for a single packet
+					UAVtalk_Run_Streams(&uavtalk_si4432_port, &Si4432_buff, Millis, RF22_MESH_MAX_MESSAGE_LEN_);//Run streams with current time
+				if(uavtalk_si4432_port.object_no==POSITION_DESIRED_NO && UAVtalk_conf.semaphores[POSITION_DESIRED_NO]==WRITE) {//Guidance could dothis
+					New_Waypoint_Flagged=1;//set the flag so the guidance knows data is ready
+					UAVtalk_conf.semaphores[POSITION_DESIRED_NO]=READ;//mark the object as read 	
+				}
+				//printf("sending %d\r\n",Si4432_buff.tail);
+				if(Si4432_buff.tail>=RF22_MESH_MAX_MESSAGE_LEN_) {//Message is spread over two packets - the streams function will avoid this if poss
+					n=RF22_MESH_MAX_MESSAGE_LEN_;//First send a packet of packed UAVObjects to the Server
+					RF22_Sendtowait(Si4432_buff.data,n,SERVER);//Send to server
+					n=Si4432_buff.tail-RF22_MESH_MAX_MESSAGE_LEN_;
+					RF22_Sendtowait(&(Si4432_buff.data[RF22_MESH_MAX_MESSAGE_LEN_]),n,SERVER);
+				}
+				else if(Si4432_buff.tail)//Only try sending if we actually have some data
+					RF22_Sendtowait(Si4432_buff.data,Si4432_buff.tail,SERVER);//Send single packet
 			}
 		}
-		else					//This is bad - protocol error
-			Si4432_buff.tail=0;		//Tail is zeroed before we start filling with anything bad that happened due to protocol error
-		//printf("Handling \r\n");
-		//We find a streamed object to place in the buffer - will run until buffer full
-		if(Si4432_buff.tail>=RF22_MESH_MAX_MESSAGE_LEN_)//We have already spread over two packets - try for two packets
-			UAVtalk_Run_Streams(&uavtalk_si4432_port, &Si4432_buff, Millis, 2*RF22_MESH_MAX_MESSAGE_LEN_);//Run stream function with current time
-		else					//Aim for a single packet
-			UAVtalk_Run_Streams(&uavtalk_si4432_port, &Si4432_buff, Millis, RF22_MESH_MAX_MESSAGE_LEN_);//Run stream function with current time
-		if(uavtalk_si4432_port.object_no==POSITION_DESIRED_NO && UAVtalk_conf.semaphores[POSITION_DESIRED_NO]==WRITE) {//Note the guidance could do this
-			New_Waypoint_Flagged=1;		//set the flag so the guidance knows data is ready
-			UAVtalk_conf.semaphores[POSITION_DESIRED_NO]=READ;//mark the object as read 	
-		}
-		//printf("sending %d\r\n",Si4432_buff.tail);
-		if(Si4432_buff.tail>=RF22_MESH_MAX_MESSAGE_LEN_) {//Message is spread over two packets - the streams function will avoid this if poss
-			n=RF22_MESH_MAX_MESSAGE_LEN_;	//First send a packet of packed UAVObjects to the Server
-			RF22_Sendtowait(Si4432_buff.data,n,SERVER);//Send to server
-			n=Si4432_buff.tail-RF22_MESH_MAX_MESSAGE_LEN_;
-			RF22_Sendtowait(&(Si4432_buff.data[RF22_MESH_MAX_MESSAGE_LEN_]),n,SERVER);
-		}
-		else if(Si4432_buff.tail)		//Only try sending if we actually have some data
-			RF22_Sendtowait(Si4432_buff.data,Si4432_buff.tail,SERVER);//Send single packet
 		//printf("UAVtalk completed\r\n");
 		//Process waypoints here - waypoints are in local NED meter co-ordinates relative to home position
 		//TODO multiple waypoints needs to be integrated into the GCS, macro flag enables the multiple waypoint functionality
@@ -461,6 +465,7 @@ void Initialisation() {
 				else {
 					RF22_Reassign(buf[0]);//Set the designated address
 					printf("We are 0x%2x\r\n",buf);
+					Si4432_connected=1;//Means a network was detected and address assigned, so we can use si4432 - base station must be on first
 				}
 			}
 			else
