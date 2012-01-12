@@ -72,6 +72,9 @@ void CrossProduct(const float v1[3], const float v2[3], float result[3]);
 	// ****** Vector Magnitude ********
 float VectorMagnitude(const float v[3]);
 
+	// ****** Vector Normalize ********
+void VectorNormalize(float v[3]);
+
 void quat_inverse(float q[4]);
 void quat_copy(const float q[4], float qnew[4]);
 void quat_mult(const float q1[4], const float q2[4], float qout[4]);

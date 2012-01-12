@@ -16,6 +16,7 @@
 #include "../Sensors/cal.h"
 #include "../Sensors/accel_down.h"
 #include "../Util/uavtalk.h"
+#include "../Util/coords.h"
 
 //Main Globals here
 extern Home_Position_Type Home_Position;
@@ -91,6 +92,7 @@ void run_imu(void) {
 	if(Completed_Jobs&(1<<MAGNO_READ)) {	//This I2C job will run whilst the prediction runs
 		Completed_Jobs&=~(1<<MAGNO_READ);//Wipe the job completed bit
 		Calibrate_3(ma,Magno_Data_Buffer,&Mag_Cal_Dat);
+		VectorNormalize(ma);		//Normalize the magnetic field
 		SensorsUsed|=MAG_SENSORS;	//Let the EKF know what we used
 	}
 	if(Completed_Jobs&(1<<BMP_24BIT)) {

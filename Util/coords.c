@@ -378,6 +378,15 @@ float VectorMagnitude(const float v[3])
 	return(sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2]));
 }
 
+// ****** Vector Normalize ******
+void VectorNormalize(float v[3])
+{
+	float len=VectorMagnitude(v);
+	v[0]/=len;
+	v[1]/=len;
+	v[2]/=len;
+}
+
 /**
  * @brief Compute the inverse of a quaternion 
  * @param [in][out] q The matrix to invert

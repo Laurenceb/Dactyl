@@ -398,13 +398,12 @@ void Initialisation() {
 	else
 		printf("Mag model completed, B(mG NED frame)=%1f,%1f,%1f\r\n",Field[0],Field[1],Field[2]);
 	//Now we normalise the field - the ekf works with normalised lenght Be vector
-	mag_len = sqrt(pow(Field[0],2) + pow(Field[1],2) + pow(Field[2],2));
-	Field[0]/=mag_len;Field[1]/=mag_len;Field[2]/=mag_len;
+	VectorNormalize(Field);
 	INSSetMagNorth(Field);			//Configure the Earths field in the EKF
 	//Use the Field and GPS position to set the home position
 	Home_Position.Set=1;//Set the SET byte to indicate to the GCS that home is set onboard the UAV
 	LLA[0]=Home_Position.Latitude*1e-7;
-	LLA[1]=Home_Position.Longitude*1e-7;//Note that altitude uses the last gps datapoint to find the giodal seperation
+	LLA[1]=Home_Position.Longitude*1e-7;	//Note that altitude uses the last gps datapoint to find the giodal seperation
 	LLA[2]=Home_Position.Altitude-((Gps.mslaltitude-Gps.altitude)/1000.0);//NWGS84 geometeric altitude, so ECEF coord conversion works better
 	LLA2ECEF(LLA,ECEF);
 	Home_Position.ECEF[0]=ECEF[0]*100.0;
@@ -418,6 +417,7 @@ void Initialisation() {
 	INSSetGravity(Home_Position.g_e);
 	//Use home position to initialise the ekf - assume that we intialise stationary with no gyro bias, and grab accel and magno data
 	Calibrate_3(mag_corr,Magno_Data_Buffer,&Mag_Cal_Dat);
+	VectorNormalize(mag_corr);		//Normalize magnetometer field
 	Calibrate_3(acc_corr,Accel_Data_Buffer,&Acc_Cal_Dat);
 	//quaternion init code - from Openpilot
 	RotFrom2Vectors((float*)acc_corr, ge, (float*)mag_corr, Field, Rbe);
