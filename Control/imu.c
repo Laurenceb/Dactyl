@@ -60,7 +60,7 @@ void run_imu(void) {
 	Accel_Access_Flag=LOCKED;		//Lock the data
 	/*LOCKED*/Calibrate_3(ac,Accel_Data_Buffer,&Acc_Cal_Dat);//Grab the data from the accel downsampler/DSP filter
 	Accel_Access_Flag=UNLOCKED;		//Unlock the data
-	Calibrate_3(gy,&Gyro_Data_Buffer[2],&Gyr_Cal_Dat);//Read gyro data buffer - skip the temperature
+	Calibrate_3(gy,&(Gyro_Data_Buffer[1]),&Gyr_Cal_Dat);//Read gyro data buffer - skip the temperature
 	//Run the EKF - we feed it float pointers but it expects float arrays - alignment has to be correct
 	INSStatePrediction(gy,ac,Delta_Time);	//Run the EKF and incorporate the avaliable sensors
 	INSCovariancePrediction(Delta_Time);
@@ -99,7 +99,6 @@ void run_imu(void) {
 		Completed_Jobs&=~(1<<BMP_24BIT);//Wipe the job completed bit
 		Baro_Pressure=Bmp_Press_Buffer;	//Copy over from the read buffer
 		flip_adc24(&Baro_Pressure);	//Fix endianess
-		Bmp_Copy_Temp();		//Copy the 16 bit temperature out of its buffer into the temperature global
 		Bmp_Simp_Conv(&Baro_Temperature,&Baro_Pressure);//Convert to a pressure in Pa
 		Baro_Alt=Baro_Convert_Pressure(Baro_Pressure);//Convert to an altitude - relative to GPS geoid
 		SensorsUsed|=BARO_SENSOR;	//We have used the baro sensor

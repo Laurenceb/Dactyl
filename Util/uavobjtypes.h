@@ -23,6 +23,7 @@ typedef struct {
 //The battery status type
 typedef struct {//Note this has been modified from the normal OpenPilot structure, where we have peak and average currents, energy consumed and estimated flight time
 	float Voltage;//Not actual flight time since bootup/launch
+	float unused[4];//TODO modify GCS definitions to avoid need for this packing
 	float Flighttime;
 }	__attribute__((packed)) Battery_State_Type;
 //The manual control status type - note we only support position hold or manual with pwm feedthrough
