@@ -120,7 +120,8 @@ void Gps_Process_Byte(uint8_t c,Ubx_Gps_Type* gps)//The raw USART data is fed in
 					//putchar(0x30+gps->packetflag);
 				}
 			}
-			State=0;
+		default:
+			State=0;		//Should only get here from case 8
 	}	
 	if(State>2 && State<8)			//In the valid range to add to the checksum
 	{

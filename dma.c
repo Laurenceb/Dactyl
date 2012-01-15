@@ -65,7 +65,7 @@ void DMA_USART1_Configuration(uint8_t enabled, Buffer_Type* tx_buffer) {
   */
 int16_t Bytes_In_Buffer(Buffer_Type* buffer)
 {
-	return ((buffer->size-DMA_GetCurrDataCounter(buffer->DMA_Channel)-buffer->tail)%buffer->size);
+	return ((buffer->size-buffer->tail-(int16_t)DMA_GetCurrDataCounter(buffer->DMA_Channel))%buffer->size);
 }
 
 /**

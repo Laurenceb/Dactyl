@@ -2,9 +2,6 @@
 #include "accel_down.h"
 #include "../Control/imu.h"
 
-extern volatile uint8_t Accel_Access_Flag;//used to control access to the imu accessed data
-extern volatile int16_t Accel_Data_Vector[3];//used to pass data to the imu code
-
 volatile int16_t Accel_Data_Buffer[3] __attribute__((packed));//buffer used by the i2c driver
 
 

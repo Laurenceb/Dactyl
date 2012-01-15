@@ -10,6 +10,7 @@
 #include "../i2c_int.h"
 #include "../dma.h"
 #include "../gpio.h"
+#include "../pwm.h"
 #include "../Sensors/ubx.h"
 #include "../Sensors/bmp085.h"
 #include "../Sensors/pitot.h"
@@ -46,21 +47,22 @@ void run_imu(void) {
 	//Static variables
 	static uint32_t Iterations=0,millis_pitot;//Number of ekf iterations, pitot sample timestamp
 	static Control_type control=DEFAULT_CONTROL;//The control structure
-	static Ubx_Gps_Type gps __attribute__((packed));//This is our local copy - theres is also a global, be careful with copying
+	static Ubx_Gps_Type gps;		//This is our local copy - theres is also a global, be careful with copying
 	static float ac[3],Wind[3];		//The accel is not always avaliable - 100hz update
 	static float AirSpeed=0,Baro_Alt,Body_x_To_x=0,Body_x_To_y=0,Mean_Alt_Err=0;
 	static uint32_t Baro_Pressure;		//Baro pressure is static for use in air density calculations
 	static uint8_t PWM_Disabled;		//Keeps track of PWM hardware passthrough state
 	//Non Static
-	float ma[3],gy[3],gps_velocity[3],gps_position[3],target_vector[3],waypoint[3];
+	float ma[3],gy[3],gps_velocity[3],gps_position[3],target_vector[3],waypoint[3]={0,0,0};
 	float Delta_Time=DELTA_TIME,x_down,y_down,h_offset,N_t_x,N_t_y,time_to_waypoint,Horiz_t,GPS_Errors[4];
 	uint16_t SensorsUsed=0;			//We by default have no sensors
 	int32_t Baro_Temperature;		//In units of 0.1C
 	//Now read the gyro buffer, convert to float from uint16_t and apply the calibration
-	Accel_Access_Flag=LOCKED;		//Lock the data
-	/*LOCKED*/Calibrate_3(ac,Accel_Data_Buffer,&Acc_Cal_Dat);//Grab the data from the accel downsampler/DSP filter
-	Accel_Access_Flag=UNLOCKED;		//Unlock the data
 	Calibrate_3(gy,&(Gyro_Data_Buffer[1]),&Gyr_Cal_Dat);//Read gyro data buffer - skip the temperature
+	//Now read the accel downconvertor buffer and apply calibration
+	Accel_Access_Flag=LOCKED;		//Lock the data
+	/*LOCKED*/Calibrate_3(ac,Accel_Data_Vector,&Acc_Cal_Dat);//Grab the data from the accel downsampler/DSP filter
+	Accel_Access_Flag=UNLOCKED;		//Unlock the data
 	//Run the EKF - we feed it float pointers but it expects float arrays - alignment has to be correct
 	INSStatePrediction(gy,ac,Delta_Time);	//Run the EKF and incorporate the avaliable sensors
 	INSCovariancePrediction(Delta_Time);
@@ -78,7 +80,7 @@ void run_imu(void) {
 		GPS_Errors[1]=pow((float)gps.vertical_error*0.001,2)*GPS_SPECTRAL_FUDGE_FACTOR;//Fudge factor is defined in ubx.h/gps header file
 		GPS_Errors[2]=pow((float)gps.speedacc*0.01,2)*GPS_SPECTRAL_FUDGE_FACTOR*GPS_Errors[0]/(GPS_Errors[0]+GPS_Errors[1]);
 		GPS_Errors[3]=GPS_Errors[2]*GPS_Errors[1]/GPS_Errors[0];//Ublox5 only gives us 3D speed accuracy? Weight with position errors
-		INSResetRGPS(GPS_Errors);	//Adjust the measurement covariance matrix with reported gps error
+		//INSResetRGPS(GPS_Errors);	//Adjust the measurement covariance matrix with reported gps error
 		SensorsUsed|=POS_SENSORS|HORIZ_SENSORS|VERT_SENSORS;//Set the flagbits for the gps update
 		//Correct Sea level pressure - average the gps altitude over first 100 seconds and apply correction when filter initialised
 		if(Iterations++>100*GPS_RATE)
@@ -123,7 +125,7 @@ void run_imu(void) {
 		}
 		millis_pitot=Millis;		//Save a timestamp so we can monitor conversion time, BMP085 corruption will double this
 	}
-	INSCorrection((float*)&ma,(float*)&gps_position,(float*)&gps_velocity,Baro_Alt+Home_Position.Altitude,SensorsUsed);
+	INSCorrection(ma,gps_position,gps_velocity,Baro_Alt+Home_Position.Altitude,SensorsUsed);
 	if(!Nav_Flag) {Nav_Global=Nav; Nav_Flag=(uint32_t)0x01;}//Copy over Nav state if its been unlocked
 	//EKF is finished, time to run the guidance
 	if(New_Waypoint_Flagged) {memcpy(waypoint,Waypoint_Global,sizeof(waypoint)); New_Waypoint_Flagged=0;}//Check for any new waypoints set

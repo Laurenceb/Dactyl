@@ -69,6 +69,8 @@ UAVtalk_Port_Type uavtalk_usart_port;
 UAVtalk_Port_Type uavtalk_si4432_port;
 //-The objects
 float UAVtalk_Attitude_Array[7];			//Used to hold the attitude object data
+int32_t Position_Actual[3];				//In cm NED units
+int32_t Velocity_Actual[3];				//In cm/s NED units
 volatile float UAVtalk_Altitude_Array[3];		//Used to hold baro altitude data
 Home_Position_Type Home_Position;			//The home position
 Telemetery_Stats_Type GCS_Telem;			//Telemetery - used for handshaking
@@ -85,8 +87,8 @@ int main(void) {
 	Initialisation();//initialise all hardware
 	Si4432_buff.size=RF22_MESH_MAX_MESSAGE_LEN_*2;//Set the Si4432 buffer size - note buffer is 256 bytes, so we have wasted space :-/
 	UAVtalk_Register_Object(ATTITUDE,(uint8_t*)UAVtalk_Attitude_Array);//Initialise UAVtalk objects here
-	UAVtalk_Register_Object(POSITION_ACTUAL,(uint8_t*)&Nav_Global);//Actual pos points to the first three elements of the global kalman state
-	UAVtalk_Register_Object(VELOCITY_ACTUAL,(uint8_t*)&Nav_Global.Vel[0]);//Velocity points to the fourth element of the global kalman state
+	UAVtalk_Register_Object(POSITION_ACTUAL,(uint8_t*)Position_Actual);//Actual Pos points to the cm integer array
+	UAVtalk_Register_Object(VELOCITY_ACTUAL,(uint8_t*)Velocity_Actual);//Actual Velocity points to the cm/s integer array
 	UAVtalk_Register_Object(BARO_ACTUAL,(uint8_t*)UAVtalk_Altitude_Array);//The baro_actual points to the global baro data array
 	UAVtalk_Register_Object(POSITION_DESIRED_NO,(uint8_t*)&Waypoint_Global);//The desired position points to the waypoint
 	UAVtalk_Register_Object(HOME_LOCATION,(uint8_t*)&Home_Position);//Home position structure, this is set at initialisation
@@ -120,6 +122,8 @@ int main(void) {
 			Watchdog_Reset(); 		//Watchdog reset goes here - requires the guidance to be running also
 			Populate_Attitude((float*)UAVtalk_Attitude_Array,(float*)&Nav_Global.q[0]);//Generate rpy, copy to byte array
 			Nav_Flag=0;			//Reset the flag
+			Populate_Vector(Position_Actual,Nav_Global.Pos);//Populate the position array
+			Populate_Vector(Velocity_Actual,Nav_Global.Vel);//Populate the velocity array
 			UAVtalk_conf.semaphores[ATTITUDE]=WRITE;//Mark the attitude packet as written (Note this needs to be done with all streams)
 			UAVtalk_conf.semaphores[POSITION_ACTUAL]=WRITE;//Mark the position as written (Note this object points directly to kalman)
 			UAVtalk_conf.semaphores[VELOCITY_ACTUAL]=WRITE;
@@ -195,7 +199,7 @@ int main(void) {
 			Ground_Flag=(uint8_t)Flight_Status.Flightmode|(uint8_t)(((uint8_t)Flight_Status.Armed)<<4);
 			UAVtalk_conf.semaphores[FLIGHT_STATUS]==READ;
 		}
-		if(UAVtalk_conf.semaphores[GPS_POSITION]==READ && Gps.packetflag) {//If GPS pos has been sent & new pos, reload (note, leads to 1s lag but simple)
+		if(/*UAVtalk_conf.semaphores[GPS_POSITION]==READ &&*/ Gps.packetflag) {//If GPS pos has been sent & new pos, reload (note, leads to 1s lag but simple)
 			Gps.packetflag=0;		//Set the global packetflag to zero to let it be reloaded from the imu code
 			GPSPosition_from_UBX(&Gps, &GPS_Position);//Fill the structure
 			UAVtalk_conf.semaphores[GPS_POSITION]==WRITE;
@@ -326,7 +330,9 @@ void Initialisation() {
 	I2C1_Request_Job(ACCEL_READ);
 	Delay(0x1FFFF);//Wait for a short period to allow the interrupt driven I2C1 reads to fire off and retrieve us some data
 	printf("Magno %d,%d,%d\r\n",Flipbytes(Magno_Data_Buffer[0]),Flipbytes(Magno_Data_Buffer[1]),Flipbytes(Magno_Data_Buffer[2]));
-	printf("Accel %d,%d,%d\r\n",Accel_Data_Buffer[0],Accel_Data_Buffer[1],Accel_Data_Buffer[2]);//Accel has correct endianess
+	Accel_Access_Flag=LOCKED;		//Locked the data so it is safe to read
+	printf("Accel %d,%d,%d\r\n",Accel_Data_Vector[0],Accel_Data_Vector[1],Accel_Data_Vector[2]);//Accel has correct endianess - we grad this from downsampler
+	Accel_Access_Flag=UNLOCKED;
 	printf("Gyro  %d,%d,%d\r\n",Flipbytes(Gyro_Data_Buffer[1]),Flipbytes(Gyro_Data_Buffer[2]),Flipbytes(Gyro_Data_Buffer[3]));
 	printf("Temp  %d\r\n",Flipbytes(Gyro_Data_Buffer[0]));
 	Millis+=TEMPERATURE_PERIOD;		//Hack the system uptime in order to cause a bmp05 temperature
@@ -398,7 +404,9 @@ void Initialisation() {
 	else
 		printf("Mag model completed, B(mG NED frame)=%1f,%1f,%1f\r\n",Field[0],Field[1],Field[2]);
 	//Now we normalise the field - the ekf works with normalised lenght Be vector
-	VectorNormalize(Field);
+	//Note - quick debug hack - Birmingham UK
+	Field[0]=189.3;Field[1]=-7.2;Field[2]=450.7;
+	VectorNormalize(Field);			//Ensure length is unity
 	INSSetMagNorth(Field);			//Configure the Earths field in the EKF
 	//Use the Field and GPS position to set the home position
 	Home_Position.Set=1;//Set the SET byte to indicate to the GCS that home is set onboard the UAV
@@ -418,9 +426,11 @@ void Initialisation() {
 	//Use home position to initialise the ekf - assume that we intialise stationary with no gyro bias, and grab accel and magno data
 	Calibrate_3(mag_corr,Magno_Data_Buffer,&Mag_Cal_Dat);
 	VectorNormalize(mag_corr);		//Normalize magnetometer field
-	Calibrate_3(acc_corr,Accel_Data_Buffer,&Acc_Cal_Dat);
+	Accel_Access_Flag=LOCKED;
+	Calibrate_3(acc_corr,Accel_Data_Vector,&Acc_Cal_Dat);//Read downsampled accel
+	Accel_Access_Flag=UNLOCKED;
 	//quaternion init code - from Openpilot
-	RotFrom2Vectors((float*)acc_corr, ge, (float*)mag_corr, Field, Rbe);
+	RotFrom2Vectors(acc_corr, ge, mag_corr, Field, Rbe);
 	R2Quaternion(Rbe, q);
 	INSSetState(Zeros,Zeros,q,Zeros);	//Home position is defined as the origin
 	//Use the Baro output to find sea level pressure, remeber home altitude is negative

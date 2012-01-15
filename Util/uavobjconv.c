@@ -32,4 +32,13 @@ void Populate_Attitude(float UAVtalk_Attitude[7], float Quaternion[4]) {
 	Quaternion2RPY(Quaternion,(float*)&(UAVtalk_Attitude[4]));//Generate rpy, copy to float array
 }
 
-
+/**
+  * @brief  Packs a float vector in m into a UAVtalk integer cm units vector
+  * @param  Pointers to the two arrays
+  * @retval None
+  */
+void Populate_Vector(int32_t UAVtalk_Vector[3], float in[3]) {
+	UAVtalk_Vector[0]=(int32_t)(100.0*in[0]);
+	UAVtalk_Vector[1]=(int32_t)(100.0*in[1]);
+	UAVtalk_Vector[2]=(int32_t)(100.0*in[2]);
+}

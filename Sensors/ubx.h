@@ -97,7 +97,11 @@ typedef struct
 #define GPS_RATE 5
 //GPS error guassian white noise approximation factors
 #define GPS_NOISE_BANDWIDTH 0.2		/*this is a rough approximation if ionospheric noise dominates, approx as uniform density from 0-0.2hz*/
-#define GPS_SPECTRAL_FUDGE_FACTOR (float)GPS_RATE/(2.0*GPS_NOISE_BANDWIDTH)
+#ifdef MODEL_GPS_SPECTRUM		/*define this to allow spectral modelling of gps noise*/
+	#define GPS_SPECTRAL_FUDGE_FACTOR (float)GPS_RATE/(2.0*GPS_NOISE_BANDWIDTH)
+#else
+	#define GPS_SPECTRAL_FUDGE_FACTOR 1.0/*Ublox seems to model this internally, so the output error is usable in a kalman*/
+#endif
 
 //Function prototypes
 void Gps_Process_Byte(uint8_t c,Ubx_Gps_Type* gps);
