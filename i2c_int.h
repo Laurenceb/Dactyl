@@ -22,7 +22,7 @@ extern volatile I2C_Error_Type I2C1error;	//used to store error state
 //Macros
 //MEMS specific defines
 #define MAGNO_ADDR 0x3C
-#define MAGNO_DATA 0xFF				/*sub address where data begins*/
+#define MAGNO_DATA 0x03				/*sub address where data begins*/
 #define ACCEL_ADDR 0x30
 #define ACCEL_DATA 0xA8
 #define GYRO_ADDR 0xD0
@@ -31,7 +31,7 @@ extern volatile I2C_Error_Type I2C1error;	//used to store error state
 //Number of jobs
 #define I2C_NUMBER_JOBS 15
 //Setup for the core sensors - other sensors have setup in their respective header files - look in /sensors 
-#define MAGNO_SETUP {0x18,0x20,0x01} /*configure the LSM303 magno for N.A./75hz,high resolution, single conversion*/
+#define MAGNO_SETUP {0x18,0x20,0x00} /*configure the LSM303 magno for N.A./75hz,high resolution, continuous conversion (set to single later)*/
 #define MAGNO_SINGLE {0x01}/*a single conversion*/
 #define ACCEL_SETUP {0x37,0x00,0x02,0x80} /*configure LSM303 acc for 400hz, no highpass, int1=DTRD, +-2G with blocking (0x90 for +-4G)*/
 #define GYRO_SETUP {0x07,0x1B,0x31} /*configure ITG gyro for 125hz,+-2000deg/s 42hz lowpass, int1=DTRD - no 50us pulse*/
@@ -40,7 +40,7 @@ extern volatile I2C_Error_Type I2C1error;	//used to store error state
 #define I2C_JOBS_INITIALISER {\
 {GYRO_ADDR,I2C_Direction_Receiver,8,0x1B,NULL}, /*Read the Gyro including temperature*/\
 {MAGNO_ADDR,I2C_Direction_Transmitter,1,0x02,Magno_single}, /*Setup a single Magno conversion*/\
-{MAGNO_ADDR,I2C_Direction_Receiver,6,0x03,NULL}, /*Read the Magno data*/\
+{MAGNO_ADDR,I2C_Direction_Receiver,7,0xFF,NULL}, /*Read the Magno data*/\
 {ACCEL_ADDR,I2C_Direction_Receiver,6,0xA8,NULL}, /*Read the Accel data*/\
 {LTC2481_R,I2C_Direction_Receiver,3,LTC2481_ADC/*0xFF*/,NULL}, /*Read the Pitot Note: sets the config incase it overwritten by bmp*/\
 {BMP085_W,I2C_Direction_Receiver,2,BMP085_ADC,NULL}, /*Read BMP085 ADC - 16bit mode Note: may be faster to reverse these, but greater pitot risk*/\

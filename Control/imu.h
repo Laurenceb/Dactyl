@@ -4,7 +4,7 @@
 #include "loops.h"
 //Globals
 extern volatile int16_t Gyro_Data_Buffer[4];//Holds temperature data as well
-extern volatile int16_t Magno_Data_Buffer[3];
+extern volatile int16_t Magno_Data_Buffer[4];
 extern volatile int16_t Accel_Data_Vector[3];//Used to pass data to the imu code from accel downsampler
 extern volatile uint8_t Accel_Access_Flag;		//Used to control access
 //Access flag stuff

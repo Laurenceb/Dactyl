@@ -79,6 +79,7 @@ Battery_State_Type Battery_State;
 Flight_Status_Type Flight_Status;
 GPS_Position_Type GPS_Position;
 //-more objects can go here if required (best to try and use existing variables) 
+volatile float quickdebug[3];
 
 int main(void) {
 	uint8_t n,m;
@@ -208,6 +209,8 @@ int main(void) {
 			Usart1tx.tail=0;
 			usart1_disable_dma(1);//0);	//Disable the TX DMA so the DMA is ready for use by SPI2 - this blocks until DMA1 ch4 is free 
 		}
+		//printf("%4f,%4f,%4f,%4x\n",quickdebug[0],quickdebug[1],quickdebug[2],Completed_Jobs);
+		printf("Magno %d,%d,%d\r\n",Magno_Data_Buffer[0],Magno_Data_Buffer[1],Magno_Data_Buffer[2]);
 		//Logfiles and SD card related functionality can go here
 		//Spi_Locked=1; //Lock the spi2 bus
 		//if(!f_err_code) {//if the logfile opened ok

@@ -31,10 +31,11 @@ extern volatile uint32_t Millis;
 extern volatile float UAVtalk_Altitude_Array[3];	
 //Just here for debug
 extern volatile float Balt;
+extern volatile float quickdebug[3];
 
 //Globals used for the Gyro and Magno data from the I2C driver, Accel data goes via downsampler, other sensors via code in ./Sensors	
 volatile int16_t Gyro_Data_Buffer[4] __attribute__((packed));//Holds temperature data as well
-volatile int16_t Magno_Data_Buffer[3] __attribute__((packed));
+volatile int16_t Magno_Data_Buffer[4] __attribute__((packed));
 volatile int16_t Accel_Data_Vector[3];		//Used to pass data from downsampler
 volatile uint8_t Accel_Access_Flag;		//Used to control access
 
@@ -94,6 +95,7 @@ void run_imu(void) {
 	if(Completed_Jobs&(1<<MAGNO_READ)) {	//This I2C job will run whilst the prediction runs
 		Completed_Jobs&=~(1<<MAGNO_READ);//Wipe the job completed bit
 		Calibrate_3(ma,Magno_Data_Buffer,&Mag_Cal_Dat);
+		memcpy(quickdebug,ma,12);//TODO remove debug
 		VectorNormalize(ma);		//Normalize the magnetic field
 		SensorsUsed|=MAG_SENSORS;	//Let the EKF know what we used
 	}

@@ -20,7 +20,7 @@ void Calibrate_3(float dataout[3], int16_t data[3], Mems_Cal_Type* cal_) {
 		Flipbytes(data[1]);
 		Flipbytes(data[2]);
 	}
-	dataout[0]=cal_->correct[0]+cal_->correct[1]*data[0]+cal_->correct[2]*data[1]+cal_->correct[3]*data[2];
-	dataout[1]=cal_->correct[4]+cal_->correct[5]*data[0]+cal_->correct[6]*data[1]+cal_->correct[7]*data[2];
-	dataout[2]=cal_->correct[8]+cal_->correct[9]*data[0]+cal_->correct[10]*data[1]+cal_->correct[11]*data[2];
+	dataout[0]=cal_->correct[0]+cal_->correct[1]*(float)data[0]+cal_->correct[2]*(float)data[1]+cal_->correct[3]*(float)data[2];
+	dataout[1]=cal_->correct[4]+cal_->correct[5]*(float)data[0]+cal_->correct[6]*(float)data[1]+cal_->correct[7]*(float)data[2];
+	dataout[2]=cal_->correct[8]+cal_->correct[9]*(float)data[0]+cal_->correct[10]*(float)data[1]+cal_->correct[11]*(float)data[2];
 }

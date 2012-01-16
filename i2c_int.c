@@ -28,15 +28,17 @@ volatile I2C_Job_Type I2C_jobs[]=I2C_JOBS_INITIALISER;//sets up the const jobs
   * @retval : None
   */
 void I2C1_EV_IRQHandler(void) {
-	static uint8_t subaddress_sent;	//current job number, bytes that have been rx/tx, flag to indicate if subaddess sent
+	static uint8_t subaddress_sent;	//flag to indicate if subaddess sent
 	static int8_t index;		//index is signed -1==send the subaddress
 	if(!((Jobs>>job)&0x00000001))	//if the current job bit is not set
 		for(job=0;!((Jobs>>job)&0x00000001) && job<I2C_NUMBER_JOBS;job++);//find the first uncompleted job, starting at current job zero
 	if(I2C_GetITStatus(I2C1,I2C_IT_SB)) {//we just sent a start - EV5 in ref manual
 		I2C_AcknowledgeConfig(I2C1, ENABLE);//make sure ACK is on
 		index=0;		//reset the index
-		if(I2C_Direction_Receiver==I2C_jobs[job].direction && (subaddress_sent || 0xFF==I2C_jobs[job].subaddress)) //we have sent the subaddr
+		if(I2C_Direction_Receiver==I2C_jobs[job].direction && (subaddress_sent || 0xFF==I2C_jobs[job].subaddress)) {//we have sent the subaddr
+			subaddress_sent=1;//make sure this is set in case of no subaddress, so following code runs correctly
 			I2C_Send7bitAddress(I2C1,I2C_jobs[job].address,I2C_Direction_Receiver);//send the address and set hardware mode
+		}
 		else {			//direction is Tx, or we havent sent the sub and rep start
 			I2C_Send7bitAddress(I2C1,I2C_jobs[job].address,I2C_Direction_Transmitter);//send the address and set hardware mode
 			if(0xFF!=I2C_jobs[job].subaddress)//0xFF as subaddress means it will be ignored, in Tx or Rx mode
@@ -113,7 +115,7 @@ void I2C1_EV_IRQHandler(void) {
 		if(GYRO_READ==job) {	//if we completed the first task (read the gyro)
 			NVIC_SetPendingIRQ(KALMAN_SW_ISR_NO);//set the kalman filter isr to run (in a lower pre-emption priority)
 			if(MAG_DATA_READY&Get_MEMS_DRDY()) {//If magno data ready pin set (should be set in 1/160seconds, this is error handler)
-				I2C1_Request_Job(MAGNO_SETUP_NO);//setup the magno for new single sample
+				//I2C1_Request_Job(MAGNO_SETUP_NO);//setup the magno for new single sample
 				I2C1_Request_Job(MAGNO_READ);//read the magno
 			}
 		}
