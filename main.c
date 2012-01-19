@@ -211,6 +211,7 @@ int main(void) {
 		}
 		//printf("%4f,%4f,%4f,%4x\n",quickdebug[0],quickdebug[1],quickdebug[2],Completed_Jobs);
 		printf("Magno %d,%d,%d\r\n",Magno_Data_Buffer[0],Magno_Data_Buffer[1],Magno_Data_Buffer[2]);
+		memset(Magno_Data_Buffer,0,6);
 		//Logfiles and SD card related functionality can go here
 		//Spi_Locked=1; //Lock the spi2 bus
 		//if(!f_err_code) {//if the logfile opened ok
