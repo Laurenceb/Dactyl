@@ -176,7 +176,7 @@ void I2C1_ER_IRQHandler(void) {
 		if(Jobs && !(I2C1->CR1&0x0100)) {//ensure start of a new job if there are still jobs left
 			while(I2C1->CR1&0x0200);//wait for any stop to finish sending
 			I2C_GenerateSTART(I2C1,ENABLE);//sets a start
-			I2C_ITConfig(I2C1, I2C_IT_EVT|I2C_IT_ERR, DISABLE);//Ensure EVT and ERR interrupts enabled 
+			I2C_ITConfig(I2C1, I2C_IT_EVT|I2C_IT_ERR, ENABLE);//Ensure EVT and ERR interrupts enabled 
 		}
 		else if(!(SR1Register & 0x0200) && !(I2C1->CR1&0x0200)) {//if we dont have an ARLO error, ensure sending of a stop
 			if(I2C1->CR1&0x0100) {//We are currently trying to send a start, this is very bad as start,stop will hang the peripheral
