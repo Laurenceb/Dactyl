@@ -3,9 +3,9 @@
 #include "stm32f10x.h"
 #include "loops.h"
 //Globals
-extern volatile int16_t Gyro_Data_Buffer[4];//Holds temperature data as well
-extern volatile int16_t Magno_Data_Buffer[4];
-extern volatile int16_t Accel_Data_Vector[3];//Used to pass data to the imu code from accel downsampler
+extern volatile uint16_t Gyro_Data_Buffer[4];//Holds temperature data as well
+extern volatile uint16_t Magno_Data_Buffer[3];
+extern volatile uint16_t Accel_Data_Vector[3];//Used to pass data to the imu code from accel downsampler
 extern volatile uint8_t Accel_Access_Flag;		//Used to control access
 //Access flag stuff
 #define LOCKED 1

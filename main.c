@@ -210,8 +210,7 @@ int main(void) {
 			usart1_disable_dma(1);//0);	//Disable the TX DMA so the DMA is ready for use by SPI2 - this blocks until DMA1 ch4 is free 
 		}
 		//printf("%4f,%4f,%4f,%4x\n",quickdebug[0],quickdebug[1],quickdebug[2],Completed_Jobs);
-		printf("Magno %d,%d,%d\r\n",Magno_Data_Buffer[0],Magno_Data_Buffer[1],Magno_Data_Buffer[2]);
-		memset(Magno_Data_Buffer,0,6);
+		//printf("Magno %d,%d,%d\r\n",(int16_t)Magno_Data_Buffer[0],(int16_t)Magno_Data_Buffer[1],(int16_t)Magno_Data_Buffer[2]);
 		//Logfiles and SD card related functionality can go here
 		//Spi_Locked=1; //Lock the spi2 bus
 		//if(!f_err_code) {//if the logfile opened ok
@@ -237,7 +236,7 @@ int main(void) {
 }
 
 void Initialisation() {
-	float Field[3],mean_pressure=0,Zeros[]={0,0,0}, Rbe[3][3], q[4], mag_len;
+	float Field[3],mean_pressure=0,Zeros[]={0,0,0}, Rbe[3][3], q[4];
         float ge[3]={0,0,-9.81};
 	int64_t home[4]={0,0,0};
 	double LLA[3]={0,0,0};
@@ -333,12 +332,12 @@ void Initialisation() {
 	I2C1_Request_Job(GYRO_READ);		//Make sure any previous data is read to clear data ready lines
 	I2C1_Request_Job(ACCEL_READ);
 	Delay(0x1FFFF);//Wait for a short period to allow the interrupt driven I2C1 reads to fire off and retrieve us some data
-	printf("Magno %d,%d,%d\r\n",Flipbytes(Magno_Data_Buffer[0]),Flipbytes(Magno_Data_Buffer[1]),Flipbytes(Magno_Data_Buffer[2]));
+	printf("Magno %d,%d,%d\r\n",Flipedbytes(Magno_Data_Buffer[0]),Flipedbytes(Magno_Data_Buffer[1]),Flipedbytes(Magno_Data_Buffer[2]));
 	Accel_Access_Flag=LOCKED;		//Locked the data so it is safe to read
-	printf("Accel %d,%d,%d\r\n",Accel_Data_Vector[0],Accel_Data_Vector[1],Accel_Data_Vector[2]);//Accel has correct endianess - we grad this from downsampler
+	printf("Accel %d,%d,%d\r\n",Accel_Data_Vector[0],Accel_Data_Vector[1],Accel_Data_Vector[2]);//Accel has correct endianess - grab from downsampler
 	Accel_Access_Flag=UNLOCKED;
-	printf("Gyro  %d,%d,%d\r\n",Flipbytes(Gyro_Data_Buffer[1]),Flipbytes(Gyro_Data_Buffer[2]),Flipbytes(Gyro_Data_Buffer[3]));
-	printf("Temp  %d\r\n",Flipbytes(Gyro_Data_Buffer[0]));
+	printf("Gyro  %d,%d,%d\r\n",Flipedbytes(Gyro_Data_Buffer[1]),Flipedbytes(Gyro_Data_Buffer[2]),Flipedbytes(Gyro_Data_Buffer[3]));
+	printf("Temp  %d\r\n",Flipedbytes(Gyro_Data_Buffer[0]));
 	Millis+=TEMPERATURE_PERIOD;		//Hack the system uptime in order to cause a bmp05 temperature
 	Delay(0x0FFFF);//Wait for a short period to allow the interrupt driven I2C1 to read bmp pressure
 	raw_pressure=Bmp_Press_Buffer;		//Copy the data over from the device driver buffers
@@ -479,7 +478,7 @@ void Initialisation() {
 				else {
 					RF22_Reassign(buf[0]);//Set the designated address
 					printf("We are 0x%2x\r\n",buf);
-					Si4432_connected=1;//Means a network was detected and address assigned, so we can use si4432 - base station must be on first
+					Si4432_connected=1;//A network was detected and address assigned, so can use si4432 - base stn must be on first
 				}
 			}
 			else

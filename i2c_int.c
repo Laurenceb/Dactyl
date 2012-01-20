@@ -134,9 +134,9 @@ void I2C1_EV_IRQHandler(void) {
 		if(GYRO_READ==job) {	//if we completed the first task (read the gyro)
 			NVIC_SetPendingIRQ(KALMAN_SW_ISR_NO);//set the kalman filter isr to run (in a lower pre-emption priority)
 			if(MAG_DATA_READY&Get_MEMS_DRDY()) {//If magno data ready pin set (should be set in 1/160seconds, this is error handler)
-				//I2C1_Request_Job(MAGNO_SETUP_NO);//setup the magno for new single sample
 				I2C1_Request_Job(MAGNO_READ);//read the magno
 			}
+			I2C1_Request_Job(MAGNO_SETUP_NO);//setup the magno for a single sample (always done to avoid error if data read and idle state)
 		}
 		else if(ACCEL_READ==job)//if we finished running the accel, run the accel downsampling function
 			Accel_Downconvert();//Accelerometer downconversion function called, this reads the global readbytes array

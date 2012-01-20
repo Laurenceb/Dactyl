@@ -40,7 +40,7 @@ extern volatile I2C_Error_Type I2C1error;	//used to store error state
 #define I2C_JOBS_INITIALISER {\
 {GYRO_ADDR,I2C_Direction_Receiver,8,0x1B,NULL}, /*Read the Gyro including temperature*/\
 {MAGNO_ADDR,I2C_Direction_Transmitter,1,0x02,Magno_single}, /*Setup a single Magno conversion*/\
-{MAGNO_ADDR,I2C_Direction_Receiver,7,0xFF,NULL}, /*Read the Magno data*/\
+{MAGNO_ADDR,I2C_Direction_Receiver,6,0x03,NULL}, /*Read the Magno data*/\
 {ACCEL_ADDR,I2C_Direction_Receiver,6,0xA8,NULL}, /*Read the Accel data*/\
 {LTC2481_R,I2C_Direction_Receiver,3,LTC2481_ADC/*0xFF*/,NULL}, /*Read the Pitot Note: sets the config incase it overwritten by bmp*/\
 {BMP085_W,I2C_Direction_Receiver,2,BMP085_ADC,NULL}, /*Read BMP085 ADC - 16bit mode Note: may be faster to reverse these, but greater pitot risk*/\
@@ -55,10 +55,10 @@ extern volatile I2C_Error_Type I2C1error;	//used to store error state
 {BMP085_W,I2C_Direction_Receiver,22,BMP085_DATA,NULL}, /*Read BMP085 EEPROM - 22 bytes*/\
 }
 //Job identifiers used to run the accel downsampler, trigger jobs from the EXTI, and trigger the Kalman task
-#define ACCEL_READ 3
 #define GYRO_READ  0
 #define MAGNO_SETUP_NO 1
 #define MAGNO_READ 2
+#define ACCEL_READ 3
 #define BMP_TEMP 7
 #define BMP_PRESS 8
 #define BMP_16BIT 5
@@ -84,4 +84,5 @@ extern volatile I2C_Error_Type I2C1error;	//used to store error state
 void I2C1_Request_Job(uint8_t job_);//Requests a job
 void I2C1_Setup_Job(uint8_t job_, volatile uint8_t* data);//Sets up the data pointer for a job
 void I2C_Config(void);//configures the hardware
-#define Flipbytes(x) x=(x>>8)|(x<<8) 
+#define Flipbytes(x) x=((x>>8)&0x00FF)|(((x&0x00FF)<<8)&0xFF00)
+#define Flipedbytes(x) (int16_t)(((x>>8)&0x00FF)|(((x&0x00FF)<<8)&0xFF00))

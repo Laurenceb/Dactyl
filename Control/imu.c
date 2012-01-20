@@ -34,9 +34,9 @@ extern volatile float Balt;
 extern volatile float quickdebug[3];
 
 //Globals used for the Gyro and Magno data from the I2C driver, Accel data goes via downsampler, other sensors via code in ./Sensors	
-volatile int16_t Gyro_Data_Buffer[4] __attribute__((packed));//Holds temperature data as well
-volatile int16_t Magno_Data_Buffer[4] __attribute__((packed));
-volatile int16_t Accel_Data_Vector[3];		//Used to pass data from downsampler
+volatile uint16_t Gyro_Data_Buffer[4] __attribute__((packed));//Holds temperature data as well
+volatile uint16_t Magno_Data_Buffer[3] __attribute__((packed));
+volatile uint16_t Accel_Data_Vector[3];		//Used to pass data from downsampler
 volatile uint8_t Accel_Access_Flag;		//Used to control access
 
 /**
