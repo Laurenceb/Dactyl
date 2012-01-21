@@ -148,7 +148,7 @@ void I2C1_EV_IRQHandler(void) {
 			while(I2C1->CR1&0x0200){;}//doesnt seem to be a better way to do this, must wait for stop to clear
 			I2C_GenerateSTART(I2C1,ENABLE);//program the Start to kick start the new transfer
 		}
-		else if(final_stop)	//If there is a final stop and no more jobs, bus is inactive, diable interrupts to prevent BTF
+		else if(final_stop)	//If there is a final stop and no more jobs, bus is inactive, disable interrupts to prevent BTF
 			I2C_ITConfig(I2C1, I2C_IT_EVT|I2C_IT_ERR, DISABLE);//Disable EVT and ERR interrupts while bus inactive
 	}
 }
@@ -201,12 +201,12 @@ void I2C1_ER_IRQHandler(void) {
   */
 void I2C1_Request_Job(uint8_t job_) {
 	if(job_<32) {			//sanity check
-		if(!Jobs && !(I2C1->CR1&0x0100)) {//if we are restarting the driver, ensure sending a start
+		Jobs|=1<<job_;		//set the job bit, do it here and use interrupt flag to detect bus inactive in case of I2C interrupting here
+		if(!(I2C1->CR2&I2C_IT_EVT) && !(I2C1->CR1&0x0100)) {//if we are restarting the driver, ensure sending a start
 			while(I2C1->CR1&0x0200){;}//wait for any stop to finish sending
 			I2C_GenerateSTART(I2C1,ENABLE);//send the start for the new job
 			I2C_ITConfig(I2C1, I2C_IT_EVT|I2C_IT_ERR, ENABLE);//allow the interrupts to fire off again
 		}
-		Jobs|=1<<job_;		//set the job bit
 	}
 }
 
