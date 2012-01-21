@@ -77,9 +77,9 @@ void run_imu(void) {
 		gps_velocity[0]=(float)gps.vnorth*0.01;//Ublox velocity is in cm/s
 		gps_velocity[1]=(float)gps.veast*0.01;
 		gps_velocity[2]=(float)gps.vdown*0.01;
-		GPS_Errors[0]=pow((float)gps.horizontal_error*0.001,2)*GPS_SPECTRAL_FUDGE_FACTOR/2.0;//Fudge factor for spectral noise density 
-		GPS_Errors[1]=pow((float)gps.vertical_error*0.001,2)*GPS_SPECTRAL_FUDGE_FACTOR;//Fudge factor is defined in ubx.h/gps header file
-		GPS_Errors[2]=pow((float)gps.speedacc*0.01,2)*GPS_SPECTRAL_FUDGE_FACTOR*GPS_Errors[0]/(GPS_Errors[0]+GPS_Errors[1]);
+		GPS_Errors[0]=powf((float)gps.horizontal_error*0.001,2)*GPS_SPECTRAL_FUDGE_FACTOR/2.0;//Fudge factor for spectral noise density 
+		GPS_Errors[1]=powf((float)gps.vertical_error*0.001,2)*GPS_SPECTRAL_FUDGE_FACTOR;//Fudge factor is defined in ubx.h/gps header file
+		GPS_Errors[2]=powf((float)gps.speedacc*0.01,2)*GPS_SPECTRAL_FUDGE_FACTOR*GPS_Errors[0]/(GPS_Errors[0]+GPS_Errors[1]);
 		GPS_Errors[3]=GPS_Errors[2]*GPS_Errors[1]/GPS_Errors[0];//Ublox5 only gives us 3D speed accuracy? Weight with position errors
 		//INSResetRGPS(GPS_Errors);	//Adjust the measurement covariance matrix with reported gps error
 		SensorsUsed|=POS_SENSORS|HORIZ_SENSORS|VERT_SENSORS;//Set the flagbits for the gps update
@@ -134,13 +134,13 @@ void run_imu(void) {
 	target_vector[0]=waypoint[0]-Nav.Pos[0];//A float vector to the waypoint in NED space
 	target_vector[1]=waypoint[1]-Nav.Pos[1];
 	target_vector[2]=waypoint[2]-Nav.Pos[2];//Now work out the eta at the waypoint (just the x,y/North,East position)
-	Horiz_t=sqrt(pow(target_vector[0],2)+pow(target_vector[1],2));//Horizontal distance to target
+	Horiz_t=sqrtf(powf(target_vector[0],2)+powf(target_vector[1],2));//Horizontal distance to target
 	N_t_x=target_vector[0]/Horiz_t;
 	N_t_y=target_vector[1]/Horiz_t;		//Normalised horizontal target vector
 	time_to_waypoint=Horiz_t/(control.airframe.airspeed+Wind[0]*N_t_x+Wind[1]*N_t_y);//Time if we travel in a straight line - ignores vertical offset
 	N_t_x=target_vector[0]-Wind[0]*time_to_waypoint;
 	N_t_y=target_vector[1]-Wind[1]*time_to_waypoint;//Modify the aiming point to account for cross track error
-	AirSpeed=sqrt(pow(Nav.Vel[0]-Wind[0],2)+pow(Nav.Vel[1]-Wind[1],2)+pow(Nav.Vel[2],2));//Work out true airspeed assume horizontal wind
+	AirSpeed=sqrtf(powf(Nav.Vel[0]-Wind[0],2)+powf(Nav.Vel[1]-Wind[1],2)+powf(Nav.Vel[2],2));//Work out true airspeed assume horizontal wind
 	//Move the body x,y axes into earth NED frame using Reb, looking at z=down components of body x and y
 	x_down=2 * (Nav.q[1] * Nav.q[3] - Nav.q[0] * Nav.q[2]);
 	y_down=2 * (Nav.q[2] * Nav.q[3] + Nav.q[0] * Nav.q[1]);
@@ -161,7 +161,7 @@ void run_imu(void) {
 		if(Ground_Flag&0xF0) {//If we are Armed, the motor can be run - defaults to disarmed
 			//Throttle set according to altitude error
 			Run_PID(&(control.throttle),&(control.airframe.throttle),\
-			target_vector[2]-(pow(AirSpeed,2)-pow(control.airframe.airspeed,2))/(2*Home_Position.g_e),Nav.Vel[2]);
+			target_vector[2]-(powf(AirSpeed,2)-powf(control.airframe.airspeed,2))/(2*Home_Position.g_e),Nav.Vel[2]);
 			control.throttle.out+=control.airframe.throttle_optimal;
 		}
 		else
