@@ -105,10 +105,10 @@ void RneFromLLA(double LLA[3], float Rne[3][3])
 {
 	float sinLat, sinLon, cosLat, cosLon;
 
-	sinLat = (float)sin(DEG2RAD * LLA[0]);
-	sinLon = (float)sin(DEG2RAD * LLA[1]);
-	cosLat = (float)cos(DEG2RAD * LLA[0]);
-	cosLon = (float)cos(DEG2RAD * LLA[1]);
+	sinLat = (float)sinf(DEG2RAD * LLA[0]);
+	sinLon = (float)sinf(DEG2RAD * LLA[1]);
+	cosLat = (float)cosf(DEG2RAD * LLA[0]);
+	cosLon = (float)cosf(DEG2RAD * LLA[1]);
 
 	Rne[0][0] = -sinLat * cosLon;
 	Rne[0][1] = -sinLat * sinLon;
@@ -375,7 +375,7 @@ void CrossProduct(const float v1[3], const float v2[3], float result[3])
 // ****** Vector Magnitude ********
 float VectorMagnitude(const float v[3])
 {
-	return(sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2]));
+	return(sqrtf(v[0]*v[0] + v[1]*v[1] + v[2]*v[2]));
 }
 
 // ****** Vector Normalize ******
