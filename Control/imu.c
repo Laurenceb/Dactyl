@@ -94,9 +94,8 @@ void run_imu(void) {
 	//Now the state dependant I2C stuff
 	if(Completed_Jobs&(1<<MAGNO_READ)) {	//This I2C job will run whilst the prediction runs
 		Completed_Jobs&=~(1<<MAGNO_READ);//Wipe the job completed bit
-		Calibrate_3(ma,Magno_Data_Buffer,&Mag_Cal_Dat);
+		Calibrate_3(ma,Magno_Data_Buffer,&Mag_Cal_Dat);//Calibrate - the EKF can take a magnetometer input in any units
 		memcpy(quickdebug,ma,12);//TODO remove debug
-		VectorNormalize(ma);		//Normalize the magnetic field
 		SensorsUsed|=MAG_SENSORS;	//Let the EKF know what we used
 	}
 	if(Completed_Jobs&(1<<BMP_24BIT)) {

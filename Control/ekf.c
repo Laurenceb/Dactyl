@@ -92,16 +92,16 @@ void INSGPSInit()		//pretty much just a place holder for now
 	P[0][0] = P[1][1] = P[2][2] = 25;	// initial position variance (m^2)
 	P[3][3] = P[4][4] = P[5][5] = 5;	// initial velocity variance (m/s)^2
 	P[6][6] = P[7][7] = P[8][8] = P[9][9] = 1e-5;	// initial quaternion variance
-	P[10][10] = P[11][11] = P[12][12] = 1e-5;	// initial gyro bias variance (rad/s)^2
+	P[10][10] = P[11][11] = P[12][12] = 1e-3;	// initial gyro bias variance (rad/s)^2
 
 	X[0] = X[1] = X[2] = X[3] = X[4] = X[5] = 0;	// initial pos and vel (m)
 	X[6] = 1;
 	X[7] = X[8] = X[9] = 0;	// initial quaternion (level and North) (m/s)
 	X[10] = X[11] = X[12] = 0;	// initial gyro bias (rad/s)
 
-	Q[0] = Q[1] = Q[2] = 50e-8;	// gyro noise variance (rad/s)^2
+	Q[0] = Q[1] = Q[2] = 7e-7;	// gyro noise variance (rad/s)^2
 	Q[3] = Q[4] = Q[5] = 0.01;	// accelerometer noise variance (m/s^2)^2
-	Q[6] = Q[7] = Q[8] = 2e-9;	// gyro bias random walk variance (rad/s^2)^2
+	Q[6] = Q[7] = Q[8] = 1.8e-4;	// gyro bias random walk variance (rad/s^2)^2
 
 	R[0] = R[1] = 0.004;	// High freq GPS horizontal position noise variance (m^2)
 	R[2] = 25;		// High freq GPS vertical position noise variance (m^2)
@@ -178,7 +178,7 @@ void INSSetPosVelVar(float PosVar, float VelVar)
 	R[2] = PosVar;
 	R[3] = VelVar;
 	R[4] = VelVar;
-//    R[5] = PosVar;  // Don't change vertical velocity, not measured
+	R[5] = PosVar; 
 }
 
 void INSSetGyroBias(float gyro_bias[3])
@@ -244,7 +244,7 @@ void INSStatePrediction(float gyro_data[3], float accel_data[3], float dT)
 	X[7] /= qmag;
 	X[8] /= qmag;
 	X[9] /= qmag;
-	//CovariancePrediction(F,G,Q,dT,P);
+	CovariancePrediction(F,G,Q,dT,P);
 
 	// Update Nav solution structure
 	Nav.Pos[0] = X[0];
