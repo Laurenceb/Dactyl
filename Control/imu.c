@@ -75,7 +75,7 @@ void run_imu(void) {
 	if(gps.packetflag==REQUIRED_DATA){	
 		gps_position[0]=(float)(gps.latitude-Home_Position.Latitude)*LAT_TO_METERS;//Remember, NED frame, and gps altitude needs *=-1
 		gps_position[1]=(float)(gps.longitude-Home_Position.Longitude)*Long_To_Meters_Home;//This is a global set with home position
-		gps_position[2]=-((float)gps.mslaltitude*0.001)-Home_Position.Altitude;//Home is in raw gps coordinates - apart from altitude in m NED
+		gps_position[2]=-((float)gps.mslaltitude*0.001)+Home_Position.Altitude;//Home is in raw gps coordinates - apart from altitude in m NED
 		gps_velocity[0]=(float)gps.vnorth*0.01;//Ublox velocity is in cm/s
 		gps_velocity[1]=(float)gps.veast*0.01;
 		gps_velocity[2]=(float)gps.vdown*0.01;
@@ -86,7 +86,7 @@ void run_imu(void) {
 		//INSResetRGPS(GPS_Errors);	//Adjust the measurement covariance matrix with reported gps error
 		SensorsUsed|=POS_SENSORS|HORIZ_SENSORS|VERT_SENSORS;//Set the flagbits for the gps update
 		//Correct baro pressure offset - average the gps altitude over first 100 seconds and apply correction when filter initialised
-		old_density=(((float)gps.mslaltitude*0.001+Home_Position.Altitude)*Air_Density*Home_Position.g_e+Baro_Pressure-Baro_Offset)\
+		old_density=(((float)gps.mslaltitude*0.001-Home_Position.Altitude)*Air_Density*Home_Position.g_e+Baro_Pressure-Baro_Offset)\
 		*(0.01/(float)GPS_RATE);	//reuse variable here
 		if(Iterations++>100*GPS_RATE)
 			Baro_Offset+=old_density;//fixed tau: 0.01s^-1
@@ -112,7 +112,7 @@ void run_imu(void) {
 		Baro_Alt=(Baro_Offset-Baro_Pressure)/(Home_Position.g_e*Air_Density);//Use the air density calculation (also used in pitot), linear approximation
 		SensorsUsed|=BARO_SENSOR;	//We have used the baro sensor
 		if(READ==UAVtalk_conf.semaphores[BARO_ACTUAL]) {//If this data has been read, we can update it (avoids risk of overwriting data mid packet tx)
-			UAVtalk_Altitude_Array[0]=Baro_Alt-Home_Position.Altitude;//Populate Baro_altitude UAVtalk packet here - Altitude is MSL altitude in m
+			UAVtalk_Altitude_Array[0]=Baro_Alt+Home_Position.Altitude;//Populate Baro_altitude UAVtalk packet here - Altitude is MSL altitude in m
 			UAVtalk_Altitude_Array[1]=(float)Baro_Temperature/10.0;//Note that as baro_actual has three independant 32bit
 			UAVtalk_Altitude_Array[2]=(float)Baro_Pressure*1e-3;//Variables, can be set directly here without passing data back - note pressure in kPa
 			UAVtalk_conf.semaphores[BARO_ACTUAL]=WRITE;//Set the semaphore to indicate this has been written
@@ -137,7 +137,7 @@ void run_imu(void) {
 		}
 		millis_pitot=Millis;		//Save a timestamp so we can monitor conversion time, BMP085 corruption will double this
 	}
-	INSCorrection(ma,gps_position,gps_velocity,Baro_Alt+Home_Position.Altitude,SensorsUsed);
+	INSCorrection(ma,gps_position,gps_velocity,Baro_Alt,SensorsUsed);
 	if(!Nav_Flag) {Nav_Global=Nav; Nav_Flag=(uint32_t)0x01;}//Copy over Nav state if its been unlocked
 	//EKF is finished, time to run the guidance
 	if(New_Waypoint_Flagged) {memcpy(waypoint,Waypoint_Global,sizeof(waypoint)); New_Waypoint_Flagged=0;}//Check for any new waypoints set

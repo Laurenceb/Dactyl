@@ -41,6 +41,7 @@
 #include "Util/gravity.h"
 #include "Util/RF22/ctocpp.h"
 #include "Util/uavobjconv.h"
+#include "Util/atmospherics.h"
 //Control loop headers
 #include "Control/insgps.h"
 
@@ -374,35 +375,36 @@ void Initialisation() {
 	printf("Averaging to find home position, please wait 10s\r\n");
 	for(err=0;err<50;err++) {		//GPS is configured for 5Hz output, so average 50 samples
 		Gps.packetflag=0x00;		//Reset
-		while(Gps.packetflag!=REQUIRED_DATA) {		//Wait for all fix data
+		while(Gps.packetflag!=REQUIRED_DATA) {	//Wait for all fix data
 			while(Bytes_In_Buffer(&Gps_Buffer))//Dump all the data
 				Gps_Process_Byte((uint8_t)(Pop_From_Buffer(&Gps_Buffer)),&Gps);
 		}
 		home[0]+=(float)Gps.latitude;
 		home[1]+=(float)Gps.longitude;
-		home[2]-=(float)Gps.mslaltitude;//NED frame - alititude is negative
+		home[2]+=(float)Gps.mslaltitude;//NED frame - alititude is negative
 		Completed_Jobs&=~(1<<BMP_24BIT);//Clear the job completed bit
 		while(!(Completed_Jobs&(1<<BMP_24BIT))){;}//BMP085 has been read (wait until bmp is read to make sure safe read of volatile data)
-		raw_pressure=Bmp_Press_Buffer;//Copy the data over from the device driver buffers
+		raw_pressure=Bmp_Press_Buffer;	//Copy the data over from the device driver buffers
 		flip_adc24(&raw_pressure);
 		if(Completed_Jobs&(1<<BMP_16BIT)) {
 			Completed_Jobs&=~(1<<BMP_16BIT);//check off the job
-			Bmp_Copy_Temp();//Copy the 16 bit temperature out of its buffer into the temperature global
+			Bmp_Copy_Temp();	//Copy the 16 bit temperature out of its buffer into the temperature global
 		}
 		Bmp_Simp_Conv(&device_temperature,&raw_pressure);//convert to pressure
 		//printf("Baro pressure is %ld Pascals, temperature is %ld C\r\n",raw_pressure,device_temperature/10);//Debug - remove later
 		mean_pressure+=raw_pressure;
 	}
-	Home_Position.Latitude=home[0]/err;	//Home is in raw units of degrees x 10^7
-	Home_Position.Longitude=home[1]/err;
+	Home_Position.Latitude=home[0]/(10.0*err);//Home is in int32_t units of degrees x 10^6
+	Home_Position.Longitude=home[1]/(10.0*err);
 	Home_Position.Altitude=home[2]/((float)err*1000.0);//Find average position - note altitude converted to meters
 	mean_pressure/=(float)err;		//Average pressure in pascals
+	Air_Density=Calc_Air_Density(Home_Position.Altitude,mean_pressure);//Find air density using atmospheric model (Kgm^-3) - set this before IMU first runs
 	Long_To_Meters_Home=LAT_TO_METERS*cos(UBX_DEG_TO_RADS*Home_Position.Latitude);
 	printf("Home position set\r\n");
 	//Init the ekf, must do this before the mag model
 	INSGPSInit();
 	//Now we initialise the magnetic model - init function is called from the get vector function
-	if((err=WMM_GetMagVector(Home_Position.Latitude*1e-7,Home_Position.Longitude*1e-7,-Home_Position.Altitude,Gps.week,Field)))
+	if((err=WMM_GetMagVector(Home_Position.Latitude*1e-7,Home_Position.Longitude*1e-7,Home_Position.Altitude,Gps.week,Field)))
 		printf("Mag model run error %d\r\n",err);
 	else
 		printf("Mag model completed, B(mG NED frame)=%1f,%1f,%1f\r\n",Field[0],Field[1],Field[2]);
@@ -415,7 +417,7 @@ void Initialisation() {
 	Home_Position.Set=1;//Set the SET byte to indicate to the GCS that home is set onboard the UAV
 	LLA[0]=Home_Position.Latitude*1e-7;
 	LLA[1]=Home_Position.Longitude*1e-7;	//Note that altitude uses the last gps datapoint to find the giodal seperation
-	LLA[2]=Home_Position.Altitude-((Gps.mslaltitude-Gps.altitude)/1000.0);//NWGS84 geometeric altitude, so ECEF coord conversion works better
+	LLA[2]=Home_Position.Altitude-((Gps.mslaltitude-Gps.altitude)*1e-3);//NWGS84 geometeric altitude, so ECEF coord conversion works better
 	LLA2ECEF(LLA,ECEF);
 	Home_Position.ECEF[0]=ECEF[0]*100.0;
 	Home_Position.ECEF[1]=ECEF[1]*100.0;
