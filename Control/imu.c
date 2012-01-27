@@ -86,7 +86,8 @@ void run_imu(void) {
 		//INSResetRGPS(GPS_Errors);	//Adjust the measurement covariance matrix with reported gps error
 		SensorsUsed|=POS_SENSORS|HORIZ_SENSORS|VERT_SENSORS;//Set the flagbits for the gps update
 		//Correct baro pressure offset - average the gps altitude over first 100 seconds and apply correction when filter initialised
-		old_density=(((float)gps.mslaltitude*0.001+Home_Position.Altitude)*Air_Density+Baro_Pressure-Baro_Offset)*(0.01/(float)GPS_RATE);//reuse variable here
+		old_density=(((float)gps.mslaltitude*0.001+Home_Position.Altitude)*Air_Density*Home_Position.g_e+Baro_Pressure-Baro_Offset)\
+		*(0.01/(float)GPS_RATE);	//reuse variable here
 		if(Iterations++>100*GPS_RATE)
 			Baro_Offset+=old_density;//fixed tau: 0.01s^-1
 		else
@@ -120,7 +121,7 @@ void run_imu(void) {
 		Bmp_Copy_Temp();		//Copy the 16 bit temperature out of its buffer into the temperature global
 		old_density=Air_Density;	//Save old air density so we can find the delta
 		Air_Density=Calc_Air_Density((float)gps.mslaltitude*1e-3,Baro_Pressure);//Find air density using atmospheric model (Kgm^-3)
-		Baro_Offset+=Baro_Alt*(Air_Density-old_density);//Correct the baro offset term to account for changing density
+		Baro_Offset+=Baro_Alt*(Air_Density-old_density)*Home_Position.g_e;//Correct the baro offset term to account for changing density
 	}
 	if(Completed_Jobs&(1<<PITOT_READ)) {
 		Completed_Jobs&=~(1<<PITOT_READ);//Wipe the job completed bit
