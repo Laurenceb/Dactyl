@@ -29,8 +29,8 @@ int32_t Pitot_Conv(uint32_t d) {
   * @param  Uncorrected value (int32_t), altitude in meters (float), barometric pressure (float)
   * @retval Corrected value ms^-1 (float)
   */
-float Pitot_convert_Airspeed(int32_t P,float Altitude, float Baro_pressure) {
-	return sqrtf(fabs(((float)(P-PITOT_OFFSET))*PITOT_GAIN*2.0/Air_Density(Altitude,Baro_pressure)));
+float Pitot_convert_Airspeed(int32_t P,float Air_Density) {
+	return sqrtf(fabs(((float)(P-PITOT_OFFSET))*PITOT_GAIN*2.0/Air_Density));
 }
 
 #ifdef PITOT_POLLED

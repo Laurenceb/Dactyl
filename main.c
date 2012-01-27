@@ -438,9 +438,7 @@ void Initialisation() {
 	INSSetState(Zeros,Zeros,q,Zeros);	//Home position is defined as the origin
 	//Use the Baro output to find sea level pressure, remeber home altitude is negative
 	printf("Baro pressure is %f Pascals, temperature is %f C\r\n",mean_pressure,(float)device_temperature/10.0);
-	Sea_Level_Pressure=mean_pressure*powf((1+2.255808e-5*Home_Position.Altitude),-5.255);//convert to sea level pressure -bmp085 datasheet
-	//Sea_Level_Pressure=mean_pressure;	//Set home position (Down=0) to the reference zero altitude
-	printf("Sea level pressure is %f\r\n",Sea_Level_Pressure);
+	Baro_Offset=mean_pressure;		//Set home position (Down=0) to the reference zero altitude
 	//Try initialising the uSD card and mounting the filesystem - if there is no card inserted it will error when we try to use files/dir
 	RTC_init;				//initialise the RTC, turning on the BKP domain
 	Set_RTC_From_GPS(Gps.week,Gps.time);	//First set the RTC correctly, so it can be used by filesystem

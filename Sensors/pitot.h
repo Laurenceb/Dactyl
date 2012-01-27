@@ -20,4 +20,4 @@ I2C_Returntype Pitot_Set_Temp_Conv(void);
 I2C_Returntype Pitot_Read_Conv(uint32_t* adc);
 #endif
 int32_t Pitot_Conv(uint32_t d);
-float Pitot_convert_Airspeed(int32_t P,float Altitude, float Baro_pressure);
+float Pitot_convert_Airspeed(int32_t P,float Air_Density);

@@ -20,7 +20,6 @@ extern volatile Bmp_Cal_Type Our_Sensorcal;//Global cal for our sensor
 extern int32_t Bmp_temp;	//This is in integer units of 0.1C
 extern volatile uint16_t Bmp_Temp_Buffer;//Holds the data from the temperature convertor
 extern volatile uint32_t Bmp_Press_Buffer;//Operates as bmp085 pressure buffer 
-extern float Sea_Level_Pressure;
 
 				//Oversampling to give 7.5ms sample time
 #define OSS 1

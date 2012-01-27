@@ -18,6 +18,7 @@
 #include "../Sensors/accel_down.h"
 #include "../Util/uavtalk.h"
 #include "../Util/coords.h"
+#include "../Util/atmospherics.h"
 
 //Main Globals here
 extern Home_Position_Type Home_Position;
@@ -38,6 +39,7 @@ volatile uint16_t Gyro_Data_Buffer[4] __attribute__((packed));//Holds temperatur
 volatile uint16_t Magno_Data_Buffer[3] __attribute__((packed));
 volatile uint16_t Accel_Data_Vector[3];		//Used to pass data from downsampler
 volatile uint8_t Accel_Access_Flag;		//Used to control access
+float Baro_Offset;				//Used to track baro pressure changes
 
 /**
   * @brief  This function runs the EKF, talks to aux sensors with a state machine and applys control loops to servos (main control task loop)
@@ -50,11 +52,11 @@ void run_imu(void) {
 	static Control_type control=DEFAULT_CONTROL;//The control structure
 	static Ubx_Gps_Type gps;		//This is our local copy - theres is also a global, be careful with copying
 	static float ac[3],Wind[3];		//The accel is not always avaliable - 100hz update
-	static float AirSpeed=0,Baro_Alt,Body_x_To_x=0,Body_x_To_y=0,Mean_Alt_Err=0;
+	static float AirSpeed=0,Baro_Alt,Body_x_To_x=0,Body_x_To_y=0,Mean_Baro_Offset;
 	static uint32_t Baro_Pressure;		//Baro pressure is static for use in air density calculations
 	static uint8_t PWM_Disabled;		//Keeps track of PWM hardware passthrough state
 	//Non Static
-	float ma[3],gy[3],gps_velocity[3],gps_position[3],target_vector[3],waypoint[3]={0,0,0};
+	float ma[3],gy[3],gps_velocity[3],gps_position[3],target_vector[3],waypoint[3]={0,0,0},old_density;
 	float Delta_Time=DELTA_TIME,x_down,y_down,h_offset,N_t_x,N_t_y,time_to_waypoint,Horiz_t,GPS_Errors[4];
 	uint16_t SensorsUsed=0;			//We by default have no sensors
 	int32_t Baro_Temperature;		//In units of 0.1C
@@ -83,11 +85,14 @@ void run_imu(void) {
 		GPS_Errors[3]=GPS_Errors[2]*GPS_Errors[1]/GPS_Errors[0];//Ublox5 only gives us 3D speed accuracy? Weight with position errors
 		//INSResetRGPS(GPS_Errors);	//Adjust the measurement covariance matrix with reported gps error
 		SensorsUsed|=POS_SENSORS|HORIZ_SENSORS|VERT_SENSORS;//Set the flagbits for the gps update
-		//Correct Sea level pressure - average the gps altitude over first 100 seconds and apply correction when filter initialised
+		//Correct baro pressure offset - average the gps altitude over first 100 seconds and apply correction when filter initialised
+		old_density=(((float)gps.mslaltitude*0.001+Home_Position.Altitude)*Air_Density+Baro_Pressure-Baro_Offset)*(0.01/(float)GPS_RATE);//reuse variable here
 		if(Iterations++>100*GPS_RATE)
-			Sea_Level_Pressure+=12.25*((float)gps.mslaltitude*0.001-Baro_Alt-Mean_Alt_Err)*0.01/GPS_RATE;//At moment fixed tau; 0.01/second
+			Baro_Offset+=old_density;//fixed tau: 0.01s^-1
 		else
-			Mean_Alt_Err+=(0.01/(float)GPS_RATE)*((float)gps.mslaltitude*0.001-Baro_Alt);//100s average to find remenant altitude error
+			Mean_Baro_Offset+=old_density;
+		if(Iterations==100*GPS_RATE)
+			Baro_Offset+=Mean_Baro_Offset;//Correct the offset variable at the end of the averaging period (100s to find remenant altitude error)
 		if(!Gps.packetflag)Gps=gps;	//Copy the data over to the main 'thread' if the global unlocked
 		gps.packetflag=0x00;		//Reset the flag
 	}
@@ -103,7 +108,7 @@ void run_imu(void) {
 		Baro_Pressure=Bmp_Press_Buffer;	//Copy over from the read buffer
 		flip_adc24(&Baro_Pressure);	//Fix endianess
 		Bmp_Simp_Conv(&Baro_Temperature,&Baro_Pressure);//Convert to a pressure in Pa
-		Baro_Alt=Baro_Convert_Pressure(Baro_Pressure);//Convert to an altitude - relative to GPS geoid
+		Baro_Alt=(Baro_Offset-Baro_Pressure)/(Home_Position.g_e*Air_Density);//Use the air density calculation (also used in pitot), linear approximation
 		SensorsUsed|=BARO_SENSOR;	//We have used the baro sensor
 		UAVtalk_Altitude_Array[0]=Baro_Alt;//Populate the Baro_altitude UAVtalk packet from here
 		UAVtalk_Altitude_Array[1]=(float)Baro_Temperature/10.0;//Note that as baro_actual has three independant 32bit
@@ -113,12 +118,15 @@ void run_imu(void) {
 	if(Completed_Jobs&(1<<BMP_16BIT)) {
 		Completed_Jobs&=~(1<<BMP_16BIT);//Wipe the job completed bit
 		Bmp_Copy_Temp();		//Copy the 16 bit temperature out of its buffer into the temperature global
+		old_density=Air_Density;	//Save old air density so we can find the delta
+		Air_Density=Calc_Air_Density((float)gps.mslaltitude*1e-3,Baro_Pressure);//Find air density using atmospheric model (Kgm^-3)
+		Baro_Offset+=Baro_Alt*(Air_Density-old_density);//Correct the baro offset term to account for changing density
 	}
 	if(Completed_Jobs&(1<<PITOT_READ)) {
 		Completed_Jobs&=~(1<<PITOT_READ);//Wipe the job completed bit
 		if((Millis-millis_pitot)<2*PITOT_PERIOD) {//An uncorrupted pitot data sample - the bmp085 has same address as ltc2481 global config
 			Pitot_Pressure=Pitot_Conv((uint32_t)Pitot_Pressure);//Align and sign the adc value - 1lsb=~0.24Pa
-			AirSpeed=Pitot_convert_Airspeed(Pitot_Pressure,(float)gps.mslaltitude*0.001,(float)Baro_Pressure);//windspeed
+			AirSpeed=Pitot_convert_Airspeed(Pitot_Pressure, Air_Density);//Windspeed
 			Wind[0]*=WIND_TAU;Wind[1]*=WIND_TAU;//Low pass filter
 			Wind[0]+=(1.0-WIND_TAU)*(Nav.Vel[0]-AirSpeed*Body_x_To_x);//This assumes horizontal wind and neglidgible slip
 			Wind[1]+=(1.0-WIND_TAU)*(Nav.Vel[1]-AirSpeed*Body_x_To_y);

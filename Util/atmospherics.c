@@ -1,14 +1,16 @@
 //Dactyl project v1.0
 #include "atmospherics.h"
 //This file is for atmospheric model and conversion related functionality
-
+//Note - a more accurate density estimate could be obtained using a temperature sensor, or assuming board temperature is ~equal to atmosphere
+//Global to store the air density
+float Air_Density;
 
 /**
   * @brief  Computes air density using pressure and temperature
   * @param  Altitude in meters above sea level, Pressure in Pascals
   * @retval Air density in Kgm^-3
   */
-float Air_Density(float Altitude, float Pressure) {
+float Calc_Air_Density(float Altitude, float Pressure) {
 	return (1.225/(101325.0*288.15))*Pressure*US_1976_Temperature(Altitude);
 }
 

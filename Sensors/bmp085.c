@@ -7,7 +7,7 @@ volatile Bmp_Cal_Type Our_Sensorcal;				//Global cal for our sensor
 int32_t Bmp_temp;
 volatile uint16_t Bmp_Temp_Buffer;				//Holds the data from the temperature convertor
 volatile uint32_t Bmp_Press_Buffer;				//Bmp085 pressure data buffer 
-float Sea_Level_Pressure;
+
 
 /**
   * @brief  Converts BMP085 data to give calibrated temperature and pressure
@@ -40,7 +40,7 @@ void Bmp085_Convert(int32_t* temperature_out, int32_t* temperature, uint32_t* pr
 	x2 = (-7357 * p) >> 16;
 	*pressure = p + ((x1 + x2 + 3791) >> 4);
 }
-
+#ifdef BMP_SEALEVEL
 /**
   * @brief  Converts pressure to altitude
   * @param  Baro pressure
@@ -49,7 +49,7 @@ void Bmp085_Convert(int32_t* temperature_out, int32_t* temperature, uint32_t* pr
 float Baro_Convert_Pressure(uint32_t p) {
 	return 44330.0*(1.0-powf(((float)p/Sea_Level_Pressure),0.190295));
 }
-
+#endif
 #ifndef BMP_POLLED
 /**
   * @brief  Fixes endianess of the BMP085 sensor calibration EEPROM data
