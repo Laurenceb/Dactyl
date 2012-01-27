@@ -47,7 +47,7 @@ void Bmp085_Convert(int32_t* temperature_out, int32_t* temperature, uint32_t* pr
   * @retval Float altitude
   */
 float Baro_Convert_Pressure(uint32_t p) {
-	return 44330.0*(1.0-pow(((float)p/Sea_Level_Pressure),0.190295));
+	return 44330.0*(1.0-powf(((float)p/Sea_Level_Pressure),0.190295));
 }
 
 #ifndef BMP_POLLED

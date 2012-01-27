@@ -16,12 +16,12 @@ void Accel_Downconvert(void) {
 	static int16_t acc[4][3] __attribute__((packed));//FIR filter the data (atm this is a box filter)
 	uint8_t n;
 	memcpy(&(acc[index][0]),Accel_Data_Buffer,6);//copy over 6 bytes from the driver buffer
-	acc[index][0]/=4;
-	acc[index][1]/=4;
-	acc[index][2]/=4;				//divide the data by 4 (works for left aligned data e.g. lsm303dlh)
+	acc[index][0]>>=2;
+	acc[index][1]>>=2;
+	acc[index][2]>>=2;				//divide the data by 4 (works for left aligned data e.g. lsm303dlh)
 	if(++index>=4) index=0;				//loop round the index
 	if(LOCKED!=Accel_Access_Flag){			//kalman hasnt locked the accel data, load some more
-		memset(Accel_Data_Vector,0,6);		//zero everything
+		memset(Accel_Data_Vector,0,6);		//zero everything - accel data vector is the output from the filter
 		for(n=0;n<4;n++) {			//add in all the data in the FIR buffer
 			Accel_Data_Vector[0]+=acc[n][0];
 			Accel_Data_Vector[1]+=acc[n][1];

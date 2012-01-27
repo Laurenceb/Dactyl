@@ -186,8 +186,8 @@ int main(void) {
 		//Process waypoints here - waypoints are in local NED meter co-ordinates relative to home position
 		//TODO multiple waypoints needs to be integrated into the GCS, macro flag enables the multiple waypoint functionality
 		#ifdef MULTIPLE_WAYPOINTS
-		if(pow(waypoint_used.x-Nav_Global.Pos[0],2)+pow(waypoint_used.y-Nav_Global.Pos[1],2)<pow(waypoint_horiz,2)&&\
-		pow(waypoint_used.z-Nav_Global.Pos[2],2)<waypoint_vert) {
+		if(powf(waypoint_used.x-Nav_Global.Pos[0],2)+powf(waypoint_used.y-Nav_Global.Pos[1],2)<powf(waypoint_horiz,2)&&\
+		powf(waypoint_used.z-Nav_Global.Pos[2],2)<waypoint_vert) {
 			Waypoint_Global=Waypoints[waypoint_index++];//Load the next waypoint
 			New_Waypoint_Flagged=1;		//Set the flag to let guidance know new waypoint is ready
 		}
@@ -438,7 +438,7 @@ void Initialisation() {
 	INSSetState(Zeros,Zeros,q,Zeros);	//Home position is defined as the origin
 	//Use the Baro output to find sea level pressure, remeber home altitude is negative
 	printf("Baro pressure is %f Pascals, temperature is %f C\r\n",mean_pressure,(float)device_temperature/10.0);
-	Sea_Level_Pressure=mean_pressure*pow((1+2.255808e-5*Home_Position.Altitude),-5.255);//convert to sea level pressure -bmp085 datasheet
+	Sea_Level_Pressure=mean_pressure*powf((1+2.255808e-5*Home_Position.Altitude),-5.255);//convert to sea level pressure -bmp085 datasheet
 	//Sea_Level_Pressure=mean_pressure;	//Set home position (Down=0) to the reference zero altitude
 	printf("Sea level pressure is %f\r\n",Sea_Level_Pressure);
 	//Try initialising the uSD card and mounting the filesystem - if there is no card inserted it will error when we try to use files/dir
