@@ -172,10 +172,13 @@ void I2C1_ER_IRQHandler(void) {
 	if(SR1Register & 0x0700) {
 		SR2Register = I2C1->SR2;//read second status register to clear ADDR if it is set (note that BTF will not be set after a NACK)
 		I2C_ITConfig(I2C1, I2C_IT_BUF, DISABLE);//disable the RXNE/TXE interrupt - prevent the ISR tailchaining onto the ER (hopefully)
-		Jobs&=~(0x00000001<<job);//cancel the current job - abandoned, 
-		if(Jobs && !(I2C1->CR1&0x0100)) {//ensure start of a new job if there are still jobs left
-			while(I2C1->CR1&0x0200);//wait for any stop to finish sending
-			I2C_GenerateSTART(I2C1,ENABLE);//sets a start
+		if(GYRO_READ!=job)	//the gyro must always be read as we use gyro data ready to trigger the kalman
+			Jobs&=~(0x00000001<<job);//cancel the current job - abandoned
+		if(Jobs) {		//ensure start of a new job if there are still jobs left
+			if(!(I2C1->CR1&0x0100)) {//if we are not already sending a start
+				while(I2C1->CR1&0x0200);//wait for any stop to finish sending
+				I2C_GenerateSTART(I2C1,ENABLE);//sets a start
+			}
 			I2C_ITConfig(I2C1, I2C_IT_EVT|I2C_IT_ERR, ENABLE);//Ensure EVT and ERR interrupts enabled 
 		}
 		else if(!(SR1Register & 0x0200) && !(I2C1->CR1&0x0200)) {//if we dont have an ARLO error, ensure sending of a stop
@@ -202,9 +205,11 @@ void I2C1_ER_IRQHandler(void) {
 void I2C1_Request_Job(uint8_t job_) {
 	if(job_<32) {			//sanity check
 		Jobs|=1<<job_;		//set the job bit, do it here and use interrupt flag to detect bus inactive in case of I2C interrupting here
-		if(!(I2C1->CR2&I2C_IT_EVT) && !(I2C1->CR1&0x0100)) {//if we are restarting the driver, ensure sending a start
-			while(I2C1->CR1&0x0200){;}//wait for any stop to finish sending
-			I2C_GenerateSTART(I2C1,ENABLE);//send the start for the new job
+		if(!(I2C1->CR2&I2C_IT_EVT)) {//if we are restarting the driver
+			if(!(I2C1->CR1&0x0100)) {// ensure sending a start
+				while(I2C1->CR1&0x0200){;}//wait for any stop to finish sending
+				I2C_GenerateSTART(I2C1,ENABLE);//send the start for the new job
+			}
 			I2C_ITConfig(I2C1, I2C_IT_EVT|I2C_IT_ERR, ENABLE);//allow the interrupts to fire off again
 		}
 	}

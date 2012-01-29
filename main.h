@@ -13,6 +13,8 @@
 //Cluster preallocation on the SD card, 3MB should be enough for an hour or so of logging
 #define PRE_SIZE 3000000UL
 
+enum operating_modes {OUTDOOR,INDOOR,DEBUG};//operating modes
+
 /* Private functions ---------------------------------------------------------*/
 
 // Peripheral configuration functions

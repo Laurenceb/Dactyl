@@ -53,6 +53,7 @@ volatile Ubx_Gps_Type Gps;	//Global Gps, there is also a static gps in the ekf/i
 volatile Nav_Type Nav_Global;	//EKF state
 volatile uint32_t Millis;	//System uptime
 uint8_t Si4432_connected;	//If we are connected to an ISM band (mesh)network (Note: atm this is only set at bootup, meaning the server must be live before UAVs)
+uint8_t Operating_Mode;		//Stores the operating mode (Outdoor, indoor, or diagnostics)
 //--Flags/Mutex go here
 volatile uint8_t Nav_Flag;	//Used to control and lock global nav state access
 volatile uint8_t New_Waypoint_Flagged;
@@ -242,7 +243,7 @@ void Initialisation() {
 	int64_t home[4]={0,0,0};
 	double LLA[3]={0,0,0};
 	double ECEF[3]={0,0,0};
-	float mag_corr[3],acc_corr[3];
+	float gyr_bias[3]={0,0,0},mag_corr[3],acc_corr[3],a;//a is just a general perpose variable
 	uint8_t err=0;
 	uint32_t raw_pressure;
 	int32_t device_temperature;
@@ -335,8 +336,8 @@ void Initialisation() {
 	Delay(0x1FFFF);//Wait for a short period to allow the interrupt driven I2C1 reads to fire off and retrieve us some data
 	printf("Magno %d,%d,%d\r\n",Flipedbytes(Magno_Data_Buffer[0]),Flipedbytes(Magno_Data_Buffer[1]),Flipedbytes(Magno_Data_Buffer[2]));
 	Accel_Access_Flag=LOCKED;		//Locked the data so it is safe to read
-	printf("Accel %d,%d,%d\r\n",Accel_Data_Vector[0],Accel_Data_Vector[1],Accel_Data_Vector[2]);//Accel has correct endianess - grab from downsampler
-	Accel_Access_Flag=UNLOCKED;
+	printf("Accel %d,%d,%d\r\n",(int16_t)Accel_Data_Vector[0],(int16_t)Accel_Data_Vector[1],(int16_t)Accel_Data_Vector[2]);//Accel - grab from downsampler
+	Accel_Access_Flag=UNLOCKED;		//The accel endianess is fixed by the downsampler
 	printf("Gyro  %d,%d,%d\r\n",Flipedbytes(Gyro_Data_Buffer[1]),Flipedbytes(Gyro_Data_Buffer[2]),Flipedbytes(Gyro_Data_Buffer[3]));
 	printf("Temp  %d\r\n",Flipedbytes(Gyro_Data_Buffer[0]));
 	Millis+=TEMPERATURE_PERIOD;		//Hack the system uptime in order to cause a bmp05 temperature
@@ -354,14 +355,21 @@ void Initialisation() {
 		printf("I2C error:%d at job number:%d %d\r\n",I2C1error.error,I2C1error.job,Millis-TEMPERATURE_PERIOD);
 	//Configure the GPS and test it, block until it gets a lock
 	if(!Config_Gps()) Usart_Send_Str((char*)"Setup GPS ok - awaiting fix\r\n");//If not the function printfs its error
-/*	while(Gps.status!=UBLOX_3D) {		//Wait for a 3D fix
+	while(Gps.status!=UBLOX_3D && OUTDOOR==Operating_Mode) {//Wait for a 3D fix
 		while(Bytes_In_Buffer(&Gps_Buffer))//Dump all the data
 			Gps_Process_Byte((uint8_t)(Pop_From_Buffer(&Gps_Buffer)),&Gps);
 		if(Gps.packetflag==REQUIRED_DATA){		
 			putchar(0x30+Gps.nosats);putchar(0x2C);//Number of sats seperated by commas
 			Gps.packetflag=0x00;
 		}
-	}*/
+		while(Bytes_In_ISR_Buffer(&Usart1_rx_buff)) {//Bytes received on serial terminal
+			err=(uint8_t)(Pop_From_Buffer(&Usart1_rx_buff));
+			if('1'==err)		//Enter '1' to abort to indoor mode
+				Operating_Mode=INDOOR;
+			if('2'==err)		//Enter '2' to abort to sensor test mode
+				Operating_Mode=DEBUG;
+		}
+	}
 	Gps.packetflag=0x00;			//Reset
 	while(Gps.packetflag!=REQUIRED_DATA) {	//Wait for all fix data
 		while(Bytes_In_Buffer(&Gps_Buffer))//Dump all the data
@@ -371,6 +379,25 @@ void Initialisation() {
 	printf("%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%1x\r\n",\
 	Gps.latitude,Gps.longitude,Gps.mslaltitude,\
 	Gps.vnorth,Gps.veast,Gps.vdown,Gps.horizontal_error,Gps.vertical_error,Gps.speedacc,Gps.nosats);
+	while(DEBUG==Operating_Mode) {		//In debug mode we just loop here and output the sensor data
+		Completed_Jobs&=~(1<<BMP_24BIT);//Clear the job completed bit
+		while(!(Completed_Jobs&(1<<BMP_24BIT))){;}//BMP085 has been read (wait until bmp is read to make sure safe read of volatile data)
+		printf("%d,%d,%d,",Flipedbytes(Magno_Data_Buffer[0]),Flipedbytes(Magno_Data_Buffer[1]),Flipedbytes(Magno_Data_Buffer[2]));
+		Accel_Access_Flag=LOCKED;	//Locked the data so it is safe to read
+		printf("%d,%d,%d,",(int16_t)Accel_Data_Vector[0],(int16_t)Accel_Data_Vector[1],(int16_t)Accel_Data_Vector[2]);//Accel - grab from downsampler
+		Accel_Access_Flag=UNLOCKED;	//The accel endianess is fixed by the downsampler
+		printf("%d,%d,%d\r\n",Flipedbytes(Gyro_Data_Buffer[1]),Flipedbytes(Gyro_Data_Buffer[2]),Flipedbytes(Gyro_Data_Buffer[3]));
+		printf("%d,",Flipedbytes(Gyro_Data_Buffer[0]));
+		raw_pressure=Bmp_Press_Buffer;	//Copy the data over from the device driver buffers
+		flip_adc24(&raw_pressure);
+		if(Completed_Jobs&(1<<BMP_16BIT)) {
+			Completed_Jobs&=~(1<<BMP_16BIT);//check off the job
+			Bmp_Copy_Temp();	//Copy the 16 bit temperature out of its buffer into the temperature global
+		}
+		Bmp_Simp_Conv(&device_temperature,&raw_pressure);//convert to pressure
+		printf("%ld,%ld,",raw_pressure,device_temperature/10);//Output baro pressure in Pa and temperature in C
+		printf("%ld\r\n",Pitot_Conv((uint32_t)Pitot_Pressure));//The pitot pressure last (not updates at only 16Hz). 13 comma delimited variables altogether
+	}
 	//Now average the GPS for 10 seconds and set this as the home position
 	printf("Averaging to find home position, please wait 10s\r\n");
 	for(err=0;err<50;err++) {		//GPS is configured for 5Hz output, so average 50 samples
@@ -392,26 +419,46 @@ void Initialisation() {
 		}
 		Bmp_Simp_Conv(&device_temperature,&raw_pressure);//convert to pressure
 		//printf("Baro pressure is %ld Pascals, temperature is %ld C\r\n",raw_pressure,device_temperature/10);//Debug - remove later
-		mean_pressure+=raw_pressure;
+		mean_pressure+=(float)raw_pressure;
+		Calibrate_3(Field,&(Gyro_Data_Buffer[1]),&Gyr_Cal_Dat);//Read gyro buffer - skip temperature, can read here directly as just waited for baro ready
+		gyr_bias[0]+=Field[0];gyr_bias[1]+=Field[1];gyr_bias[2]+=Field[2];//Add data into the mag_corr array
+		Calibrate_3(mag_corr,Magno_Data_Buffer,&Mag_Cal_Dat);
+		VectorNormalize(mag_corr);	//Normalize magnetometer field
+		Accel_Access_Flag=LOCKED;
+		Calibrate_3(acc_corr,Accel_Data_Vector,&Acc_Cal_Dat);//Read downsampled accel
+		Accel_Access_Flag=UNLOCKED;
+		VectorNormalize(acc_corr);	//Normalize accel
+		a+=acc_corr[0]*mag_corr[0]+acc_corr[1]*mag_corr[1]+acc_corr[2]*mag_corr[2];//add the dot product onto the mean dot product
 	}
 	Home_Position.Latitude=home[0]/(10.0*err);//Home is in int32_t units of degrees x 10^6
 	Home_Position.Longitude=home[1]/(10.0*err);
 	Home_Position.Altitude=home[2]/((float)err*1000.0);//Find average position - note altitude converted to meters
 	mean_pressure/=(float)err;		//Average pressure in pascals
+	gyr_bias[0]/=err;gyr_bias[1]/=err;gyr_bias[2]/=err;//Average the gyro bias
+	INSSetGyroBias(gyr_bias);		//Set gyro bias in the EKF
+	a/=err;					//Mean the dot product
+	a=acosf(a);				//Single precision inverse cosine - gives result in range
 	Air_Density=Calc_Air_Density(Home_Position.Altitude,mean_pressure);//Find air density using atmospheric model (Kgm^-3) - set this before IMU first runs
 	Long_To_Meters_Home=LAT_TO_METERS*cos(UBX_DEG_TO_RADS*Home_Position.Latitude);
 	printf("Home position set\r\n");
 	//Init the ekf, must do this before the mag model
 	INSGPSInit();
-	//Now we initialise the magnetic model - init function is called from the get vector function
-	if((err=WMM_GetMagVector(Home_Position.Latitude*1e-7,Home_Position.Longitude*1e-7,Home_Position.Altitude,Gps.week,Field)))
-		printf("Mag model run error %d\r\n",err);
-	else
-		printf("Mag model completed, B(mG NED frame)=%1f,%1f,%1f\r\n",Field[0],Field[1],Field[2]);
-	//Now we normalise the field - the ekf works with normalised lenght Be vector
-	//Note - quick debug hack - Birmingham UK
-	Field[0]=189.3;Field[1]=-7.2;Field[2]=450.7;
-	VectorNormalize(Field);			//Ensure length is unity
+	if(OUTDOOR==Operating_Mode) {		//If we are in outdoor mode, set the field from world mag model here
+		//Now we initialise the magnetic model - init function is called from the get vector function
+		if((err=WMM_GetMagVector(Home_Position.Latitude*1e-7,Home_Position.Longitude*1e-7,Home_Position.Altitude,Gps.week,Field)))
+			printf("Mag model run error %d\r\n",err);
+		else
+			printf("Mag model completed, B(mG NED frame)=%1f,%1f,%1f\r\n",Field[0],Field[1],Field[2]);
+		//Now we normalise the field - the ekf works with normalised lenght Be vector
+		//Note - quick debug hack - Birmingham UK
+		//Field[0]=186.48;Field[1]=-7.2;Field[2]=453.43;
+		VectorNormalize(Field);		//Ensure length is unity
+	}
+	else {
+		Field[0]=sinf(a);		//Assume North is +ive
+		Field[1]=0;			//Assume no East axis component
+		Field[2]=-cosf(a);		//a==theta - angle between accel and field, and accel is pointing in -ive down axis, so -cos(theta)
+	}
 	INSSetMagNorth(Field);			//Configure the Earths field in the EKF
 	//Use the Field and GPS position to set the home position
 	Home_Position.Set=1;//Set the SET byte to indicate to the GCS that home is set onboard the UAV

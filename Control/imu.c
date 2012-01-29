@@ -86,7 +86,7 @@ void run_imu(void) {
 		//INSResetRGPS(GPS_Errors);	//Adjust the measurement covariance matrix with reported gps error
 		SensorsUsed|=POS_SENSORS|HORIZ_SENSORS|VERT_SENSORS;//Set the flagbits for the gps update
 		//Correct baro pressure offset - average the gps altitude over first 100 seconds and apply correction when filter initialised
-		old_density=(((float)gps.mslaltitude*0.001-Home_Position.Altitude)*Air_Density*Home_Position.g_e+Baro_Pressure-Baro_Offset)\
+		old_density=(((float)gps.mslaltitude*0.001-Home_Position.Altitude)*Air_Density*Home_Position.g_e+(float)Baro_Pressure-Baro_Offset)\
 		*(0.01/(float)GPS_RATE);	//reuse variable here
 		if(Iterations++>100*GPS_RATE)
 			Baro_Offset+=old_density;//fixed tau: 0.01s^-1
@@ -109,7 +109,7 @@ void run_imu(void) {
 		Baro_Pressure=Bmp_Press_Buffer;	//Copy over from the read buffer
 		flip_adc24(&Baro_Pressure);	//Fix endianess
 		Bmp_Simp_Conv(&Baro_Temperature,&Baro_Pressure);//Convert to a pressure in Pa
-		Baro_Alt=(Baro_Offset-Baro_Pressure)/(Home_Position.g_e*Air_Density);//Use the air density calculation (also used in pitot), linear approximation
+		Baro_Alt=(Baro_Offset-(float)Baro_Pressure)/(Home_Position.g_e*Air_Density);//Use the air density calculation (also used in pitot), linear approx
 		SensorsUsed|=BARO_SENSOR;	//We have used the baro sensor
 		if(READ==UAVtalk_conf.semaphores[BARO_ACTUAL]) {//If this data has been read, we can update it (avoids risk of overwriting data mid packet tx)
 			UAVtalk_Altitude_Array[0]=Baro_Alt+Home_Position.Altitude;//Populate Baro_altitude UAVtalk packet here - Altitude is MSL altitude in m
@@ -122,7 +122,7 @@ void run_imu(void) {
 		Completed_Jobs&=~(1<<BMP_16BIT);//Wipe the job completed bit
 		Bmp_Copy_Temp();		//Copy the 16 bit temperature out of its buffer into the temperature global
 		old_density=Air_Density;	//Save old air density so we can find the delta
-		Air_Density=Calc_Air_Density((float)gps.mslaltitude*1e-3,Baro_Pressure);//Find air density using atmospheric model (Kgm^-3)
+		Air_Density=Calc_Air_Density((float)gps.mslaltitude*1e-3,(float)Baro_Pressure);//Find air density using atmospheric model (Kgm^-3)
 		Baro_Offset+=Baro_Alt*(Air_Density-old_density)*Home_Position.g_e;//Correct the baro offset term to account for changing density
 	}
 	if(Completed_Jobs&(1<<PITOT_READ)) {
@@ -133,11 +133,11 @@ void run_imu(void) {
 			Wind[0]*=WIND_TAU;Wind[1]*=WIND_TAU;//Low pass filter
 			Wind[0]+=(1.0-WIND_TAU)*(Nav.Vel[0]-AirSpeed*Body_x_To_x);//This assumes horizontal wind and neglidgible slip
 			Wind[1]+=(1.0-WIND_TAU)*(Nav.Vel[1]-AirSpeed*Body_x_To_y);
-			Balt=(float)AirSpeed;		//Pitot_Pressure;//Note debug
+			Balt=(float)AirSpeed;	//Pitot_Pressure;//Note debug
 		}
 		millis_pitot=Millis;		//Save a timestamp so we can monitor conversion time, BMP085 corruption will double this
 	}
-	INSCorrection(ma,gps_position,gps_velocity,Baro_Alt,SensorsUsed);
+	INSCorrection(ma,gps_position,gps_velocity,-Baro_Alt,SensorsUsed);//Note that Baro has to be in NED frame
 	if(!Nav_Flag) {Nav_Global=Nav; Nav_Flag=(uint32_t)0x01;}//Copy over Nav state if its been unlocked
 	//EKF is finished, time to run the guidance
 	if(New_Waypoint_Flagged) {memcpy(waypoint,Waypoint_Global,sizeof(waypoint)); New_Waypoint_Flagged=0;}//Check for any new waypoints set

@@ -11,8 +11,8 @@ extern float Baro_Offset;
 //Access flag stuff
 #define LOCKED 1
 #define UNLOCKED 0
-//interation time - 125Hz loop
-#define DELTA_TIME 0.008
+//interation time - 111.1Hz loop
+#define DELTA_TIME 0.009
 //From the earths radius and ublox output in degrees x 10^7 -UBLOX UBX protocol specific
 #define LAT_TO_METERS (float)0.011131884
 #define UBX_DEG_TO_RADS (float)1.745329252e-9

@@ -2,6 +2,7 @@
 #pragma once
 #include <stdio.h>
 #include "stm32f10x.h"
+#include "Control/imu.h"
 //Datatypes
 typedef struct{
 	uint8_t error;
@@ -20,6 +21,7 @@ typedef struct{
 extern volatile uint32_t Jobs,Completed_Jobs;	//used for task control (only ever access this from outside for polling Jobs/Reading Completed_Jobs)
 extern volatile I2C_Error_Type I2C1error;	//used to store error state
 //Macros
+#define GYRO_CLK (uint8_t)(1000.0*DELTA_TIME)-1	/*sample rate divider*/
 //MEMS specific defines
 #define MAGNO_ADDR 0x3C
 #define MAGNO_DATA 0x03				/*sub address where data begins*/
@@ -34,7 +36,7 @@ extern volatile I2C_Error_Type I2C1error;	//used to store error state
 #define MAGNO_SETUP {0x18,0x20,0x00} /*configure the LSM303 magno for N.A./75hz,high resolution, continuous conversion (set to single later)*/
 #define MAGNO_SINGLE {0x01}/*a single conversion*/
 #define ACCEL_SETUP {0x37,0x00,0x02,0x80} /*configure LSM303 acc for 400hz, no highpass, int1=DTRD, +-2G with blocking (0x90 for +-4G)*/
-#define GYRO_SETUP {0x07,0x1B,0x31} /*configure ITG gyro for 125hz,+-2000deg/s 42hz lowpass, int1=DTRD - no 50us pulse*/
+#define GYRO_SETUP {GYRO_CLK,0x1B,0x31} /*configure ITG gyro for 111.1/125hz,+-2000deg/s 42hz lowpass, int1=DTRD - no 50us pulse*/
 #define ITG_CLOCK {0x01} /*configure clock to be pll off gyro x axis*/
 //Jobs structure initialiser 
 #define I2C_JOBS_INITIALISER {\
