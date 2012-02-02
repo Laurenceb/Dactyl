@@ -70,7 +70,7 @@ void run_imu(void) {
 	INSStatePrediction(gy,ac,Delta_Time);	//Run the EKF and incorporate the avaliable sensors
 	INSCovariancePrediction(Delta_Time);
 	//Process the GPS data
-	while(Bytes_In_Buffer(&Gps_Buffer))//Dump all the data from DMA
+	while(Bytes_In_Buffer(&Gps_Buffer))	//Dump all the data from DMA
 		Gps_Process_Byte((uint8_t)(Pop_From_Buffer(&Gps_Buffer)),&gps);
 	if(gps.packetflag==REQUIRED_DATA){	
 		gps_position[0]=(float)(gps.latitude-Home_Position.Latitude)*LAT_TO_METERS;//Remember, NED frame, and gps altitude needs *=-1
@@ -83,7 +83,8 @@ void run_imu(void) {
 		GPS_Errors[1]=(float)gps.vertical_error*(float)gps.vertical_error*1e-6*GPS_SPECTRAL_FUDGE_FACTOR;//Fudge factor is defined in ubx.h/gps header file
 		GPS_Errors[2]=(float)gps.speedacc*(float)gps.speedacc*1e-4*GPS_SPECTRAL_FUDGE_FACTOR*GPS_Errors[0]/(GPS_Errors[0]+GPS_Errors[1]);
 		GPS_Errors[3]=GPS_Errors[2]*GPS_Errors[1]/GPS_Errors[0];//Ublox5 only gives us 3D speed accuracy? Weight with position errors
-		//INSResetRGPS(GPS_Errors);	//Adjust the measurement covariance matrix with reported gps error
+		if(OUTDOOR==Operating_Mode)
+			INSResetRGPS(GPS_Errors);//Adjust the measurement covariance matrix with reported gps error
 		SensorsUsed|=POS_SENSORS|HORIZ_SENSORS|VERT_SENSORS;//Set the flagbits for the gps update
 		//Correct baro pressure offset - average the gps altitude over first 100 seconds and apply correction when filter initialised
 		old_density=(((float)gps.mslaltitude*0.001-Home_Position.Altitude)*Air_Density*Home_Position.g_e+(float)Baro_Pressure-Baro_Offset)\

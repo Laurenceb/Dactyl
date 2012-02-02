@@ -243,7 +243,7 @@ void Initialisation() {
 	int64_t home[4]={0,0,0};
 	double LLA[3]={0,0,0};
 	double ECEF[3]={0,0,0};
-	float gyr_bias[3]={0,0,0},mag_corr[3],acc_corr[3],a;//a is just a general perpose variable
+	float gyr_bias[3]={0,0,0},mag_corr[3],acc_corr[3],a=0;//a is just a general perpose variable
 	uint8_t err=0;
 	uint32_t raw_pressure;
 	int32_t device_temperature;
@@ -354,7 +354,7 @@ void Initialisation() {
 	if(I2C1error.error)
 		printf("I2C error:%d at job number:%d %d\r\n",I2C1error.error,I2C1error.job,Millis-TEMPERATURE_PERIOD);
 	//Configure the GPS and test it, block until it gets a lock
-	if(!Config_Gps()) Usart_Send_Str((char*)"Setup GPS ok - awaiting fix\r\n");//If not the function printfs its error
+	if(!Config_Gps()) Usart_Send_Str((char*)"Setup GPS ok - awaiting fix, enter 1 for indoor mode, 2 for debug\r\n");//If not the function printfs its error
 	while(Gps.status!=UBLOX_3D && OUTDOOR==Operating_Mode) {//Wait for a 3D fix
 		while(Bytes_In_Buffer(&Gps_Buffer))//Dump all the data
 			Gps_Process_Byte((uint8_t)(Pop_From_Buffer(&Gps_Buffer)),&Gps);
@@ -363,11 +363,15 @@ void Initialisation() {
 			Gps.packetflag=0x00;
 		}
 		while(Bytes_In_ISR_Buffer(&Usart1_rx_buff)) {//Bytes received on serial terminal
-			err=(uint8_t)(Pop_From_Buffer(&Usart1_rx_buff));
-			if('1'==err)		//Enter '1' to abort to indoor mode
+			err=(uint8_t)(Get_From_ISR_Buffer(&Usart1_rx_buff));
+			if('1'==err) {		//Enter '1' to abort to indoor mode
 				Operating_Mode=INDOOR;
-			if('2'==err)		//Enter '2' to abort to sensor test mode
+				printf("Indoor mode\r\n");
+			}
+			if('2'==err) {		//Enter '2' to abort to sensor test mode
 				Operating_Mode=DEBUG;
+				printf("Debug mode\r\n");
+			}
 		}
 	}
 	Gps.packetflag=0x00;			//Reset
@@ -428,15 +432,14 @@ void Initialisation() {
 		Calibrate_3(acc_corr,Accel_Data_Vector,&Acc_Cal_Dat);//Read downsampled accel
 		Accel_Access_Flag=UNLOCKED;
 		VectorNormalize(acc_corr);	//Normalize accel
-		a+=acc_corr[0]*mag_corr[0]+acc_corr[1]*mag_corr[1]+acc_corr[2]*mag_corr[2];//add the dot product onto the mean dot product
+		a+=(acc_corr[0]*mag_corr[0])+(acc_corr[1]*mag_corr[1])+(acc_corr[2]*mag_corr[2]);//add the dot product onto the mean dot product
 	}
 	Home_Position.Latitude=home[0]/(10.0*err);//Home is in int32_t units of degrees x 10^6
 	Home_Position.Longitude=home[1]/(10.0*err);
 	Home_Position.Altitude=home[2]/((float)err*1000.0);//Find average position - note altitude converted to meters
 	mean_pressure/=(float)err;		//Average pressure in pascals
-	gyr_bias[0]/=err;gyr_bias[1]/=err;gyr_bias[2]/=err;//Average the gyro bias
-	INSSetGyroBias(gyr_bias);		//Set gyro bias in the EKF
-	a/=err;					//Mean the dot product
+	gyr_bias[0]/=(float)err;gyr_bias[1]/=(float)err;gyr_bias[2]/=(float)err;//Average the gyro bias
+	a/=(float)err;					//Mean the dot product
 	a=acosf(a);				//Single precision inverse cosine - gives result in range
 	Air_Density=Calc_Air_Density(Home_Position.Altitude,mean_pressure);//Find air density using atmospheric model (Kgm^-3) - set this before IMU first runs
 	Long_To_Meters_Home=LAT_TO_METERS*cos(UBX_DEG_TO_RADS*Home_Position.Latitude);
@@ -455,6 +458,7 @@ void Initialisation() {
 		VectorNormalize(Field);		//Ensure length is unity
 	}
 	else {
+		printf("Magnetic inclination:%f\r\n",a);
 		Field[0]=sinf(a);		//Assume North is +ive
 		Field[1]=0;			//Assume no East axis component
 		Field[2]=-cosf(a);		//a==theta - angle between accel and field, and accel is pointing in -ive down axis, so -cos(theta)
@@ -484,7 +488,7 @@ void Initialisation() {
 	//quaternion init code - from Openpilot
 	RotFrom2Vectors(acc_corr, ge, mag_corr, Field, Rbe);
 	R2Quaternion(Rbe, q);
-	INSSetState(Zeros,Zeros,q,Zeros);	//Home position is defined as the origin
+	INSSetState(Zeros,Zeros,q,gyr_bias);	//Home position is defined as the origin, set the computed attitude and gyro bias
 	//Use the Baro output to find sea level pressure, remeber home altitude is negative
 	printf("Baro pressure is %f Pascals, temperature is %f C\r\n",mean_pressure,(float)device_temperature/10.0);
 	Baro_Offset=mean_pressure;		//Set home position (Down=0) to the reference zero altitude

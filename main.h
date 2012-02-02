@@ -15,6 +15,8 @@
 
 enum operating_modes {OUTDOOR,INDOOR,DEBUG};//operating modes
 
+extern uint8_t Operating_Mode;
+
 /* Private functions ---------------------------------------------------------*/
 
 // Peripheral configuration functions

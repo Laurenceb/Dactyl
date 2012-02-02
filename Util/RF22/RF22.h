@@ -284,7 +284,7 @@ extern "C" {
 #define RF22_REG_06_INTERRUPT_ENABLE2                   0x06
 #define RF22_REG_07_OPERATING_MODE1                     0x07
 #define RF22_REG_08_OPERATING_MODE2                     0x08
-#define RF22_REG_09_OSCILLATOR_LOAD_CAPACITANCE         0x09
+#define RF22_REG_09_OSCILLATOR_LOAD_CAPACITANCE         0xCC	/*12pF load capacitance for FA238 xtal*/
 #define RF22_REG_0A_UC_OUTPUT_CLOCK                     0x0a
 #define RF22_REG_0B_GPIO_CONFIGURATION0                 0x0b
 #define RF22_REG_0C_GPIO_CONFIGURATION1                 0x0c
