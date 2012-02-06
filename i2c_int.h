@@ -45,7 +45,7 @@ extern volatile I2C_Error_Type I2C1error;	//used to store error state
 {MAGNO_ADDR,I2C_Direction_Receiver,6,0x03,NULL}, /*Read the Magno data*/\
 {ACCEL_ADDR,I2C_Direction_Receiver,6,0xA8,NULL}, /*Read the Accel data*/\
 {LTC2481_R,I2C_Direction_Receiver,3,LTC2481_ADC/*0xFF*/,NULL}, /*Read the Pitot Note: sets the config incase it overwritten by bmp*/\
-{BMP085_W,I2C_Direction_Receiver,2,BMP085_ADC,NULL}, /*Read BMP085 ADC - 16bit mode Note: may be faster to reverse these, but greater pitot risk*/\
+{BMP085_W,I2C_Direction_Receiver,3,BMP085_ADC,NULL}, /*Read BMP085 ADC - 16bit mode Note: may be faster to reverse these, but greater pitot risk*/\
 {BMP085_W,I2C_Direction_Receiver,3,BMP085_ADC,NULL}, /*Read BMP085 ADC - 24/19bit mode*/\
 {BMP085_W,I2C_Direction_Transmitter,1,BMP085_CTRL,Bmp_temperature}, /*Setup a BMP085 temperature conv*/\
 {BMP085_W,I2C_Direction_Transmitter,1,BMP085_CTRL,Bmp_pressure}, /*Setup a BMP085 pressure conv*/\
@@ -86,5 +86,5 @@ extern volatile I2C_Error_Type I2C1error;	//used to store error state
 void I2C1_Request_Job(uint8_t job_);//Requests a job
 void I2C1_Setup_Job(uint8_t job_, volatile uint8_t* data);//Sets up the data pointer for a job
 void I2C_Config(void);//configures the hardware
-#define Flipbytes(x) x=((x>>8)&0x00FF)|(((x&0x00FF)<<8)&0xFF00)
+#define Flipbytes(x) x=(((uint16_t)x>>8)&0x00FF)|((((uint16_t)x&0x00FF)<<8)&0xFF00)
 #define Flipedbytes(x) (int16_t)(((x>>8)&0x00FF)|(((x&0x00FF)<<8)&0xFF00))

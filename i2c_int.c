@@ -36,7 +36,7 @@ void I2C1_EV_IRQHandler(void) {
 		subaddress_sent=0;
 	}
 	if(I2C_GetITStatus(I2C1,I2C_IT_SB)) {//we just sent a start - EV5 in ref manual
-		I2C_AcknowledgeConfig(I2C1, DISABLE);//make sure ACK is off
+		I2C_AcknowledgeConfig(I2C1, ENABLE);//make sure ACK is on
 		index=0;		//reset the index
 		if(I2C_Direction_Receiver==I2C_jobs[job].direction && (subaddress_sent || 0xFF==I2C_jobs[job].subaddress)) {//we have sent the subaddr
 			subaddress_sent=1;//make sure this is set in case of no subaddress, so following code runs correctly
@@ -50,7 +50,6 @@ void I2C1_EV_IRQHandler(void) {
 	}
 	else if(I2C_GetITStatus(I2C1,I2C_IT_ADDR)) {//we just sent the address - EV6 in ref manual
 		volatile uint8_t a=I2C1->SR1;//Read SR1,2 to clear ADDR
-		I2C_AcknowledgeConfig(I2C1, ENABLE);//make sure ACK is on
 		if(1==I2C_jobs[job].bytes && I2C_Direction_Receiver==I2C_jobs[job].direction && subaddress_sent) {//we are receiving 1 byte - EV6_3
 			I2C_AcknowledgeConfig(I2C1, DISABLE);//turn off ACK
 			a=I2C1->SR2;	//clear ADDR after ACK is turned off

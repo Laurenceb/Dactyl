@@ -386,21 +386,22 @@ void Initialisation() {
 	while(DEBUG==Operating_Mode) {		//In debug mode we just loop here and output the sensor data
 		Completed_Jobs&=~(1<<BMP_24BIT);//Clear the job completed bit
 		while(!(Completed_Jobs&(1<<BMP_24BIT))){;}//BMP085 has been read (wait until bmp is read to make sure safe read of volatile data)
-		printf("%d,%d,%d,",Flipedbytes(Magno_Data_Buffer[0]),Flipedbytes(Magno_Data_Buffer[1]),Flipedbytes(Magno_Data_Buffer[2]));
+		/*printf("%d,%d,%d,",Flipedbytes(Magno_Data_Buffer[0]),Flipedbytes(Magno_Data_Buffer[1]),Flipedbytes(Magno_Data_Buffer[2]));
 		Accel_Access_Flag=LOCKED;	//Locked the data so it is safe to read
 		printf("%d,%d,%d,",(int16_t)Accel_Data_Vector[0],(int16_t)Accel_Data_Vector[1],(int16_t)Accel_Data_Vector[2]);//Accel - grab from downsampler
 		Accel_Access_Flag=UNLOCKED;	//The accel endianess is fixed by the downsampler
-		printf("%d,%d,%d\r\n",Flipedbytes(Gyro_Data_Buffer[1]),Flipedbytes(Gyro_Data_Buffer[2]),Flipedbytes(Gyro_Data_Buffer[3]));
-		printf("%d,",Flipedbytes(Gyro_Data_Buffer[0]));
+		printf("%d,%d,%d,",Flipedbytes(Gyro_Data_Buffer[1]),Flipedbytes(Gyro_Data_Buffer[2]),Flipedbytes(Gyro_Data_Buffer[3]));
+		printf("%d,",Flipedbytes(Gyro_Data_Buffer[0]));*/
 		raw_pressure=Bmp_Press_Buffer;	//Copy the data over from the device driver buffers
 		flip_adc24(&raw_pressure);
 		if(Completed_Jobs&(1<<BMP_16BIT)) {
 			Completed_Jobs&=~(1<<BMP_16BIT);//check off the job
-			Bmp_Copy_Temp();	//Copy the 16 bit temperature out of its buffer into the temperature global
+			//Bmp_Copy_Temp();	//Copy the 16 bit temperature out of its buffer into the temperature global
+			printf("%d,%d",(Bmp_Temp_Buffer>>8)&0x00FF,Bmp_Temp_Buffer&0x00FF);
 		}
 		Bmp_Simp_Conv(&device_temperature,&raw_pressure);//convert to pressure
-		printf("%ld,%ld,",raw_pressure,device_temperature/10);//Output baro pressure in Pa and temperature in C
-		printf("%ld\r\n",Pitot_Conv((uint32_t)Pitot_Pressure));//The pitot pressure last (not updates at only 16Hz). 13 comma delimited variables altogether
+		/*printf("%ld,%ld,",raw_pressure,device_temperature);//Output baro pressure in Pa and temperature in C
+		printf("%ld\r\n",Pitot_Conv((uint32_t)Pitot_Pressure));//The pitot pressure last (not updates at only 16Hz). 13 comma delimited variables altogether*/
 	}
 	//Now average the GPS for 10 seconds and set this as the home position
 	printf("Averaging to find home position, please wait 10s\r\n");
@@ -434,8 +435,8 @@ void Initialisation() {
 		VectorNormalize(acc_corr);	//Normalize accel
 		a+=(acc_corr[0]*mag_corr[0])+(acc_corr[1]*mag_corr[1])+(acc_corr[2]*mag_corr[2]);//add the dot product onto the mean dot product
 	}
-	Home_Position.Latitude=home[0]/(10.0*err);//Home is in int32_t units of degrees x 10^6
-	Home_Position.Longitude=home[1]/(10.0*err);
+	Home_Position.Latitude=home[0]/(10.0*(float)err);//Home is in int32_t units of degrees x 10^6
+	Home_Position.Longitude=home[1]/(10.0*(float)err);
 	Home_Position.Altitude=home[2]/((float)err*1000.0);//Find average position - note altitude converted to meters
 	mean_pressure/=(float)err;		//Average pressure in pascals
 	gyr_bias[0]/=(float)err;gyr_bias[1]/=(float)err;gyr_bias[2]/=(float)err;//Average the gyro bias
@@ -444,7 +445,7 @@ void Initialisation() {
 	Air_Density=Calc_Air_Density(Home_Position.Altitude,mean_pressure);//Find air density using atmospheric model (Kgm^-3) - set this before IMU first runs
 	Long_To_Meters_Home=LAT_TO_METERS*cos(UBX_DEG_TO_RADS*Home_Position.Latitude);
 	printf("Home position set\r\n");
-	//Init the ekf, must do this before the mag model
+	//Init the ekf, must do this before the mag modelBmp_Temp_Buffer&0x00FF
 	INSGPSInit();
 	if(OUTDOOR==Operating_Mode) {		//If we are in outdoor mode, set the field from world mag model here
 		//Now we initialise the magnetic model - init function is called from the get vector function

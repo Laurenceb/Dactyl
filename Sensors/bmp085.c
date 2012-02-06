@@ -19,7 +19,7 @@ void Bmp085_Convert(int32_t* temperature_out, int32_t* temperature, uint32_t* pr
 	int32_t x1, x2, b5, b6, x3, b3, p;			//This is based on code from sparkfun.com
 	uint32_t b4, b7;
 	
-	x1 = (((int32_t)*temperature - cal->ac6) * cal->ac5) >> 15;
+	x1 = (((int32_t)*temperature - (int32_t)cal->ac6) * (int32_t)cal->ac5) >> 15;
 	x2 = ((int32_t) cal->mc << 11) / (x1 + cal->md);
 	b5 = x1 + x2;
 	*temperature_out = (b5 + 8) >> 4;			//The pressure pointer is corrected to true pressure by this function
@@ -33,8 +33,8 @@ void Bmp085_Convert(int32_t* temperature_out, int32_t* temperature, uint32_t* pr
 	x2 = (cal->b1 * (b6 * b6 >> 12)) >> 16;
 	x3 = ((x1 + x2) + 2) >> 2;
 	b4 = (cal->ac4 * (uint32_t) (x3 + 32768)) >> 15;
-	b7 = ((uint32_t) *pressure - b3) * (50000 >> OSS);
-	p = b7 < 0x80000000 ? (b7 * 2) / b4 : (b7 / b4) * 2;
+	b7 = (uint32_t)((uint32_t) *pressure - b3) * (50000 >> OSS);
+	p = b7 < 0x80000000 ? (b7 << 1) / b4 : (b7 / b4) << 1;
 	x1 = (p >> 8) * (p >> 8);
 	x1 = (x1 * 3038) >> 16;
 	x2 = (-7357 * p) >> 16;
@@ -58,7 +58,7 @@ float Baro_Convert_Pressure(uint32_t p) {
   */
 void flip_sensorcal(Bmp_Cal_Type* cal) {
 	uint8_t n;
-	for(n=0;n<sizeof(Bmp_Cal_Type)/2;n++)
+	for(n=0;n<(sizeof(Bmp_Cal_Type)/2);n++)
 		Flipbytes(((uint16_t*)cal)[n]);
 }
 
@@ -70,7 +70,7 @@ void flip_sensorcal(Bmp_Cal_Type* cal) {
 void flip_adc24(uint32_t* a) {
 	uint8_t b[4];
 	*(uint32_t*)b=*a;
-	*a=((((uint32_t)b[0] <<16) | ((uint32_t)b[1] <<8) | ((uint32_t)b[2])) >> (8-OSS));
+	*a=((((uint32_t)(b[0]) <<16) | ((uint32_t)(b[1]) <<8) | ((uint32_t)(b[2]))) >> (8-OSS));
 }
 #endif
 
