@@ -31,11 +31,12 @@ volatile I2C_Job_Type I2C_jobs[]=I2C_JOBS_INITIALISER;//sets up the const jobs
 void I2C1_EV_IRQHandler(void) {
 	static uint8_t subaddress_sent,final_stop;//flag to indicate if subaddess sent, flag to indicate final bus condition
 	static int8_t index;		//index is signed -1==send the subaddress
+	uint8_t SReg_1=I2C1->SR1;	//read the status register here
 	if(!((Jobs>>job)&0x00000001)) {	//if the current job bit is not set
 		for(job=0;!((Jobs>>job)&0x00000001) && job<I2C_NUMBER_JOBS;job++);//find the first uncompleted job, starting at current job zero
 		subaddress_sent=0;
 	}
-	if(I2C_GetITStatus(I2C1,I2C_IT_SB)) {//we just sent a start - EV5 in ref manual
+	if(SReg_1&0x0001) {//we just sent a start - EV5 in ref manual
 		I2C_AcknowledgeConfig(I2C1, ENABLE);//make sure ACK is on
 		index=0;		//reset the index
 		if(I2C_Direction_Receiver==I2C_jobs[job].direction && (subaddress_sent || 0xFF==I2C_jobs[job].subaddress)) {//we have sent the subaddr
@@ -48,10 +49,13 @@ void I2C1_EV_IRQHandler(void) {
 				index=-1;//send a subaddress
 		}
 	}
-	else if(I2C_GetITStatus(I2C1,I2C_IT_ADDR)) {//we just sent the address - EV6 in ref manual
-		volatile uint8_t a=I2C1->SR1;//Read SR1,2 to clear ADDR
+	else if(SReg_1&0x0002) {//we just sent the address - EV6 in ref manual
+		//Read SR1,2 to clear ADDR
+		volatile uint8_t a;
+		asm volatile ("dmb" ::: "memory");//memory fence to control hardware
 		if(1==I2C_jobs[job].bytes && I2C_Direction_Receiver==I2C_jobs[job].direction && subaddress_sent) {//we are receiving 1 byte - EV6_3
 			I2C_AcknowledgeConfig(I2C1, DISABLE);//turn off ACK
+			asm volatile ("dmb" ::: "memory");
 			a=I2C1->SR2;	//clear ADDR after ACK is turned off
 			I2C_GenerateSTOP(I2C1,ENABLE);//program the stop
 			final_stop=1;
@@ -59,17 +63,18 @@ void I2C1_EV_IRQHandler(void) {
 		}
 		else {//EV6 and EV6_1
 			a=I2C1->SR2;	//clear the ADDR here
-			if(2==I2C_jobs[job].bytes && I2C_Direction_Receiver==I2C_jobs[job].direction && subaddress_sent) { //rx 2 bytes - EV6_1
+			asm volatile ("dmb" ::: "memory");
+			/*if(2==I2C_jobs[job].bytes && I2C_Direction_Receiver==I2C_jobs[job].direction && subaddress_sent) { //rx 2 bytes - EV6_1
 				I2C_AcknowledgeConfig(I2C1, DISABLE);//turn off ACK
 				I2C_ITConfig(I2C1, I2C_IT_BUF, DISABLE);//disable TXE to allow the buffer to fill
-			}
-			else if(3==I2C_jobs[job].bytes && I2C_Direction_Receiver==I2C_jobs[job].direction && subaddress_sent)//rx 3 bytes
+			}*/
+			if(3==I2C_jobs[job].bytes && I2C_Direction_Receiver==I2C_jobs[job].direction && subaddress_sent)//rx 3 bytes
 				I2C_ITConfig(I2C1, I2C_IT_BUF, DISABLE);//make sure RXNE disabled so we get a BTF in two bytes time
 			else //receiving greater than three bytes, sending subaddress, or transmitting
 				I2C_ITConfig(I2C1, I2C_IT_BUF, ENABLE);
 		}
 	}
-	else if(I2C_GetITStatus(I2C1,I2C_IT_BTF)) {//Byte transfer finished - EV7_2, EV7_3 or EV8_2
+	else if(SReg_1&0x004) {//Byte transfer finished - EV7_2, EV7_3 or EV8_2
 		if(Jobs&~(1<<job)) 	//check if there are other jobs requested other than the current one
 			final_stop=0;
 		else
@@ -108,14 +113,25 @@ void I2C1_EV_IRQHandler(void) {
 		}
 		while(I2C1->CR1&0x0100){;}//we must wait for the start to clear, otherwise we get constant BTF
 	}
-	else if(I2C_GetITStatus(I2C1,I2C_IT_RXNE)) {//Byte received - EV7
+	else if(SReg_1&0x0040) {//Byte received - EV7
 		I2C_jobs[job].data_pointer[index++]=I2C_ReceiveData(I2C1);
-		if(I2C_jobs[job].bytes==(index+3))
+		if(I2C_jobs[job].bytes==2 && index==1) {
+			I2C_AcknowledgeConfig(I2C1, DISABLE);//turn off ACK
+			if(Jobs&~(1<<job)) { 	//check if there are other jobs requested other than the current one
+				final_stop=0;
+				I2C_GenerateSTART(I2C1,ENABLE);//program a rep start
+			}
+			else {
+				final_stop=1;
+				I2C_GenerateSTOP(I2C1,ENABLE);//program the Stop
+			}
+		}			
+		else if(I2C_jobs[job].bytes==(index+3))
 			I2C_ITConfig(I2C1, I2C_IT_BUF, DISABLE);//disable TXE to allow the buffer to flush so we can get an EV7_2
 		if(I2C_jobs[job].bytes==index)//We have completed a final EV7
 			index++;	//to show job is complete
 	}
-	else if(I2C_GetITStatus(I2C1,I2C_IT_TXE)) {//Byte transmitted -EV8/EV8_1
+	else if(SReg_1&0x0080) {//Byte transmitted -EV8/EV8_1
 		if(-1!=index) {		//we dont have a subaddress to send
 			I2C_SendData(I2C1,I2C_jobs[job].data_pointer[index++]);
 			if(I2C_jobs[job].bytes==index)//we have sent all the data
@@ -149,6 +165,7 @@ void I2C1_EV_IRQHandler(void) {
 		}
 		else if(final_stop)	//If there is a final stop and no more jobs, bus is inactive, disable interrupts to prevent BTF
 			I2C_ITConfig(I2C1, I2C_IT_EVT|I2C_IT_ERR, DISABLE);//Disable EVT and ERR interrupts while bus inactive
+		I2C_AcknowledgeConfig(I2C1, ENABLE);//make sure ACK is on
 	}
 }
 

@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include "stm32f10x.h"
 #include "Control/imu.h"
+#include "Sensors/bmp085.h"
 //Datatypes
 typedef struct{
 	uint8_t error;
@@ -45,7 +46,7 @@ extern volatile I2C_Error_Type I2C1error;	//used to store error state
 {MAGNO_ADDR,I2C_Direction_Receiver,6,0x03,NULL}, /*Read the Magno data*/\
 {ACCEL_ADDR,I2C_Direction_Receiver,6,0xA8,NULL}, /*Read the Accel data*/\
 {LTC2481_R,I2C_Direction_Receiver,3,LTC2481_ADC/*0xFF*/,NULL}, /*Read the Pitot Note: sets the config incase it overwritten by bmp*/\
-{BMP085_W,I2C_Direction_Receiver,3,BMP085_ADC,NULL}, /*Read BMP085 ADC - 16bit mode Note: may be faster to reverse these, but greater pitot risk*/\
+{BMP085_W,I2C_Direction_Receiver,2,BMP085_ADC,NULL}, /*Read BMP085 ADC - 16bit mode Note: may be faster to reverse these, but greater pitot risk*/\
 {BMP085_W,I2C_Direction_Receiver,3,BMP085_ADC,NULL}, /*Read BMP085 ADC - 24/19bit mode*/\
 {BMP085_W,I2C_Direction_Transmitter,1,BMP085_CTRL,Bmp_temperature}, /*Setup a BMP085 temperature conv*/\
 {BMP085_W,I2C_Direction_Transmitter,1,BMP085_CTRL,Bmp_pressure}, /*Setup a BMP085 pressure conv*/\
@@ -79,7 +80,7 @@ extern volatile I2C_Error_Type I2C1error;	//used to store error state
 //Filter Software ISR config
 #define KALMAN_SW_ISR_NO   EXTI4_IRQn		/*software trigger EXTI4 to run the kalman*/
 //Timing stuff
-#define TEMPERATURE_PERIOD 1000			/*1Hz temperature*/
+#define TEMPERATURE_PERIOD 1000/(1<<BMP_TEMP_OSS)/* (1*Oversampling) Hz temperature*/
 #define PITOT_PERIOD (uint32_t)(10000.0/145.0)	/*14.5Hz pitot*/
 
 //Function prototypes
