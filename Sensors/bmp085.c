@@ -81,7 +81,7 @@ void flip_adc24(uint32_t* a) {
   */
 void Bmp_Copy_Temp(void) {
 	Flipbytes(Bmp_Temp_Buffer);
-	Bmp_temp*=3;		//multiply the temperature variable by 3 - we have tau==1/4
+	Bmp_temp*=(1<<BMP_TEMP_OSS)-1;	//multiply the temperature variable by 3 - we have tau==1/4
 	Bmp_temp+=((uint32_t)Bmp_Temp_Buffer)<<(8-BMP_TEMP_OSS);//add on the buffer
 	Bmp_temp>>=(BMP_TEMP_OSS);//divide by 4
 }
