@@ -342,9 +342,10 @@ void Initialisation() {
 	printf("Temp  %d\r\n",Flipedbytes(Gyro_Data_Buffer[0]));
 	Millis+=TEMPERATURE_PERIOD;		//Hack the system uptime in order to cause a bmp05 temperature
 	Delay(0x0FFFF);//Wait for a short period to allow the interrupt driven I2C1 to read bmp pressure
+	SET_BMP_TEMP;				//Set the rolling temperature average 
 	raw_pressure=Bmp_Press_Buffer;		//Copy the data over from the device driver buffers
 	flip_adc24(&raw_pressure);
-	Bmp_Copy_Temp();			//Copy the 16 bit temperature out of its buffer into the temperature global
+	//Bmp_Copy_Temp();			//Copy the 16 bit temperature out of its buffer into the temperature global
 	Bmp_Simp_Conv(&device_temperature,&raw_pressure);//convert to pressure and calibrated temperature output using i2c driver data
 	printf("Baro pressure is %ld Pascals, temperature is %ld C\r\n",raw_pressure,device_temperature/10);//Debug
 	//Test the pitot tube sensor
@@ -396,12 +397,12 @@ void Initialisation() {
 		flip_adc24(&raw_pressure);
 		if(Completed_Jobs&(1<<BMP_16BIT)) {
 			Completed_Jobs&=~(1<<BMP_16BIT);//check off the job
-			//Bmp_Copy_Temp();	//Copy the 16 bit temperature out of its buffer into the temperature global
-			printf("%d,%d",(Bmp_Temp_Buffer>>8)&0x00FF,Bmp_Temp_Buffer&0x00FF);
+			Bmp_Copy_Temp();	//Copy the 16 bit temperature out of its buffer into the temperature global
+			//printf("%d,%d",(Bmp_Temp_Buffer>>8)&0x00FF,Bmp_Temp_Buffer&0x00FF);
 		}
 		Bmp_Simp_Conv(&device_temperature,&raw_pressure);//convert to pressure
-		/*printf("%ld,%ld,",raw_pressure,device_temperature);//Output baro pressure in Pa and temperature in C
-		printf("%ld\r\n",Pitot_Conv((uint32_t)Pitot_Pressure));//The pitot pressure last (not updates at only 16Hz). 13 comma delimited variables altogether*/
+		printf("%ld,%ld,",raw_pressure,device_temperature);//Output baro pressure in Pa and temperature in C
+		printf("%ld\r\n",Pitot_Conv((uint32_t)Pitot_Pressure));//The pitot pressure last (not updates at only 16Hz). 13 comma delimited variables altogether
 	}
 	//Now average the GPS for 10 seconds and set this as the home position
 	printf("Averaging to find home position, please wait 10s\r\n");

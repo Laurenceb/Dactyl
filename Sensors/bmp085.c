@@ -4,7 +4,7 @@
 
 
 volatile Bmp_Cal_Type Our_Sensorcal;				//Global cal for our sensor
-int32_t Bmp_temp;
+uint32_t Bmp_temp;
 volatile uint16_t Bmp_Temp_Buffer;				//Holds the data from the temperature convertor
 volatile uint32_t Bmp_Press_Buffer;				//Bmp085 pressure data buffer 
 
@@ -14,7 +14,7 @@ volatile uint32_t Bmp_Press_Buffer;				//Bmp085 pressure data buffer
   * @param  Pointers to output temperature, input temperature, pressure (overwritten), and cal structure for the sensor
   * @retval None
   */
-void Bmp085_Convert(int32_t* temperature_out, int32_t temperature, uint32_t* pressure, Bmp_Cal_Type* cal)
+void Bmp085_Convert(int32_t* temperature_out, uint32_t temperature, uint32_t* pressure, Bmp_Cal_Type* cal)
 {
 	int32_t x1, x2, b5, b6, x3, b3, p;			//This is based on code from sparkfun.com
 	uint32_t b4, b7;
@@ -82,7 +82,7 @@ void flip_adc24(uint32_t* a) {
 void Bmp_Copy_Temp(void) {
 	Flipbytes(Bmp_Temp_Buffer);
 	Bmp_temp*=(1<<BMP_TEMP_OSS)-1;	//multiply the temperature variable by 3 - we have tau==1/4
-	Bmp_temp+=((uint32_t)Bmp_Temp_Buffer)<<(8-BMP_TEMP_OSS);//add on the buffer
+	Bmp_temp+=((uint32_t)Bmp_Temp_Buffer)<<8;//add on the buffer
 	Bmp_temp>>=(BMP_TEMP_OSS);//divide by 4
 }
 
