@@ -37,13 +37,14 @@ void I2C1_EV_IRQHandler(void) {
 		subaddress_sent=0;
 	}
 	if(SReg_1&0x0001) {//we just sent a start - EV5 in ref manual
+		I2C1->CR1&=~0x0800;	//reset the POS bit so ACK/NACK applied to the current byte
 		I2C_AcknowledgeConfig(I2C1, ENABLE);//make sure ACK is on
 		index=0;		//reset the index
 		if(I2C_Direction_Receiver==I2C_jobs[job].direction && (subaddress_sent || 0xFF==I2C_jobs[job].subaddress)) {//we have sent the subaddr
 			subaddress_sent=1;//make sure this is set in case of no subaddress, so following code runs correctly
-			I2C_Send7bitAddress(I2C1,I2C_jobs[job].address,I2C_Direction_Receiver);//send the address and set hardware mode
 			if(2==I2C_jobs[job].bytes)
 				I2C1->CR1|=0x0800;//set the POS bit so NACK applied to the final byte in the two byte read
+			I2C_Send7bitAddress(I2C1,I2C_jobs[job].address,I2C_Direction_Receiver);//send the address and set hardware mode
 		}
 		else {			//direction is Tx, or we havent sent the sub and rep start
 			I2C_Send7bitAddress(I2C1,I2C_jobs[job].address,I2C_Direction_Transmitter);//send the address and set hardware mode
@@ -70,7 +71,7 @@ void I2C1_EV_IRQHandler(void) {
 				I2C_AcknowledgeConfig(I2C1, DISABLE);//turn off ACK
 				I2C_ITConfig(I2C1, I2C_IT_BUF, DISABLE);//disable TXE to allow the buffer to fill
 			}
-			if(3==I2C_jobs[job].bytes && I2C_Direction_Receiver==I2C_jobs[job].direction && subaddress_sent)//rx 3 bytes
+			else if(3==I2C_jobs[job].bytes && I2C_Direction_Receiver==I2C_jobs[job].direction && subaddress_sent)//rx 3 bytes
 				I2C_ITConfig(I2C1, I2C_IT_BUF, DISABLE);//make sure RXNE disabled so we get a BTF in two bytes time
 			else //receiving greater than three bytes, sending subaddress, or transmitting
 				I2C_ITConfig(I2C1, I2C_IT_BUF, ENABLE);
@@ -150,7 +151,6 @@ void I2C1_EV_IRQHandler(void) {
 		Jobs&=~(0x00000001<<job);//tick off current job as complete
 		Completed_Jobs|=(0x00000001<<job);//These can be polled by other tasks to see if a job has been completed or is scheduled 
 		subaddress_sent=0;	//reset this here
-		I2C1->CR1&=~0x0800;	//reset the POS bit so NACK applied to the current byte
 		if(Jobs && final_stop) {//there are still jobs left
 			while(I2C1->CR1&0x0200){;}//doesnt seem to be a better way to do this, must wait for stop to clear
 			I2C_GenerateSTART(I2C1,ENABLE);//program the Start to kick start the new transfer

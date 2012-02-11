@@ -387,12 +387,12 @@ void Initialisation() {
 	while(DEBUG==Operating_Mode) {		//In debug mode we just loop here and output the sensor data
 		Completed_Jobs&=~(1<<BMP_24BIT);//Clear the job completed bit
 		while(!(Completed_Jobs&(1<<BMP_24BIT))){;}//BMP085 has been read (wait until bmp is read to make sure safe read of volatile data)
-		/*printf("%d,%d,%d,",Flipedbytes(Magno_Data_Buffer[0]),Flipedbytes(Magno_Data_Buffer[1]),Flipedbytes(Magno_Data_Buffer[2]));
+		printf("%d,%d,%d,",Flipedbytes(Magno_Data_Buffer[0]),Flipedbytes(Magno_Data_Buffer[1]),Flipedbytes(Magno_Data_Buffer[2]));
 		Accel_Access_Flag=LOCKED;	//Locked the data so it is safe to read
 		printf("%d,%d,%d,",(int16_t)Accel_Data_Vector[0],(int16_t)Accel_Data_Vector[1],(int16_t)Accel_Data_Vector[2]);//Accel - grab from downsampler
 		Accel_Access_Flag=UNLOCKED;	//The accel endianess is fixed by the downsampler
 		printf("%d,%d,%d,",Flipedbytes(Gyro_Data_Buffer[1]),Flipedbytes(Gyro_Data_Buffer[2]),Flipedbytes(Gyro_Data_Buffer[3]));
-		printf("%d,",Flipedbytes(Gyro_Data_Buffer[0]));*/
+		printf("%d,",Flipedbytes(Gyro_Data_Buffer[0]));
 		raw_pressure=Bmp_Press_Buffer;	//Copy the data over from the device driver buffers
 		flip_adc24(&raw_pressure);
 		if(Completed_Jobs&(1<<BMP_16BIT)) {
