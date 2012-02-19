@@ -64,7 +64,7 @@ volatile uint8_t Spi_Locked=1;	//Used to control SPI2 sharing - locked by defaul
 FRESULT f_err_code;
 static FATFS FATFS_Obj;
 FIL FATFS_logfile;
-volatile float Balt;
+volatile float Balt;//just here for debug TODO remove
 //--UAVtalk globals
 //-The ports
 UAVtalk_Port_Type uavtalk_usart_port;
@@ -81,7 +81,6 @@ Battery_State_Type Battery_State;
 Flight_Status_Type Flight_Status;
 GPS_Position_Type GPS_Position;
 //-more objects can go here if required (best to try and use existing variables) 
-volatile float quickdebug[3];
 
 int main(void) {
 	uint8_t n,m;
@@ -213,6 +212,7 @@ int main(void) {
 		}
 		//printf("%4f,%4f,%4f,%4x\n",quickdebug[0],quickdebug[1],quickdebug[2],Completed_Jobs);
 		//printf("Magno %d,%d,%d\r\n",(int16_t)Magno_Data_Buffer[0],(int16_t)Magno_Data_Buffer[1],(int16_t)Magno_Data_Buffer[2]);
+		//printf("%f\n",Balt);
 		//Logfiles and SD card related functionality can go here
 		//Spi_Locked=1; //Lock the spi2 bus
 		//if(!f_err_code) {//if the logfile opened ok
@@ -470,7 +470,7 @@ void Initialisation() {
 	Home_Position.Set=1;//Set the SET byte to indicate to the GCS that home is set onboard the UAV
 	LLA[0]=Home_Position.Latitude*1e-7;
 	LLA[1]=Home_Position.Longitude*1e-7;	//Note that altitude uses the last gps datapoint to find the giodal seperation
-	LLA[2]=Home_Position.Altitude-((Gps.mslaltitude-Gps.altitude)*1e-3);//NWGS84 geometeric altitude, so ECEF coord conversion works better
+	LLA[2]=Home_Position.Altitude;//-((Gps.mslaltitude-Gps.altitude)*1e-3);//NWGS84 geometeric altitude, so ECEF coord conversion works better
 	LLA2ECEF(LLA,ECEF);
 	Home_Position.ECEF[0]=ECEF[0]*100.0;
 	Home_Position.ECEF[1]=ECEF[1]*100.0;

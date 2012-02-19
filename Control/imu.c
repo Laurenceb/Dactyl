@@ -32,7 +32,6 @@ extern volatile uint32_t Millis;
 extern volatile float UAVtalk_Altitude_Array[3];	
 //Just here for debug
 extern volatile float Balt;
-extern volatile float quickdebug[3];
 
 //Globals used for the Gyro and Magno data from the I2C driver, Accel data goes via downsampler, other sensors via code in ./Sensors	
 volatile uint16_t Gyro_Data_Buffer[4] __attribute__((packed));//Holds temperature data as well
@@ -87,14 +86,12 @@ void run_imu(void) {
 			INSResetRGPS(GPS_Errors);//Adjust the measurement covariance matrix with reported gps error
 		SensorsUsed|=POS_SENSORS|HORIZ_SENSORS|VERT_SENSORS;//Set the flagbits for the gps update
 		//Correct baro pressure offset - average the gps altitude over first 100 seconds and apply correction when filter initialised
-		old_density=(((float)gps.mslaltitude*0.001-Home_Position.Altitude)*Air_Density*Home_Position.g_e+(float)Baro_Pressure-Baro_Offset)\
-		*(0.01/(float)GPS_RATE);	//reuse variable here
+		old_density=((((float)gps.mslaltitude*0.001-Home_Position.Altitude)*Air_Density*Home_Position.g_e)+(float)Baro_Pressure-Baro_Offset\
+		-Mean_Baro_Offset)*(0.01/(float)GPS_RATE);//reuse variable here
 		if(Iterations++>100*GPS_RATE)
-			Baro_Offset+=old_density;//fixed tau: 0.01s^-1
+			Baro_Offset+=old_density;//fixed tau: 0.01s^-1, use the averaged offset to take out gps altitude error in the home pos
 		else
 			Mean_Baro_Offset+=old_density;
-		if(Iterations==100*GPS_RATE)
-			Baro_Offset+=Mean_Baro_Offset;//Correct the offset variable at the end of the averaging period (100s to find remenant altitude error)
 		if(!Gps.packetflag)Gps=gps;	//Copy the data over to the main 'thread' if the global unlocked
 		gps.packetflag=0x00;		//Reset the flag
 	}
@@ -102,7 +99,6 @@ void run_imu(void) {
 	if(Completed_Jobs&(1<<MAGNO_READ)) {	//This I2C job will run whilst the prediction runs
 		Completed_Jobs&=~(1<<MAGNO_READ);//Wipe the job completed bit
 		Calibrate_3(ma,Magno_Data_Buffer,&Mag_Cal_Dat);//Calibrate - the EKF can take a magnetometer input in any units
-		memcpy(quickdebug,ma,12);//TODO remove debug
 		SensorsUsed|=MAG_SENSORS;	//Let the EKF know what we used
 	}
 	if(Completed_Jobs&(1<<BMP_24BIT)) {
@@ -112,6 +108,7 @@ void run_imu(void) {
 		Bmp_Simp_Conv(&Baro_Temperature,&Baro_Pressure);//Convert to a pressure in Pa
 		Baro_Alt=(Baro_Offset-(float)Baro_Pressure)/(Home_Position.g_e*Air_Density);//Use the air density calculation (also used in pitot), linear approx
 		SensorsUsed|=BARO_SENSOR;	//We have used the baro sensor
+		Balt=Baro_Alt;
 		if(READ==UAVtalk_conf.semaphores[BARO_ACTUAL]) {//If this data has been read, we can update it (avoids risk of overwriting data mid packet tx)
 			UAVtalk_Altitude_Array[0]=Baro_Alt+Home_Position.Altitude;//Populate Baro_altitude UAVtalk packet here - Altitude is MSL altitude in m
 			UAVtalk_Altitude_Array[1]=(float)Baro_Temperature/10.0;//Note that as baro_actual has three independant 32bit
