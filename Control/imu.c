@@ -110,7 +110,7 @@ void run_imu(void) {
 		SensorsUsed|=BARO_SENSOR;	//We have used the baro sensor
 		Balt=Baro_Alt;
 		if(READ==UAVtalk_conf.semaphores[BARO_ACTUAL]) {//If this data has been read, we can update it (avoids risk of overwriting data mid packet tx)
-			UAVtalk_Altitude_Array[0]=Baro_Alt+Home_Position.Altitude;//Populate Baro_altitude UAVtalk packet here - Altitude is MSL altitude in m
+			UAVtalk_Altitude_Array[0]=Baro_Alt;//+Home_Position.Altitude;//Populate Baro_altitude UAVtalk packet here - Altitude is MSL altitude in m
 			UAVtalk_Altitude_Array[1]=(float)Baro_Temperature/10.0;//Note that as baro_actual has three independant 32bit
 			UAVtalk_Altitude_Array[2]=(float)Baro_Pressure*1e-3;//Variables, can be set directly here without passing data back - note pressure in kPa
 			UAVtalk_conf.semaphores[BARO_ACTUAL]=WRITE;//Set the semaphore to indicate this has been written

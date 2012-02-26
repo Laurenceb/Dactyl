@@ -13,8 +13,8 @@ void GPSPosition_from_UBX(Ubx_Gps_Type* UBX, GPS_Position_Type* GPSPos) {
 	GPSPos->Status=UBX->status;
 	GPSPos->Latitude=UBX->latitude;
 	GPSPos->Longitude=UBX->longitude;
-	GPSPos->Altitude=(float)UBX->mslaltitude*1000.0;//In meters
-	GPSPos->GeoidSeparation=(float)(UBX->mslaltitude-UBX->mslaltitude)*1000.0;//In meters
+	GPSPos->Altitude=(float)UBX->mslaltitude*1.0e-3;//In meters
+	GPSPos->GeoidSeparation=(float)(UBX->mslaltitude-UBX->mslaltitude)*1.0e-3;//In meters
 	GPSPos->Groundspeed=sqrtf(powf((float)UBX->vnorth,2)+powf((float)UBX->veast,2));
 	GPSPos->Heading=180.0/M_PI*atan2f(UBX->vnorth,UBX->veast);//Speed and heading over the ground
 	GPSPos->PDOP=sqrtf(powf((float)UBX->vertical_error,2)+powf((float)UBX->horizontal_error,2))/1000.0;

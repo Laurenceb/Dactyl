@@ -470,7 +470,7 @@ void Initialisation() {
 	Home_Position.Set=1;//Set the SET byte to indicate to the GCS that home is set onboard the UAV
 	LLA[0]=Home_Position.Latitude*1e-7;
 	LLA[1]=Home_Position.Longitude*1e-7;	//Note that altitude uses the last gps datapoint to find the giodal seperation
-	LLA[2]=Home_Position.Altitude;//-((Gps.mslaltitude-Gps.altitude)*1e-3);//NWGS84 geometeric altitude, so ECEF coord conversion works better
+	LLA[2]=Home_Position.Altitude;//-((Gps.mslaltitude-Gps.altitude)*1e-3);//NWGS84 geometeric altitude, so ECEF coord conversion works better?
 	LLA2ECEF(LLA,ECEF);
 	Home_Position.ECEF[0]=ECEF[0]*100.0;
 	Home_Position.ECEF[1]=ECEF[1]*100.0;

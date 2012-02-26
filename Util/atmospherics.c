@@ -20,6 +20,7 @@ float Calc_Air_Density(float Altitude, float Pressure) {
   * @retval Model temperature of atmosphere
   */
 float US_1976_Temperature(float Altitude) {	/*This could use a temperature sensor, but performance improvement would be small*/
+	if(Altitude<-1000) Altitude=0;				//Unrealistic altitude - ublox can produce large -ive altitude if no/2D lock
 	if(Altitude<11000) return 288.15-0.0065*Altitude;	//The Troposphere
 	if(Altitude>11000 && Altitude<20000) return 216.15;	//Lower Stratosphere
 	else/*if(Altitude>20000)*/ return 216.15+0.001*Altitude;//Upper Stratosphere (assume flight wont be higher than 32Km)
