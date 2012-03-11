@@ -156,7 +156,12 @@ void run_imu(void) {
 	//Work out the heading offset - z component of target vector cross body x axis
 	Body_x_To_x=Nav.q[0] * Nav.q[0] + Nav.q[1] * Nav.q[1] - Nav.q[2] * Nav.q[2] - Nav.q[3] * Nav.q[3];
 	Body_x_To_y=2*Nav.q[1] * Nav.q[2] + Nav.q[0] * Nav.q[3];//These are saved for subsequent iterations as static variables
-	h_offset=Body_x_To_x * N_t_y - Body_x_To_y * N_t_x;
+	Horiz_t=sqrtf(N_t_x*N_t_x+N_t_y*N_t_y);	//Normalise the wind corrected target vector
+	N_t_x/Horiz_t;
+	N_t_y/Horiz_t;
+	h_offset=Body_x_To_x * N_t_x + Body_x_To_y * N_t_y -1;//We do dot product to get cos(angle), then subtract 1
+	if(Body_x_To_x * N_t_y - Body_x_To_y * N_t_x<0)//Multiply by -1 depending on the direction - cos(-angle)==cos(angle)
+		h_offset*=-1;
 	//Run the control loops if we arent controlled from the ground
 	if(Ground_Flag&0x0F) {//TODO implement ground control using PWM input capture and sanity check, as well as PWM passthrough?
 		if(PWM_Disabled) {//If PWM isnt already enabled, enable it
