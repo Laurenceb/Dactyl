@@ -125,28 +125,23 @@ void Timer_GPIO_Disable(void)
 int PWM_Set(int Channel, int Pulse)
 {
 	Pulse=(Pulse*3)+4875;/*this is actually about 10% too small, but is all integer*/
-        TIM_OCInitTypeDef TIM_OCInitStructure;
 	/*800us to 2.1ms pwm*/
         if(Pulse<2600 || Pulse>6900)
         return -2;
-
-        TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
-        TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable ;
-        TIM_OCInitStructure.TIM_Pulse = Pulse-1;
-        TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
+	//Now select the correct channel
         switch(Channel)
         {
                 case 1:
-                        TIM_OC1Init(TIM1, &TIM_OCInitStructure);
+			TIM_SetCompare1(TIM1, Pulse-1);
                         break;
                 case 2:
-                        TIM_OC1Init(TIM4, &TIM_OCInitStructure);
+			TIM_SetCompare1(TIM4, Pulse-1);
                         break;
                 case 3:
-                        TIM_OC2Init(TIM4, &TIM_OCInitStructure);
+			TIM_SetCompare2(TIM4, Pulse-1);
                         break;
                 case 4:
-                        TIM_OC4Init(TIM1, &TIM_OCInitStructure);
+			TIM_SetCompare4(TIM1, Pulse-1);
                         break;
                 default:
                         return -1;
