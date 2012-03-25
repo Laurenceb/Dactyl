@@ -132,16 +132,16 @@ int PWM_Set(int Channel, int Pulse)
         switch(Channel)
         {
                 case 1:
-			TIM_SetCompare1(TIM1, Pulse-1);
+			TIM_SetCompare1(TIM1, Pulse);
                         break;
                 case 2:
-			TIM_SetCompare1(TIM4, Pulse-1);
+			TIM_SetCompare1(TIM4, Pulse);
                         break;
                 case 3:
-			TIM_SetCompare2(TIM4, Pulse-1);
+			TIM_SetCompare2(TIM4, Pulse);
                         break;
                 case 4:
-			TIM_SetCompare4(TIM1, Pulse-1);
+			TIM_SetCompare4(TIM1, Pulse);
                         break;
                 default:
                         return -1;
