@@ -122,7 +122,7 @@ void Timer_GPIO_Disable(void)
   * @param  Channel number and pwm period in microseconds
   * @retval -2=invalid lenght, -1=wrong channel, 0=success
   */
-int PWM_Set(int Channel, int Pulse)
+int8_t PWM_Set(uint8_t Channel, uint16_t Pulse)
 {
 	Pulse=(Pulse*3)+4875;/*this is actually about 10% too small, but is all integer*/
 	/*800us to 2.1ms pwm*/
