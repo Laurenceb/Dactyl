@@ -188,7 +188,7 @@ int main(void) {
 		//TODO multiple waypoints needs to be integrated into the GCS, macro flag enables the multiple waypoint functionality
 		#ifdef MULTIPLE_WAYPOINTS
 		if(powf(waypoint_used.x-Nav_Global.Pos[0],2)+powf(waypoint_used.y-Nav_Global.Pos[1],2)<powf(waypoint_horiz,2)&&\
-		powf(waypoint_used.z-Nav_Global.Pos[2],2)<waypoint_vert) {
+		powf(waypoint_used.z-Nav_Global.Pos[2],2)<powf(waypoint_vert,2)) {
 			Waypoint_Global=Waypoints[waypoint_index++];//Load the next waypoint
 			New_Waypoint_Flagged=1;		//Set the flag to let guidance know new waypoint is ready
 		}
