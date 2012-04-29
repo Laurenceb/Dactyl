@@ -44,7 +44,7 @@ void ADC_Configuration(void)
 
 uint16_t readADC1(uint8_t channel)
 {
-  ADC_RegularChannelConfig(ADC1, channel, 1, ADC_SampleTime_1Cycles5);
+  ADC_RegularChannelConfig(ADC1, channel, 1, ADC_SampleTime_7Cycles5);
   // Start the conversion
   ADC_SoftwareStartConvCmd(ADC1, ENABLE);
   // Wait until conversion completion
