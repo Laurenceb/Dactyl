@@ -54,6 +54,7 @@ volatile Nav_Type Nav_Global;	//EKF state
 volatile uint32_t Millis;	//System uptime
 uint8_t Si4432_connected;	//If we are connected to an ISM band (mesh)network (Note: atm this is only set at bootup, meaning the server must be live before UAVs)
 uint8_t Operating_Mode;		//Stores the operating mode (Outdoor, indoor, or diagnostics)
+uint8_t Reset_Cause;		//Stores the reset cause when we init
 //--Flags/Mutex go here
 volatile uint8_t Nav_Flag;	//Used to control and lock global nav state access
 volatile uint8_t New_Waypoint_Flagged;
@@ -249,6 +250,8 @@ void Initialisation() {
 	int32_t device_temperature;
 	// Setup STM32 system (clock, PLL and Flash configuration)
 	SystemInit();
+	// Read reset cause
+	Reset_Cause=Watchdog_Reset_Detect;
 	// Setup the GPIOs
 	All_IO_Configuration();
 	// Confidue the DMA (for the USART2 - GPS)
