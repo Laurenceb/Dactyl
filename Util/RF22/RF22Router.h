@@ -284,6 +284,10 @@ public:
     /// \return true if a valid message was copied to buf
     boolean recvfromAckTimeout(uint8_t* buf, uint8_t* len,  uint16_t timeout, uint8_t* source = NULL, uint8_t* dest = NULL, uint8_t* id = NULL, uint8_t* flags = NULL);
 
+    /// allows the end to end sequence number to be reset to a new value, useful for detecting
+    /// dropped packets
+    void pokeAtSequence(uint8_t newSequence);
+
 protected:
 
     /// Lets sublasses peek at messages going 

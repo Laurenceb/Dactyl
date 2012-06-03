@@ -18,6 +18,7 @@ extern RF22Mesh rf22;
   void RF22_Reassign(uint8_t New_address);
   void RF22_Service_ISR(void);
   bool RF22_Sendto(uint8_t* buf, uint8_t len, uint8_t address);
+  void RF22_Set_New_Sequence(uint8_t newSequence);
 //  bool RF22_SendtoWait(uint8_t* buf, uint8_t len, uint8_t address);
 #ifdef __cplusplus
  }

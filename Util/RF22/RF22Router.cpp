@@ -201,6 +201,14 @@ void RF22Router::peekAtMessage(RoutedMessage* message, uint8_t messageLen)
     // Default does nothing
 }
 
+///////////////////////////////////////////////////////////////////
+// This may be useful if you want to use the end to end ID to detect 
+// dropped packets, and have multiple simultanious transfers going on
+void RF22Router::pokeAtSequence(uint8_t newSequence)
+{
+    _lastE2ESequenceNumber=newSequence;
+}
+
 ////////////////////////////////////////////////////////////////////
 boolean RF22Router::recvfromAck(uint8_t* buf, uint8_t* len, uint8_t* source, uint8_t* dest, uint8_t* id, uint8_t* flags)
 {  
