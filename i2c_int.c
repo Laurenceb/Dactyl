@@ -33,11 +33,10 @@ void I2C1_EV_IRQHandler(void) {
 	static int8_t index;		//index is signed -1==send the subaddress
 	uint8_t SReg_1=I2C1->SR1;	//read the status register here
 	if(!((Jobs>>job)&0x00000001)) {	//if the current job bit is not set
-		for(job=0;!((Jobs>>job)&0x00000001) && job<I2C_NUMBER_JOBS;job++);//find the first uncompleted job, starting at current job zero
+		for(job=0;!((Jobs>>job)&0x00000001) && job<(I2C_NUMBER_JOBS-1);job++);//find the first uncompleted job, starting at current job zero
 		subaddress_sent=0;
 	}
 	if(SReg_1&0x0001) {//we just sent a start - EV5 in ref manual
-		I2C1->CR1&=~0x0800;	//reset the POS bit so ACK/NACK applied to the current byte
 		I2C_AcknowledgeConfig(I2C1, ENABLE);//make sure ACK is on
 		index=0;		//reset the index
 		if(I2C_Direction_Receiver==I2C_jobs[job].direction && (subaddress_sent || 0xFF==I2C_jobs[job].subaddress)) {//we have sent the subaddr
@@ -87,7 +86,7 @@ void I2C1_EV_IRQHandler(void) {
 				I2C_AcknowledgeConfig(I2C1, DISABLE);//turn off ACK
 				I2C_jobs[job].data_pointer[index++]=I2C_ReceiveData(I2C1);//read data N-2
 				I2C_GenerateSTOP(I2C1,ENABLE);//program the Stop
-				final_stop=1;//reuired to fix hardware
+				final_stop=1;//required to fix hardware
 				I2C_jobs[job].data_pointer[index++]=I2C_ReceiveData(I2C1);//read data N-1
 				I2C_ITConfig(I2C1, I2C_IT_BUF, ENABLE);//enable TXE to allow the final EV7
 			}
@@ -150,7 +149,10 @@ void I2C1_EV_IRQHandler(void) {
 		//End of completion tasks
 		Jobs&=~(0x00000001<<job);//tick off current job as complete
 		Completed_Jobs|=(0x00000001<<job);//These can be polled by other tasks to see if a job has been completed or is scheduled 
-		subaddress_sent=0;	//reset this here
+		subaddress_sent=0;	//reset these here
+		job=0;
+		I2C1->CR1&=~0x0800;	//reset the POS bit so NACK applied to the current byte
+		I2C_ITConfig(I2C1, I2C_IT_BUF, DISABLE);//make sure the TXNE/RXE is disabled to start off with
 		if(Jobs && final_stop) {//there are still jobs left
 			while(I2C1->CR1&0x0200){;}//doesnt seem to be a better way to do this, must wait for stop to clear
 			I2C_GenerateSTART(I2C1,ENABLE);//program the Start to kick start the new transfer
@@ -212,7 +214,7 @@ void I2C1_ER_IRQHandler(void) {
 void I2C1_Request_Job(uint8_t job_) {
 	if(job_<32) {			//sanity check
 		Jobs|=1<<job_;		//set the job bit, do it here and use interrupt flag to detect bus inactive in case of I2C interrupting here
-		if(!(I2C1->CR2&I2C_IT_EVT)) {//if we are restarting the driver
+		if(!((I2C1->CR2)&(I2C_IT_EVT))) {//if we are restarting the driver
 			if(!(I2C1->CR1&0x0100)) {// ensure sending a start
 				while(I2C1->CR1&0x0200){;}//wait for any stop to finish sending
 				I2C_GenerateSTART(I2C1,ENABLE);//send the start for the new job
